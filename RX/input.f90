@@ -8,7 +8,7 @@ subroutine input(filename,ix,jx,t,x,y,U,V)
   real(8), intent(out) :: U(ix,jx,var1)
   real(8), intent(out) :: V(ix,jx,var2)
   integer :: i, j, ix0, jx0
-  real(8) :: f1, v2, B2
+!  real(8) :: f1, v2, B2
 
   U(:,:,:) = 0.d0
   V(:,:,:) = 0.d0
