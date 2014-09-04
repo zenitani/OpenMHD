@@ -1,6 +1,6 @@
 ### gfortran
 # F90 = gfortran -O2 -m64 -Wall
-### intel fortran ("-heat-arrays" option is useful)
+### intel fortran ("-heap-arrays" option is useful)
 F90 = ifort -heap-arrays
 
 OBJS = model.o set_dt.o u2v.o output.o \
