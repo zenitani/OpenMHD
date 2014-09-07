@@ -4,7 +4,8 @@
 # F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### intel fortran ("-heap-arrays" option is useful)
 F90 = ifort -heap-arrays
-F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
+#F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
+F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 ### XC
 #F90 = ftn
 #F90 = mpif90 -O2 -m64 -Wall
