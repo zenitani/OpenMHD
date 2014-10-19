@@ -7,7 +7,7 @@ subroutine v2g(V,G,ix,is,ie,jx,js,je)
   include 'param.h'
 !-----------------------------------------------------------------------
   real(8), intent(in) :: V(ix,jx,var1)  ! primitive variables (V) [input]
-  real(8) :: G(ix,jx,var1)  ! numerical flux (F) [output]
+  real(8) :: G(ix,jx,var1)  ! numerical flux (G) [output]
   integer, intent(in) :: ix, is, ie
   integer, intent(in) :: jx, js, je
 !-----------------------------------------------------------------------

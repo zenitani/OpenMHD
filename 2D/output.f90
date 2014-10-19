@@ -2,10 +2,10 @@ subroutine output(filename,ix,jx,t,x,y,U,V)
   implicit none
   include 'param.h'
   integer, intent(in) :: ix, jx
-  real(8) :: x(ix), y(jx)
-  real(8) :: U(ix,jx,var1)
-  real(8) :: V(ix,jx,var2)
-  real(8) :: t
+  real(8), intent(in) :: x(ix), y(jx)
+  real(8), intent(in) :: U(ix,jx,var1)
+  real(8), intent(in) :: V(ix,jx,var2)
+  real(8), intent(in) :: t
   integer :: i, j
   character*256 :: filename      
 
