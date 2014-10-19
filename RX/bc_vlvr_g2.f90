@@ -1,4 +1,4 @@
-subroutine bc_fixv_g2( VL,VR,ix,jx )
+subroutine bc_vlvr_g2( VL,VR,ix,jx )
 !-----------------------------------------------------------------------
 !     BC fixes for VL/VR in the Y direction for parallel run 2 (mainp2)
 !-----------------------------------------------------------------------
@@ -29,4 +29,4 @@ subroutine bc_fixv_g2( VL,VR,ix,jx )
   VR(:,jx-1,ps) =  VL(:,jx-1,ps)
 
   return
-end subroutine bc_fixv_g2
+end subroutine bc_vlvr_g2

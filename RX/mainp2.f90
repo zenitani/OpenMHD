@@ -12,7 +12,7 @@ program main
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: version = 20140830   ! version number
+  integer, parameter :: version = 20141020   ! version number
   integer, parameter :: ix =   77        ! 75 x 80 --> 6000 cells
   integer, parameter :: jx = 4502
   integer, parameter :: loop_max = 100000
@@ -156,7 +156,7 @@ program main
      call limiter_f(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_f(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !     write(6,*) 'fix VL/VR at MPI boundary'
-     call mpi_fixv_f2(VL,VR,ix,jx,myrank,npe)
+     call mpibc_vlvr_f2(VL,VR,ix,jx,myrank,npe)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      if( flux_type .eq. 1 )then
@@ -178,7 +178,7 @@ program main
      call limiter_g(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_g(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !    fix flux bc (G)
-     call bc_fixv_g2(VL,VR,ix,jx)
+     call bc_vlvr_g2(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      if( flux_type .eq. 1 )then
@@ -212,7 +212,7 @@ program main
      call limiter_f(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_f(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !     write(6,*) 'fix VL/VR at MPI boundary'
-     call mpi_fixv_f2(VL,VR,ix,jx,myrank,npe)
+     call mpibc_vlvr_f2(VL,VR,ix,jx,myrank,npe)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      if( flux_type .eq. 1 )then
@@ -234,7 +234,7 @@ program main
      call limiter_g(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_g(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !    fix flux bc (G)
-     call bc_fixv_g2(VL,VR,ix,jx)
+     call bc_vlvr_g2(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      if( flux_type .eq. 1 )then

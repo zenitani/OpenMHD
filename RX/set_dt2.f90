@@ -4,7 +4,8 @@ subroutine set_dt2(Rm,dt,dx,cfl)
 !     For simplicity, we reuse the CFL factor.
 !-----------------------------------------------------------------------
   implicit none
-  real(8) :: Rm, dt, dx, cfl
+  real(8), intent(in) :: Rm, dx, cfl
+  real(8), intent(inout) :: dt
 
   if( dt .gt. 0.5d0*cfl*Rm*(dx**2) ) then
      dt = 0.5d0*cfl*Rm*(dx**2)

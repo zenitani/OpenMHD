@@ -1,4 +1,4 @@
-subroutine mpi_fixv_f(VL,VR,ix,jx,myrank,npe)
+subroutine mpibc_vlvr_f(VL,VR,ix,jx,myrank,npe)
 !-----------------------------------------------------------------------
 !     2010/01/27  S. Zenitani   MPI ex for HLL
 !-----------------------------------------------------------------------
@@ -61,4 +61,4 @@ subroutine mpi_fixv_f(VL,VR,ix,jx,myrank,npe)
 !  call mpi_barrier(mpi_comm_world,merr)
 
   return
-end subroutine mpi_fixv_f
+end subroutine mpibc_vlvr_f
