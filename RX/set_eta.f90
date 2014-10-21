@@ -17,9 +17,9 @@ subroutine set_eta(E,EF,EG,x,y,dx,Rm1,Rm0,ix,jx)
   eta0  = 1.d0 / Rm0
   eta01 = ( Rm0 - Rm1 ) / ( Rm0 * Rm1 )
 
-  E(ix,:) = 0.d0
+  E(:,:) = 0.d0
   do j=1,jx
-  do i=1,ix-1
+  do i=1,ix
      E(i,j) = eta( x(i), y(j), eta0, eta01 )
   enddo
   enddo
