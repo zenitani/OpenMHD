@@ -121,8 +121,8 @@ subroutine mpibc3(U,ix,jx,myrank,npe)
   U(:,jx,my) = -U(:,jx,my)
 !  U(:,jx,mz) =  U(:,jx,mz) ! not sure this one
 !  U(:,jx,en) =  U(:,jx,en)
-!  U(:,jx,bx) =  U(:,jx,bx)
-!  U(:,jx,by) =  U(:,jx,by)
+  U(:,jx,bx) = -U(:,jx,bx)
+  U(:,jx,by) = -U(:,jx,by)
 !  U(:,jx,bz) =  U(:,jx,bz) ! not sure this one
   U(:,jx,ps) = -U(:,jx,ps)
 

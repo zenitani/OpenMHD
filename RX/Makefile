@@ -1,13 +1,14 @@
 ### gfortran
 # F90 = gfortran -O2 -m64 -Wall
 # F90 = /opt/openmpi64i/bin/mpif90 -g -m64
+# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 # F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### intel fortran ("-heap-arrays" option is useful)
-F90 = ifort -heap-arrays
+#F90 = ifort -heap-arrays
 #F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
-F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
+#F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 ### XC
-#F90 = ftn
+F90 = ftn
 #F90 = mpif90 -O2 -m64 -Wall
 
 OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
@@ -18,8 +19,9 @@ OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
 	glm_f.o glm_g.o glm_ss.o
 OBJP = modelp.o  mpibc.o  mpibc_vlvr_f.o
 OBJP2= modelp2.o mpibc2.o mpibc_vlvr_f2.o bc_vlvr_g2.o
+OBJP3= modelp.o  mpibc3.o mpibc_vlvr_f3.o mpibc_vlvr_g3.o
 
-all: run runp runp2
+all: run runp runp2 runp3
 
 # serial version
 run : main.o $(OBJS)
@@ -32,6 +34,10 @@ runp : mainp.o $(OBJS) $(OBJP)
 # parallel version (1/4 BC for large-scale evolution)
 runp2 : mainp2.o $(OBJS) $(OBJP2)
 	$(F90) -o ap2.out mainp2.o $(OBJS) $(OBJP2)
+
+# parallel version (periodic in x; tricky in y)
+runp3 : mainp3.o $(OBJS) $(OBJP3)
+	$(F90) -o ap3.out mainp3.o $(OBJS) $(OBJP3)
 
 %.o: %.f90 param.h
 	$(F90) $(FFLAGS) -c $<
