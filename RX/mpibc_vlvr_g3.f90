@@ -29,7 +29,6 @@ subroutine mpibc_vlvr_g3(VL,VR,ix,jx,myrank,npe)
   VL(:,1,:)  = bufrcv(:,:)
   VL(:,1,vx) = -VL(:,1,vx)
   VL(:,1,bx) = -VL(:,1,bx)
-  VL(:,1,ps) = -VL(:,1,ps)
 
   bufsnd(:,:) = VR(ix:1:-1,1,:)
   call mpi_barrier(mpi_comm_world,merr)
@@ -40,7 +39,6 @@ subroutine mpibc_vlvr_g3(VL,VR,ix,jx,myrank,npe)
   VR(:,jx-1,:)  = bufrcv(:,:)
   VR(:,jx-1,vx) = -VR(:,jx-1,vx)
   VR(:,jx-1,bx) = -VR(:,jx-1,bx)
-  VR(:,jx-1,ps) = -VR(:,jx-1,ps)
 
   return
 end subroutine mpibc_vlvr_g3
