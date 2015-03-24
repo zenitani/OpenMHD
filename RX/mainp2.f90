@@ -1,7 +1,8 @@
 program main
 !-----------------------------------------------------------------------
 !     Open MHD  Reconnection solver (parallel version with 1/4 BC)
-!        Ref: S. Zenitani, T. Miyoshi, Phys. Plasmas, 18, 022105 (2011)
+!        Ref: S. Zenitani, Phys. Plasmas 22, 032114 (2015)
+!        Ref: S. Zenitani, T. Miyoshi, Phys. Plasmas 18, 022105 (2011)
 !-----------------------------------------------------------------------
 !     2010/09/25  S. Zenitani  HLL reconnection code
 !     2010/09/29  S. Zenitani  MPI version
@@ -13,17 +14,23 @@ program main
   include 'mpif.h' ! for MPI
   include 'param.h'
   integer, parameter :: version = 20141020   ! version number
-  integer, parameter :: ix =   77        ! 75 x 80 --> 6000 cells
-  integer, parameter :: jx = 4502
-  integer, parameter :: loop_max = 100000
+!--------------------------------------- Zenitani (2015) ---------------
+  integer, parameter :: ix =   22   !  20 x 600 --> 12000 cells = 200 x 60
+  integer, parameter :: jx = 9002   !                9000 cells = 150 x 60
+!--------------------------------------- Zenitani & Miyoshi (2011) -----
+! integer, parameter :: ix =   77   !  75 x  80  --> 6000 cells = 200 x 30
+! integer, parameter :: jx = 4502   !                4500 cells = 150 x 30
+  integer, parameter :: loop_max = 1000000
   real(8), parameter :: tend  = 350.0d0
   real(8), parameter :: dtout =  25.0d0  ! output interval
   real(8), parameter :: cfl   =   0.35d0 ! time step
-  integer, parameter :: n_start = 0    ! If non-zero, load previous data file
+  integer, parameter :: n_start = 0     ! If non-zero, load previous data file
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
-  integer, parameter :: lm_type   = 2
+  integer, parameter :: lm_type   = 1   ! Zenitani (2015)
+! integer, parameter :: lm_type   = 2   ! Zenitani & Miyoshi (2011)
 ! Numerical flux (1: HLL, 3: HLLD)
-  integer, parameter :: flux_type = 1
+  integer, parameter :: flux_type = 3   ! Zenitani (2015)
+! integer, parameter :: flux_type = 1   ! Zenitani & Miyoshi (2011)
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 ! Resistivity
