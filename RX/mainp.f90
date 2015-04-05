@@ -4,11 +4,12 @@ program main
 !-----------------------------------------------------------------------
 !     2010/09/25  S. Zenitani  HLL reconnection code
 !     2010/09/29  S. Zenitani  MPI version
+!     2015/04/05  S. Zenitani  MPI-IO
 !-----------------------------------------------------------------------
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: version = 20141020   ! version number
+  integer, parameter :: version = 20150405   ! version number
   integer, parameter :: ix = 152
   integer, parameter :: jx = 602
   integer, parameter :: loop_max = 30000
@@ -16,9 +17,9 @@ program main
   real(8), parameter :: dtout = 5.d0 ! output interval
   real(8), parameter :: cfl   = 0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
-  integer, parameter :: lm_type   = 3
+  integer, parameter :: lm_type   = 1
 ! Numerical flux (1: HLL, 3: HLLD)
-  integer, parameter :: flux_type = 1
+  integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 ! Resistivity
@@ -73,9 +74,11 @@ program main
   endif
   if( myrank.eq.0 ) then
      write(6,*) '[Params]'
-     write(6,998) dt, dtout, ix, jx
+     write(6,*) 'Code version: ', version, '  Core # : ', npe
+     write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
+     write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
      write(6,999) lm_type, flux_type, time_type
-998  format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:', i5, i5 )
+998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i5,' (',i5,') x ',i5 )
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif
@@ -92,9 +95,12 @@ program main
 !   -----------------  
 !    [ output ]
      if ( t .ge. t_output ) then
-        write(6,*) 'data output   t = ', t
-        write(filename,990) myrank, n_output
-        call output(filename,ix,jx,t,x,y,U,V)
+!        write(6,*) 'data output   t = ', t
+!        write(filename,990) myrank, n_output
+!        call output(filename,ix,jx,t,x,y,U,V)
+        if( myrank.eq.0 )  write(6,*) 'writing data ...   t = ', t
+        write(filename,980) n_output
+        call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
         n_output = n_output + 1
         t_output = t_output + dtout
      endif
@@ -245,7 +251,8 @@ program main
      write(6,*) '== end =='
   endif
 
-990 format ('data/field-',i3.3,'-',i5.5,'.dat')
+980 format ('data/field-',i5.5,'.dat')
+!990 format ('data/field-',i3.3,'-',i5.5,'.dat')
 !991 format ('data/field-',i3.3,'-',i5.5,'.dat.restart')
 
 end program main

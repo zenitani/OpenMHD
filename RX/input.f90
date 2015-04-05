@@ -1,4 +1,4 @@
-subroutine input(filename,ix,jx,t,x,y,U,V)
+subroutine input(filename,ix,jx,t,x,y,U)
   implicit none
   include 'param.h'
   character*256 :: filename      
@@ -6,7 +6,7 @@ subroutine input(filename,ix,jx,t,x,y,U,V)
   real(8), intent(out) :: t
   real(8), intent(out) :: x(ix), y(jx)
   real(8), intent(out) :: U(ix,jx,var1)
-  real(8), intent(out) :: V(ix,jx,var2)
+!  real(8), intent(out) :: V(ix,jx,var2)
   integer :: i, j, ix0, jx0
 !  real(8) :: f1, v2, B2
 
@@ -34,10 +34,10 @@ subroutine input(filename,ix,jx,t,x,y,U,V)
   read(15) ((U(i,j,by),i=1,ix),j=1,jx)
   read(15) ((U(i,j,bz),i=1,ix),j=1,jx)
   read(15) ((U(i,j,ps),i=1,ix),j=1,jx)
-  read(15) ((V(i,j,vx),i=1,ix),j=1,jx)
-  read(15) ((V(i,j,vy),i=1,ix),j=1,jx)
-  read(15) ((V(i,j,vz),i=1,ix),j=1,jx)
-  read(15) ((V(i,j,pr),i=1,ix),j=1,jx)
+!  read(15) ((V(i,j,vx),i=1,ix),j=1,jx)
+!  read(15) ((V(i,j,vy),i=1,ix),j=1,jx)
+!  read(15) ((V(i,j,vz),i=1,ix),j=1,jx)
+!  read(15) ((V(i,j,pr),i=1,ix),j=1,jx)
   close(15)
 
 ! ----------------------------------------------------------------------
