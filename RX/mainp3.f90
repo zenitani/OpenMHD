@@ -132,12 +132,10 @@ program main
         call mpi_barrier(mpi_comm_world,merr)
      endif
 !    [ end? ]
+     if ( t .ge. tend )  exit
      if ( k .eq. loop_max ) then
-        write(6,*) 'max loop'
-        goto 1000
-     endif
-     if ( t .ge. tend ) then
-        goto 1000
+        if( myrank.eq.0 )  write(6,*) 'max loop'
+        exit
      endif
 !   -----------------  
 !    CFL condition
@@ -271,12 +269,8 @@ program main
   enddo
 !-----------------------------------------------------------------------
 
-1000 continue
-
   call mpi_finalize(merr)
-  if( myrank.eq.0 ) then
-     write(6,*) '== end =='
-  endif
+  if( myrank.eq.0 )  write(6,*) '== end =='
 
 980 format ('data/field-',i5.5,'.dat')
 981 format ('data/field-',i5.5,'.dat.restart')

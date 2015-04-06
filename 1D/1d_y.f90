@@ -76,11 +76,9 @@ program main
 !    [ end? ]
      if ( k .eq. loop_max ) then
         write(6,*) 'max loop'
-        goto 1000
+        exit
      endif
-     if ( t .ge. tend ) then
-        goto 1000
-     endif
+     if ( t .ge. tend )  exit
 !   -----------------  
 !    CFL condition
      call set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
@@ -165,8 +163,6 @@ program main
 ! --- BC ---
      t=t+dt
   enddo
-
-1000 continue
 
   write(6,*) '== end =='
 end program main

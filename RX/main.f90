@@ -78,12 +78,10 @@ program main
         t_output = t_output + dtout
      endif
 !    [ end? ]
+     if ( t .ge. tend )  exit
      if ( k .eq. loop_max ) then
         write(6,*) 'max loop'
-        goto 1000
-     endif
-     if ( t .ge. tend ) then
-        goto 1000
+        exit
      endif
 !   -----------------  
 !    CFL condition
@@ -203,8 +201,6 @@ program main
      call bc(U,ix,jx)
      t=t+dt
   enddo
-
-1000 continue
 
   write(6,*) '== end =='
 end program main
