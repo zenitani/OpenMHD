@@ -1,11 +1,11 @@
-subroutine mpi_fixv_f(VL,VR,ix,jx,myrank,npe)
+subroutine mpibc_vlvr_f(VL,VR,ix,jx,myrank,npe)
 !-----------------------------------------------------------------------
 !     2010/01/27  S. Zenitani   MPI ex for HLL
 !-----------------------------------------------------------------------
   implicit none
   include 'mpif.h'
   include 'param.h'
-  integer :: ix, jx, myrank, npe
+  integer, intent(in) :: ix, jx, myrank, npe
 ! left flux (VL) [input]
   real(8) :: VL(ix,jx,var1)
 ! right flux (VR) [input]
@@ -57,4 +57,4 @@ subroutine mpi_fixv_f(VL,VR,ix,jx,myrank,npe)
 !  call mpi_barrier(mpi_comm_world,merr)
 
   return
-end subroutine mpi_fixv_f
+end subroutine mpibc_vlvr_f

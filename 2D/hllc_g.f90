@@ -10,7 +10,7 @@ subroutine hllc_g(G,VL,VR,ix,jx)
   include 'param.h'
   integer, intent(in) :: ix, jx
 ! numerical flux (F) [output]
-  real(8) :: G(ix,jx,var1)
+  real(8), intent(out) :: G(ix,jx,var1)
 ! left/right states (VL,VR) [input]
   real(8) :: VL(ix,jx,var1), VR(ix,jx,var1)
 ! left/right conserved variables (UL & UR; local)

@@ -5,7 +5,7 @@ subroutine mpibc_vlvr_f3(VL,VR,ix,jx,myrank,npe)
   implicit none
   include 'mpif.h'
   include 'param.h'
-  integer :: ix, jx, myrank, npe
+  integer, intent(in) :: ix, jx, myrank, npe
 ! left flux (VL) [input]
   real(8) :: VL(ix,jx,var1)
 ! right flux (VR) [input]

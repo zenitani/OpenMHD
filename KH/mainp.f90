@@ -4,11 +4,12 @@ program main
 !-----------------------------------------------------------------------
 !     2010/09/27  S. Zenitani  K-H instability
 !     2010/09/27  S. Zenitani  K-H instability (MPI version)
+!     2015/04/05  S. Zenitani  MPI-IO
 !-----------------------------------------------------------------------
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: version = 20120705   ! version number
+  integer, parameter :: version = 20150405   ! version number
   integer, parameter :: ix =  62  ! 60 (cells per core) x 8 (cores) + 2 = 482
   integer, parameter :: jx = 602
   integer, parameter :: loop_max = 200000
@@ -16,7 +17,7 @@ program main
   real(8), parameter :: tend  = 100.0d0
   real(8), parameter :: dtout =   5.0d0 ! output interval
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
-  integer, parameter :: lm_type   = 3
+  integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
   integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)
@@ -69,9 +70,10 @@ program main
   endif
   if( myrank.eq.0 ) then
      write(6,*) '[Params]'
-     write(6,998) dt, dtout, ix, jx
+     write(6,*) 'Code version: ', version, '  Core # : ', npe
+     write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
      write(6,999) lm_type, flux_type, time_type
-998  format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:', i5, i5 )
+998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i5,' (',i5,') x ',i5 )
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif
@@ -128,7 +130,7 @@ program main
      call limiter_f(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_f(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !     write(6,*) 'fix VL/VR at MPI boundary'
-     call mpi_fixv_f(VL,VR,ix,jx,myrank,npe)
+     call mpibc_vlvr_f(VL,VR,ix,jx,myrank,npe)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      if( flux_type .eq. 0 )then
@@ -192,7 +194,7 @@ program main
      call limiter_f(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_f(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !     write(6,*) 'fix VL, VR at MPI boundary'
-     call mpi_fixv_f(VL,VR,ix,jx,myrank,npe)
+     call mpibc_vlvr_f(VL,VR,ix,jx,myrank,npe)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      if( flux_type .eq. 0 )then

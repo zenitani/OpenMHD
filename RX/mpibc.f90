@@ -5,7 +5,7 @@ subroutine mpibc(U,ix,jx,myrank,npe)
   implicit none
   include 'mpif.h'
   include 'param.h'
-  integer :: ix, jx, myrank, npe
+  integer, intent(in) :: ix, jx, myrank, npe
   real(8) :: U(ix,jx,var1)
   integer :: mstatus(mpi_status_size)
   integer :: mmx, merr, mright, mleft
