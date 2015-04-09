@@ -1,4 +1,7 @@
-subroutine bc_fixv_g( VL,VR,ix,jx )
+subroutine bc_vlvr_g( VL,VR,ix,jx )
+!-----------------------------------------------------------------------
+!     BC fixes for VL/VR in the Y direction
+!-----------------------------------------------------------------------
   implicit none
   include 'param.h'
   integer, intent(in) :: ix, jx
@@ -25,4 +28,4 @@ subroutine bc_fixv_g( VL,VR,ix,jx )
   VR(:,jx-1,ps) =  VL(:,jx-1,ps)
 
   return
-end subroutine bc_fixv_g
+end subroutine bc_vlvr_g

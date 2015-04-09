@@ -91,9 +91,12 @@ program main
 !   -----------------  
 !    [ output ]
      if ( t .ge. t_output ) then
-        write(6,*) 'data output   t = ', t
-        write(filename,990) myrank, n_output
-        call output(filename,ix,jx,t,x,y,U,V)
+!        write(6,*) 'data output   t = ', t
+!        write(filename,990) myrank, n_output
+!        call output(filename,ix,jx,t,x,y,U,V)
+        if( myrank.eq.0 )  write(6,*) 'writing data ...   t = ', t
+        write(filename,980) n_output
+        call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
         n_output = n_output + 1
         t_output = t_output + dtout
      endif
@@ -255,7 +258,8 @@ program main
   if( myrank.eq.0 )  write(6,*) '== end =='
 
 
-990 format ('data/field-',i3.3,'-',i5.5,'.dat')
+980 format ('data/field-',i5.5,'.dat')
+!990 format ('data/field-',i3.3,'-',i5.5,'.dat')
 !991 format ('data/field-',i3.3,'-',i5.5,'.dat.restart')
 
 end program main
