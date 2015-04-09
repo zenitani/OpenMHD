@@ -156,7 +156,7 @@ program main
      call limiter_g(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_g(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !    fix VR/VL for wall bc (G)
-     call bc_fixv_g(VL,VR,ix,jx)
+     call bc_vlvr_g(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      if( flux_type .eq. 0 )then
@@ -220,7 +220,7 @@ program main
      call limiter_g(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
      call limiter_g(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
 !    fix VR/VL for wall bc (G)
-     call bc_fixv_g(VL,VR,ix,jx)
+     call bc_vlvr_g(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      if( flux_type .eq. 0 )then

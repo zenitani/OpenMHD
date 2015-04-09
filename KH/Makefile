@@ -11,7 +11,7 @@ F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 #F90 = mpif90 -O2 -m64 -Wall
 
 OBJS = model.o set_dt.o u2v.o output.o rk21.o rk22.o step1.o step2.o bc.o \
-	v2u.o v2f.o v2g.o limiter_f.o limiter_g.o bc_fixv_g.o \
+	v2u.o v2f.o v2g.o limiter_f.o limiter_g.o bc_vlvr_g.o \
 	hlld_f.o hlld_g.o hllc_f.o hllc_g.o hll_f.o hll_g.o llf_f.o llf_g.o \
 	glm_f.o glm_g.o glm_ss.o
 OBJP = modelp.o mpibc.o mpibc_vlvr_f.o mpiinput.o mpioutput.o
