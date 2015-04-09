@@ -4,7 +4,7 @@ subroutine bc_vlvr_g2( VL,VR,ix,jx )
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer :: ix, jx
+  integer, intent(in) :: ix, jx
   real(8) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
 
   VL(:, 1,ro) =  VR(:,1,ro)

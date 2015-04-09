@@ -1,7 +1,7 @@
 subroutine bc(U,ix,jx)
   implicit none
   include 'param.h'
-  integer :: ix, jx
+  integer, intent(in) :: ix, jx
   real(8) :: U(ix,jx,var1)
 !----------------------------------------------------------------------
 
