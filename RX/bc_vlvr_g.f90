@@ -1,6 +1,6 @@
 subroutine bc_vlvr_g( VL,VR,ix,jx )
 !-----------------------------------------------------------------------
-!     BC fixes for VL/VR in the Y direction for parallel run 1 (mainp)
+!     BC fixes for VL/VR in the Y direction
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'

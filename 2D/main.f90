@@ -15,7 +15,7 @@ program main
   real(8), parameter :: dtout = 0.1d0 ! output interval
   real(8), parameter :: cfl   = 0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
-  integer, parameter :: lm_type   = 3
+  integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
   integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)

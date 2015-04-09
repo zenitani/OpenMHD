@@ -12,9 +12,8 @@ subroutine v2f(V,F,ix,is,ie,jx,js,je)
   integer, intent(in) :: jx, js, je
 !-----------------------------------------------------------------------
   integer :: i, j
-  real(8) :: v2, vB, B2, f1
-
-  f1 = gamma / ( gamma - 1 )
+  real(8) :: v2, vB, B2
+  real(8), parameter :: f1 = gamma / ( gamma - 1 )
 
   do j=js,je
   do i=is,ie
