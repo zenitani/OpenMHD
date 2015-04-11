@@ -21,6 +21,7 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
        mpi_info_null, fh, ierr )
 
   disp = 0
+  call mpi_file_set_size( fh,disp,ierr)
 
   mk = 8
   call mpi_file_write_all( fh, mk, 1, mpi_integer, mpi_status_ignore, ierr) ; disp = disp+mksize
