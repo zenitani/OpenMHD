@@ -11,7 +11,7 @@ subroutine input(filename,ix,jx,t,x,y,U)
 !  real(8) :: f1, v2, B2
 
   U(:,:,:) = 0.d0
-  V(:,:,:) = 0.d0
+!  V(:,:,:) = 0.d0
 
   open(15,file=filename,form='unformatted')
   read(15) t
