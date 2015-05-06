@@ -98,7 +98,7 @@ program main
      call mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
   endif
   t_output = t - dt/3.d0
-  n_output = 0
+  n_output = n_start
 
 !-----------------------------------------------------------------------
   do k=1,loop_max
@@ -112,13 +112,11 @@ program main
 !   -----------------  
 !    [ output ]
      if ( t .ge. t_output ) then
-        if (( n_output .eq. 0 ).and.( n_start .ne. 0 )) then
+        if (( k .eq. 1 ).and.( n_start .ne. 0 )) then
 !           write(filename,991) myrank, n_start
 !           call output(filename,ix,jx,t,x,y,U,V)
-           write(filename,981) n_start
+           write(filename,981) n_output
            call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
-           n_output = n_start + 1
-           t_output = t + dtout - dt/3.d0
         else
 !           write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
 !           write(filename,990) myrank, n_output
@@ -126,9 +124,9 @@ program main
            if( myrank.eq.0 )  write(6,*) 'writing data ...   t = ', t
            write(filename,980) n_output
            call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
-           n_output = n_output + 1
-           t_output = t_output + dtout
         endif
+        n_output = n_output + 1
+        t_output = t_output + dtout
         call mpi_barrier(mpi_comm_world,merr)
      endif
 !    [ end? ]
