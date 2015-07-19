@@ -48,7 +48,7 @@ subroutine limiter_g(wk,wD,wU,ix,jx,type)
 !                 grad = max(gA,gB)
               endif
            endif
-!           grad = sign(0.5d0,gA) * max( 0.d0, min(abs(gA),sign(1.d0,gA)*gB) )
+!           grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
            wU(i,j-1) = wk(i,j) - grad
            wD(i,j)   = wk(i,j) + grad
 !           wU(i,j-1) = wk(i,j) - 0.5d0 * grad
@@ -83,6 +83,7 @@ subroutine limiter_g(wk,wD,wU,ix,jx,type)
 !                 grad = max(2*gA,2*gB,gC)
               endif
            endif
+!           grad = (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
            wU(i,j-1) = wk(i,j) - grad
            wD(i,j)   = wk(i,j) + grad
 !           wU(i,j-1) = wk(i,j) - 0.5d0 * grad

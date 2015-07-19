@@ -1,6 +1,6 @@
 subroutine step2(wk,wF,wG,dt,dx,ix,jx)
 !-----------------------------------------------------------------------
-!     2/2 step of the standard Runge-Kutta method
+!     2/2 step of the standard Runge=Kutta method
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'

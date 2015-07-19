@@ -269,7 +269,7 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
 
 ! resistive fix to G
 ! Caution: J is surface value
-!          B is taken from the left (VL) or the right state (VR)
+!          B is taken from the left (VL) and the right states (VR)
   do j=1,jx-1
      G(:,j,en) = G(:,j,en) + 0.5d0 * EtS(:,j) * &
           ( JzS(:,j)*(VL(:,j,bx)+VR(:,j,bx)) - JxS(:,j)*(VL(:,j,bz)+VR(:,j,bz)) )

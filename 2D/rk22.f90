@@ -1,6 +1,6 @@
 subroutine rk22(wk,wk1,wF,wG,dt,dx,ix,jx)
 !-----------------------------------------------------------------------
-!     2/2 step of TVD Runge-Kutta method
+!     2/2 step of TVD Runge=Kutta method
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'

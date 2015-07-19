@@ -21,6 +21,7 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
 
 ! 1st order
   if( type .eq. 0 ) then
+
      do j=1,jx
         do i=1,ix-1
            wL(i,j) = wk(i,j)
@@ -50,7 +51,7 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
 !                 grad = max(gA,gB)
               endif
            endif
-!           grad = sign(0.5d0,gA) * max( 0.d0, min(abs(gA),sign(1.d0,gA)*gB) )
+!           grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
            wR(i-1,j) = wk(i,j) - grad
            wL(i,j)   = wk(i,j) + grad
 !           wR(i-1,j) = wk(i,j) - 0.5d0 * grad
@@ -85,6 +86,7 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
 !                 grad = max(2*gA,2*gB,gC)
               endif
            endif
+!           grad = (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
            wR(i-1,j) = wk(i,j) - grad
            wL(i,j)   = wk(i,j) + grad
 !           wR(i-1,j) = wk(i,j) - 0.5d0 * grad

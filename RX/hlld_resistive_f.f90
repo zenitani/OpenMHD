@@ -275,7 +275,7 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 
 ! resistive fix to F
 ! Caution: J is surface value
-!          B is taken from the left (VL) or the right state (VR)
+!          B is taken from the left (VL) and the right states (VR)
   do j=2,jx-1
   do i=1,ix-1
      F(i,j,en) = F(i,j,en) + 0.5d0 * EtS(i,j) * &
