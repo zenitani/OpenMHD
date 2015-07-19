@@ -1,15 +1,15 @@
 ### gfortran
 # F90 = gfortran -O2 -m64 -Wall
-# F90 = /opt/openmpi64i/bin/mpif90 -g -m64
-# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 # F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### intel fortran ("-heap-arrays" option is useful)
-#F90 = ifort -heap-arrays
-#F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
-#F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
-### XC
+# F90 = ifort -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -g -m64
+# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
+### NAOJ/XC
 F90 = ftn
-#F90 = mpif90 -O2 -m64 -Wall
+### JAXA/FX100
+# F90 = f90sjx -Umpi
 
 OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
 	rk21.o rk22.o step1.o step2.o bc.o \
@@ -31,7 +31,7 @@ run : main.o $(OBJS)
 runp : mainp.o $(OBJS) $(OBJP)
 	$(F90) -o ap.out mainp.o $(OBJS) $(OBJP)
 
-# parallel version (1/4 BC for large-scale evolution)
+# parallel version (1/4 BC for reconnection papers)
 runp2 : mainp2.o $(OBJS) $(OBJP2)
 	$(F90) -o ap2.out mainp2.o $(OBJS) $(OBJP2)
 

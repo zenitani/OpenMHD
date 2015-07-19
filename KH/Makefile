@@ -1,14 +1,15 @@
 ### gfortran
 # F90 = gfortran -O2 -m64 -Wall
-# F90 = /opt/openmpi64i/bin/mpif90 -g -m64
 # F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### intel fortran ("-heap-arrays" option is useful)
-F90 = ifort -heap-arrays
-#F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
+# F90 = ifort -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -g -m64
 F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 ### XC
-#F90 = ftn
-#F90 = mpif90 -O2 -m64 -Wall
+# F90 = ftn
+### JAXA/FX100
+# F90 = f90sjx -Umpi
 
 OBJS = model.o set_dt.o u2v.o output.o rk21.o rk22.o step1.o step2.o bc.o \
 	v2u.o v2f.o v2g.o limiter_f.o limiter_g.o bc_vlvr_g.o \

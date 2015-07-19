@@ -5,6 +5,7 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
 !     2010/01/22  S. Zenitani  2nd order limiters (minmod, MC)
 !     2010/05/14  S. Zenitani  added van Leer limiter
 !     2012/07/05  S. Zenitani  added Koren limiter (bug fixed)
+!     2015/07/19  S. Zenitani  removed if-statements from minmod/MC limiters
 !-----------------------------------------------------------------------
   implicit none
   integer, intent(in)  :: ix, jx
@@ -40,22 +41,20 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
         do i=2,ix-1
            gA =     ( wk(i,j)  -wk(i-1,j))
            gB =     ( wk(i+1,j)-wk(i,j)  )
-           if( gA*gB .le. 0 ) then
-              grad = 0.d0
-           else
-              if( gA .gt. 0 ) then
-                 grad = 0.5d0 * min(gA,gB)
+!           if( gA*gB .le. 0 ) then
+!              grad = 0.d0
+!           else
+!              if( gA .gt. 0 ) then
 !                 grad = min(gA,gB)
-              else
-                 grad = 0.5d0 * max(gA,gB)
+!              else
 !                 grad = max(gA,gB)
-              endif
-           endif
-!           grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
-           wR(i-1,j) = wk(i,j) - grad
-           wL(i,j)   = wk(i,j) + grad
+!              endif
+!           endif
 !           wR(i-1,j) = wk(i,j) - 0.5d0 * grad
 !           wL(i,j)   = wk(i,j) + 0.5d0 * grad
+           grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
+           wR(i-1,j) = wk(i,j) - grad
+           wL(i,j)   = wk(i,j) + grad
         enddo
      enddo
      do i=ix,ix
@@ -75,18 +74,18 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
            gB =       ( wk(i+1,j)-wk(i,j)  )
            gC = 0.25d0*( wk(i+1,j)-wk(i-1,j))
 !           gC = 0.5d0*( wk(i+1,j)-wk(i-1,j))
-           if( gA*gB .le. 0 ) then
-              grad = 0.d0
-           else
-              if( gA .gt. 0 ) then
-                 grad = min(gA,gB,gC)
-!                 grad = min(2*gA,2*gB,gC)
-              else
-                 grad = max(gA,gB,gC)
-!                 grad = max(2*gA,2*gB,gC)
-              endif
-           endif
-!           grad = (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+!           if( gA*gB .le. 0 ) then
+!              grad = 0.d0
+!           else
+!              if( gA .gt. 0 ) then
+!                 grad = min(gA,gB,gC)
+!!                 grad = min(2*gA,2*gB,gC)
+!              else
+!                 grad = max(gA,gB,gC)
+!!                 grad = max(2*gA,2*gB,gC)
+!              endif
+!           endif
+           grad = (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
            wR(i-1,j) = wk(i,j) - grad
            wL(i,j)   = wk(i,j) + grad
 !           wR(i-1,j) = wk(i,j) - 0.5d0 * grad
