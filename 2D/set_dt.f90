@@ -13,7 +13,8 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
   real(8), intent(out) :: vmax, dt
 !-----------------------------------------------------------------------
   integer :: i, j
-  real(8) :: B2, f1, f2, vfx, vfy, vtmp, dttmp
+  integer :: imax, jmax
+  real(8) :: B2, f1, f2, vfx, vfy, vtmp
 
   vmax = 0.d0
   dt   = 99999.d0
@@ -36,21 +37,26 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
 
 !    max speed of MHD waves
      vtmp = max( abs( V(i,j,vx) ) + vfx, abs( V(i,j,vy) ) + vfy )
-!    tmp value of dt
-     dttmp = cfl * dx / vtmp
 
-     if( dttmp .lt. dtmin ) then
-        write(6,*) ' dt is too small : ', dttmp, ' < ', dtmin
-        write(6,*) '     velocity is : ', vtmp
-        write(6,*) i, j, U(i,j,ro), V(i,j,pr), B2
-        stop
-     elseif( dttmp .lt. dt ) then
-        dt   = dttmp
+     if( vtmp > vmax ) then
         vmax = vtmp
+        imax = i
+        jmax = j
      endif
      
   enddo
   enddo
+
+! dt
+  dt = cfl * dx / vmax
+
+! error check
+  if( dt < dtmin ) then
+     write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+     write(6,*) '     velocity is : ', vmax
+     write(6,*) imax, jmax, U(imax,jmax,ro), V(imax,jmax,pr)
+     stop
+  endif
 
   return
 end subroutine set_dt

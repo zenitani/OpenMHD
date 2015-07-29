@@ -7,11 +7,11 @@ subroutine llf_g(G,VL,VR,ix,jx)
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, intent(in) :: ix, jx
+  integer, intent(in)  :: ix, jx
 ! numerical flux (G) [output]
   real(8), intent(out) :: G(ix,jx,var1)
 ! left/right states (VL,VR) [input]
-  real(8) :: VL(ix,jx,var1), VR(ix,jx,var1)
+  real(8), intent(in)  :: VL(ix,jx,var1), VR(ix,jx,var1)
 ! left/right conserved variables (UL & UR; local)
   real(8) :: UL(ix,jx,var2), UR(ix,jx,var2)
 ! numerical flux (GL & GR local)
@@ -19,7 +19,7 @@ subroutine llf_g(G,VL,VR,ix,jx)
   integer :: i, j
 
   real(8) :: B2, f1, f2
-  real(8) :: aL, aR
+  real(8) :: aLLF
   real(8) :: vfL, vfR
 
   G(:,:,:) = 0.d0
@@ -53,27 +53,12 @@ subroutine llf_g(G,VL,VR,ix,jx)
      vfR = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) ))
 
 !    Local Lax Friedrich
-     aR = max( abs(VL(i,j,vy))+vfL, abs(VR(i,j,vy))+vfR )
-     aL = -aR
+     aLLF = max( abs(VL(i,j,vy))+vfL, abs(VR(i,j,vy))+vfR )
 
-!    G = G(L)
-     if ( aL .ge. 0 ) then
-        G(i,j,:) = GL(i,j,:)
-!    G = G(R)
-     elseif ( aR .le. 0 ) then
-        G(i,j,:) = GR(i,j,:)
-!    G = G(LLF)
-     else
-
-        f1 = 1.d0 / ( aR - aL )
-        f2 = aL * aR
-
-        G(i,j,mx:en) = f1*( aR*GL(i,j,mx:en) - aL*GR(i,j,mx:en) &
-             + f2 *(UR(i,j,mx:en)-UL(i,j,mx:en)) )
-        G(i,j,ro:bz) = f1*( aR*GL(i,j,ro:bz) - aL*GR(i,j,ro:bz) &
-             + f2 *(VR(i,j,ro:bz)-VL(i,j,ro:bz)) )
-
-     endif
+     G(i,j,mx:en) = 0.5d0 * ( GL(i,j,mx:en)+GR(i,j,mx:en) &
+          - aLLF*( UR(i,j,mx:en)-UL(i,j,mx:en) ) )
+     G(i,j,ro:bz) = 0.5d0 * ( GL(i,j,ro:bz)+GR(i,j,ro:bz) &
+          - aLLF*( VR(i,j,ro:bz)-VL(i,j,ro:bz) ) )
 
   enddo
   enddo

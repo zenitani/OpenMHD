@@ -7,9 +7,8 @@ subroutine u2v(U,V,ix,jx)
   real(8), intent(out) :: V(ix,jx,var2)  ! primitive variables  [output]
 !-----------------------------------------------------------------------
   integer :: i, j
-  real(8) :: f1, B2, M2
-  
-  f1 = gamma - 1
+  real(8) :: B2, M2
+  real(8), parameter :: f1 = gamma - 1
 
   do j=1,jx
   do i=1,ix

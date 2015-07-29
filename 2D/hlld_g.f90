@@ -6,15 +6,14 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !     2010/05/11  S. Zenitani  HLLC-G solver
 !     2010/05/13  S. Zenitani  HLLD solver
 !     2010/09/18  S. Zenitani  fixed some bugs
-!     2014/04/11  S. Zenitani  fixed a NaN problem in vfL and vfR
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, intent(in) :: ix, jx
+  integer, intent(in)  :: ix, jx
 ! numerical flux (F) [output]
   real(8), intent(out) :: G(ix,jx,var1)
 ! left/right states (VL,VR) [input]
-  real(8) :: VL(ix,jx,var1), VR(ix,jx,var1)
+  real(8), intent(in)  :: VL(ix,jx,var1), VR(ix,jx,var1)
 ! left/right conserved variables (UL & UR; local)
   real(8) :: UL(ix,jx,var2), UR(ix,jx,var2)
 ! numerical flux (GL & GR local)
@@ -25,7 +24,7 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 
   real(8) :: B2, f1, f2
   real(8) :: aL, aL1, aM, aR1, aR, aVL, aVR, vBL, vBR
-  real(8) :: vfL, vfR
+  real(8) :: vf, vfL2, vfR2
   real(8) :: ptL, ptR
   real(8) :: UL1(var1), UR1(var1), U2(var1), U_hll(var1), pt
   real(8) :: ro_L1, ro_R1, vx_L1, vx_R1, vz_L1, vz_R1, vx_2, vz_2
@@ -48,9 +47,9 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !    f2: 4 gamma p B_n^2
      f1 = gamma * VL(i,j,pr)
      f2 = 4 * f1 * VL(i,j,by)**2
-!    fast mode, total pressure, v dot B
+!    fast mode^2, total pressure, v dot B
 !     vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     vfL = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) ))
+     vfL2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
      vBL = dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
 
@@ -60,17 +59,20 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !    f2: 4 gamma p B_n^2
      f1 = gamma * VR(i,j,pr)
      f2 = 4 * f1 * VR(i,j,by)**2
-!    fast mode, total pressure, v dot B
+!    fast mode^2, total pressure, v dot B
 !     vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     vfR = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) ))
+     vfR2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
      vBR = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
 
 !    Riemann fan speed (MK05 eq. 67)
 !     aL = min( VL(i,j,vy) - vfL, VR(i,j,vy) - vfR )
 !     aR = max( VL(i,j,vy) + vfL, VR(i,j,vy) + vfR )
-     aL = min( VL(i,j,vy), VR(i,j,vy) ) - max( vfL, vfR )
-     aR = max( VL(i,j,vy), VR(i,j,vy) ) + max( vfL, vfR )
+!     aL = min( VL(i,j,vy), VR(i,j,vy) ) - max( vfL, vfR )
+!     aR = max( VL(i,j,vy), VR(i,j,vy) ) + max( vfL, vfR )
+     vf = sqrt( max( vfL2, vfR2 ) )
+     aL = min( VL(i,j,vy), VR(i,j,vy) ) - vf
+     aR = max( VL(i,j,vy), VR(i,j,vy) ) + vf
 
 !    G = G(L)
      if ( aL .ge. 0 ) then
@@ -90,12 +92,12 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !       entropy wave
         aM = U_hll(my) / U_hll(ro)
 
-!       Can we mathematically prove this?
-        if ( aL .gt. aM .or. aR .lt. aM ) then
-           write(6,*) 'error', aL, aM, aR
-           write(6,*) ' fast mode: ', vfL, vfR
-           stop
-        endif
+!!       Can we mathematically prove this? -- I have never met this case.
+!        if ( aL .gt. aM .or. aR .lt. aM ) then
+!           write(6,*) 'error', aL, aM, aR
+!           write(6,*) ' fast mode: ', vfL, vfR
+!           stop
+!        endif
 
 !       Total pressure
         pt    = ptL + VL(i,j,ro) * ( aL - VL(i,j,vy) ) * ( aM - VL(i,j,vy) )

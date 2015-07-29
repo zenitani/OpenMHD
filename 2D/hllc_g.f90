@@ -4,15 +4,14 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 !       Ref: K. F. Gurski, SIAM J. Sci. Comput., 25, 2165 (2004)
 !-----------------------------------------------------------------------
 !     2010/05/11  S. Zenitani  HLLC-G solver
-!     2014/04/11  S. Zenitani  fixed a NaN problem in vfL and vfR
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, intent(in) :: ix, jx
+  integer, intent(in)  :: ix, jx
 ! numerical flux (F) [output]
   real(8), intent(out) :: G(ix,jx,var1)
 ! left/right states (VL,VR) [input]
-  real(8) :: VL(ix,jx,var1), VR(ix,jx,var1)
+  real(8), intent(in)  :: VL(ix,jx,var1), VR(ix,jx,var1)
 ! left/right conserved variables (UL & UR; local)
   real(8) :: UL(ix,jx,var2), UR(ix,jx,var2)
 ! numerical flux (GL & GR local)
@@ -21,7 +20,7 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 
   real(8) :: vB, B2, f1, f2
   real(8) :: aL, aR, a, aM
-  real(8) :: vfL, vfR
+  real(8) :: vf, vfL2, vfR2
   real(8) :: ptL, ptR
   real(8) :: U_tmp(var1), ro_hll, pt_tmp
 
@@ -41,9 +40,9 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 !    f2: 4 gamma p B_n^2
      f1 = gamma * VL(i,j,pr)
      f2 = 4 * f1 * VL(i,j,by)**2
-!    fast mode
+!    fast mode^2
 !     vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     vfL = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) ))
+     vfL2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
 
 !    VR -> coefficients
@@ -52,16 +51,19 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 !    f2: 4 gamma p B_n^2
      f1 = gamma * VR(i,j,pr)
      f2 = 4 * f1 * VR(i,j,by)**2
-!    fast mode
+!    fast mode^2
 !     vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     vfR = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) ))
+     vfR2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
 
 !    Riemann fan speed (MK05 eq. 67)
 !     aL = min( VL(i,j,vy) - vfL, VR(i,j,vy) - vfR )
 !     aR = max( VL(i,j,vy) + vfL, VR(i,j,vy) + vfR )
-     aL = min( VL(i,j,vy), VR(i,j,vy) ) - max( vfL, vfR )
-     aR = max( VL(i,j,vy), VR(i,j,vy) ) + max( vfL, vfR )
+!     aL = min( VL(i,j,vy), VR(i,j,vy) ) - max( vfL, vfR )
+!     aR = max( VL(i,j,vy), VR(i,j,vy) ) + max( vfL, vfR )
+     vf = sqrt( max( vfL2, vfR2 ) )
+     aL = min( VL(i,j,vy), VR(i,j,vy) ) - vf
+     aR = max( VL(i,j,vy), VR(i,j,vy) ) + vf
 
 !    entropy wave
      aM = ( &
@@ -69,11 +71,11 @@ subroutine hllc_g(G,VL,VR,ix,jx)
           ( (aL-VL(i,j,vy))*VL(i,j,ro)*VL(i,j,vy) - ptL ) &
           ) / ( (aR-VR(i,j,vy))*VR(i,j,ro) - (aL-VL(i,j,vy))*VL(i,j,ro) )
 
-     if ( aL .gt. aM .or. aR .lt. aM ) then
-        write(6,*) 'error', aL, aM, aR
-        write(6,*) ' fast mode: ', vfL, vfR
-        stop
-     endif
+!     if ( aL .gt. aM .or. aR .lt. aM ) then
+!        write(6,*) 'error', aL, aM, aR
+!        write(6,*) ' fast mode: ', vfL, vfR
+!        stop
+!     endif
 
 
 !    G = G(L)
