@@ -9,7 +9,7 @@ program main
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: version = 20150405   ! version number
+  integer, parameter :: version = 20150730   ! version number
   integer, parameter :: ix = 152
   integer, parameter :: jx = 602
   integer, parameter :: loop_max = 30000

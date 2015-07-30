@@ -105,8 +105,9 @@ subroutine hll_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
      f2 = aL * aR
      G(i,j,mx:en) = f1*( aR*GL(i,j,mx:en) - aL*GR(i,j,mx:en) &
           + f2 *(UR(i,j,mx:en)-UL(i,j,mx:en)) )
-     G(i,j,ro:bz) = f1*( aR*GL(i,j,ro:bz) - aL*GR(i,j,ro:bz) &
-          + f2 *(VR(i,j,ro:bz)-VL(i,j,ro:bz)) )
+     G(i,j,ro) = f1*( aR*GL(i,j,ro) - aL*GR(i,j,ro) + f2*(VR(i,j,ro)-VL(i,j,ro)) )
+     G(i,j,bx) = f1*( aR*GL(i,j,bx) - aL*GR(i,j,bx) + f2*(VR(i,j,bx)-VL(i,j,bx)) )
+     G(i,j,bz) = f1*( aR*GL(i,j,bz) - aL*GR(i,j,bz) + f2*(VR(i,j,bz)-VL(i,j,bz)) )
 
 !     endif
 

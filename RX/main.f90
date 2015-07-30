@@ -6,7 +6,7 @@ program main
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, parameter :: version = 20101130   ! version number
+  integer, parameter :: version = 20150730   ! version number
   integer, parameter :: ix = 802
   integer, parameter :: jx = 202
   integer, parameter :: loop_max = 30000
@@ -14,7 +14,7 @@ program main
   real(8), parameter :: dtout =  5.d0 ! output interval
   real(8), parameter :: cfl   = 0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
-  integer, parameter :: lm_type   = 3
+  integer, parameter :: lm_type   = 1
 ! Numerical flux (1: HLL, 3: HLLD)
   integer, parameter :: flux_type = 1
 ! Time marching  (0: TVD RK2, 1: RK2)

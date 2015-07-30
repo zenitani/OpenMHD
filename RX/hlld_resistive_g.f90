@@ -132,8 +132,9 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
               U2(mz) = ro_L1 * vz_2
 
               G(i,j,mx:en) = aL *( U2(mx:en) - UL(i,j,mx:en) ) + GL(i,j,mx:en)
-              G(i,j,ro)    = aL *( ro_L1     - VL(i,j,ro)    ) + GL(i,j,ro)
-              G(i,j,bx:bz) = aL *( U_hll(bx:bz) - VL(i,j,bx:bz) ) + GL(i,j,bx:bz)
+              G(i,j,ro)    = aL *( ro_L1     - VL(i,j,ro) )    + GL(i,j,ro)
+              G(i,j,bx)    = aL *( U_hll(bx) - VL(i,j,bx) )    + GL(i,j,bx)
+              G(i,j,bz)    = aL *( U_hll(bz) - VL(i,j,bz) )    + GL(i,j,bz)
 
 !          G = G(R*)
            else
@@ -145,8 +146,9 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
               U2(mz) = ro_R1 * vz_2
 
               G(i,j,mx:en) = aR *( U2(mx:en) - UR(i,j,mx:en) ) + GR(i,j,mx:en)
-              G(i,j,ro)    = aR *( ro_R1     - VR(i,j,ro)    ) + GR(i,j,ro)
-              G(i,j,bx:bz) = aR *( U_hll(bx:bz) - VR(i,j,bx:bz) ) + GR(i,j,bx:bz)
+              G(i,j,ro)    = aR *( ro_R1     - VR(i,j,ro) )    + GR(i,j,ro)
+              G(i,j,bx)    = aR *( U_hll(bx) - VR(i,j,bx) )    + GR(i,j,bx)
+              G(i,j,bz)    = aR *( U_hll(bz) - VR(i,j,bz) )    + GR(i,j,bz)
 
            endif
 
@@ -156,7 +158,6 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
 !          Intermediate state (L*)
            f1 = 1.d0 / ( VL(i,j,ro)*(aL-VL(i,j,vy))*(aL-aM) - U_hll(by)**2 )
            UL1(bx) = VL(i,j,bx) * f1 * ( VL(i,j,ro)*(aL-VL(i,j,vy))**2 - U_hll(by)**2 )
-           UL1(by) = U_hll(by)
            UL1(bz) = VL(i,j,bz) * f1 * ( VL(i,j,ro)*(aL-VL(i,j,vy))**2 - U_hll(by)**2 )
            vx_L1   = VL(i,j,vx) - f1 * U_hll(by)*VL(i,j,bx)*(aM-VL(i,j,vy))
            vz_L1   = VL(i,j,vz) - f1 * U_hll(by)*VL(i,j,bz)*(aM-VL(i,j,vy))
@@ -171,7 +172,6 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
 !          Intermediate state (R*)
            f1 = 1.d0 / ( VR(i,j,ro)*(aR-VR(i,j,vy))*(aR-aM) - U_hll(by)**2 )
            UR1(bx) = VR(i,j,bx) * f1 * ( VR(i,j,ro)*(aR-VR(i,j,vy))**2 - U_hll(by)**2 )
-           UR1(by) = U_hll(by)
            UR1(bz) = VR(i,j,bz) * f1 * ( VR(i,j,ro)*(aR-VR(i,j,vy))**2 - U_hll(by)**2 )
            vx_R1   = VR(i,j,vx) - f1 * U_hll(by)*VR(i,j,bx)*(aM-VR(i,j,vy))
            vz_R1   = VR(i,j,vz) - f1 * U_hll(by)*VR(i,j,bz)*(aM-VR(i,j,vy))
@@ -191,15 +191,17 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
            if( aL1 .ge. 0 ) then
 
               G(i,j,mx:en) = aL *( UL1(mx:en) - UL(i,j,mx:en) ) + GL(i,j,mx:en)
-              G(i,j,ro)    = aL *( UL1(ro)    - VL(i,j,ro)    ) + GL(i,j,ro)
-              G(i,j,bx:bz) = aL *( UL1(bx:bz) - VL(i,j,bx:bz) ) + GL(i,j,bx:bz)
+              G(i,j,ro)    = aL *( UL1(ro)    - VL(i,j,ro) )    + GL(i,j,ro)
+              G(i,j,bx)    = aL *( UL1(bx)    - VL(i,j,bx) )    + GL(i,j,bx)
+              G(i,j,bz)    = aL *( UL1(bz)    - VL(i,j,bz) )    + GL(i,j,bz)
 
 !          G = G(R*)
            elseif( aR1 .le. 0 ) then
 
               G(i,j,mx:en) = aR *( UR1(mx:en) - UR(i,j,mx:en) ) + GR(i,j,mx:en)
               G(i,j,ro)    = aR *( UR1(ro)    - VR(i,j,ro) )    + GR(i,j,ro)
-              G(i,j,bx:bz) = aR *( UR1(bx:bz) - VR(i,j,bx:bz) ) + GR(i,j,bx:bz)
+              G(i,j,bx)    = aR *( UR1(bx)    - VR(i,j,bx) )    + GR(i,j,bx)
+              G(i,j,bz)    = aR *( UR1(bz)    - VR(i,j,bz) )    + GR(i,j,bz)
 
 !          Centeral states are tricky
 !          Question: can we really rule out U_hll(by) == 0 ?
@@ -212,7 +214,6 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
               vx_2   = f1 * ( ro_Ls*vx_L1 + ro_Rs*vx_R1 + ( UR1(bx)-UL1(bx) )*f2 )
               vz_2   = f1 * ( ro_Ls*vz_L1 + ro_Rs*vz_R1 + ( UR1(bz)-UL1(bz) )*f2 )
               U2(bx) = f1 * ( ro_Ls*UR1(bx) + ro_Rs*UL1(bx) + ro_Ls*ro_Rs*( vx_R1-vx_L1 )*f2 )
-              U2(by) = U_hll(by)
               U2(bz) = f1 * ( ro_Ls*UR1(bz) + ro_Rs*UL1(bz) + ro_Ls*ro_Rs*( vz_R1-vz_L1 )*f2 )
 
 !             G = G(L**)
@@ -226,8 +227,9 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
                  U2(mz) = ro_L1 * vz_2
 
                  G(i,j,mx:en) = aL1*U2(mx:en) - (aL1-aL)*UL1(mx:en) - aL*UL(i,j,mx:en) + GL(i,j,mx:en)
-                 G(i,j,ro)    = aL1*U2(ro)    - (aL1-aL)*UL1(ro)    - aL*VL(i,j,ro)    + GL(i,j,ro)
-                 G(i,j,bx:bz) = aL1*U2(bx:bz) - (aL1-aL)*UL1(bx:bz) - aL*VL(i,j,bx:bz) + GL(i,j,bx:bz)
+                 G(i,j,ro)    = aL1*U2(ro) - (aL1-aL)*UL1(ro) - aL*VL(i,j,ro) + GL(i,j,ro)
+                 G(i,j,bx)    = aL1*U2(bx) - (aL1-aL)*UL1(bx) - aL*VL(i,j,bx) + GL(i,j,bx)
+                 G(i,j,bz)    = aL1*U2(bz) - (aL1-aL)*UL1(bz) - aL*VL(i,j,bz) + GL(i,j,bz)
 
 !             G = G(R**)
               else
@@ -240,8 +242,9 @@ subroutine hlld_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
                  U2(mz) = ro_R1 * vz_2
 
                  G(i,j,mx:en) = aR1*U2(mx:en) - (aR1-aR)*UR1(mx:en) - aR*UR(i,j,mx:en) + GR(i,j,mx:en)
-                 G(i,j,ro)    = aR1*U2(ro)    - (aR1-aR)*UR1(ro)    - aR*VR(i,j,ro)    + GR(i,j,ro)
-                 G(i,j,bx:bz) = aR1*U2(bx:bz) - (aR1-aR)*UR1(bx:bz) - aR*VR(i,j,bx:bz) + GR(i,j,bx:bz)
+                 G(i,j,ro)    = aR1*U2(ro) - (aR1-aR)*UR1(ro) - aR*VR(i,j,ro) + GR(i,j,ro)
+                 G(i,j,bx)    = aR1*U2(bx) - (aR1-aR)*UR1(bx) - aR*VR(i,j,bx) + GR(i,j,bx)
+                 G(i,j,bz)    = aR1*U2(bz) - (aR1-aR)*UR1(bz) - aR*VR(i,j,bz) + GR(i,j,bz)
 
               endif
 

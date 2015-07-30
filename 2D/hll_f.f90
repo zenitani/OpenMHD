@@ -74,8 +74,9 @@ subroutine hll_f(F,VL,VR,ix,jx)
      f2 = aL * aR
      F(i,j,mx:en) = f1*( aR*FL(i,j,mx:en) - aL*FR(i,j,mx:en) &
           + f2 *(UR(i,j,mx:en)-UL(i,j,mx:en)) )
-     F(i,j,ro:bz) = f1*( aR*FL(i,j,ro:bz) - aL*FR(i,j,ro:bz) &
-          + f2 *(VR(i,j,ro:bz)-VL(i,j,ro:bz)) )
+     F(i,j,ro) = f1*( aR*FL(i,j,ro) - aL*FR(i,j,ro) + f2*(VR(i,j,ro)-VL(i,j,ro)) )
+     F(i,j,by) = f1*( aR*FL(i,j,by) - aL*FR(i,j,by) + f2*(VR(i,j,by)-VL(i,j,by)) )
+     F(i,j,bz) = f1*( aR*FL(i,j,bz) - aL*FR(i,j,bz) + f2*(VR(i,j,bz)-VL(i,j,bz)) )
 
 !     endif
 
