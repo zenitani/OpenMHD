@@ -218,6 +218,7 @@ program main
 !    boundary condition
      call bc(U,ix,jx)
      t=t+dt
+
   enddo
 !-----------------------------------------------------------------------
 

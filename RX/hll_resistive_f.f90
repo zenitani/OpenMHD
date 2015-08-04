@@ -32,38 +32,11 @@ subroutine hll_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
   real(8) :: vf, vfL2, vfR2
 
   F(:,:,:) = 0.d0
-  JyS(:,:) = 0.d0
-  JzS(:,:) = 0.d0
 
   call v2u(VL,UL,ix,1,ix-1,jx,1,jx)
   call v2f(VL,FL,ix,1,ix-1,jx,1,jx)
   call v2u(VR,UR,ix,1,ix-1,jx,1,jx)
   call v2f(VR,FR,ix,1,ix-1,jx,1,jx)
-
-! surface current (Toth+ 2008, JCP)
-  f1 = 1.d0 / dx
-  do j=2,jx-1
-  do i=1,ix-1
-!     JxS(i,j) = f1*0.25d0*( U(i,j+1,bz)+U(i+1,j+1,bz)-U(i,j-1,bz)-U(i+1,j-1,bz) )
-     JyS(i,j) = -f1*( U(i+1,j,bz)-U(i,j,bz) )
-     JzS(i,j) = f1*( ( U(i+1,j,by)-U(i,j,by) ) &
-                     - 0.25d0*( U(i,j+1,bx)+U(i+1,j+1,bx)-U(i,j-1,bx)-U(i+1,j-1,bx) ) )
-  enddo
-  enddo
-
-! resistive fix to FL, and FR
-! Caution: J is surface value
-!          B is taken from the left (VL) or the right state (VR)
-  do j=1,jx
-  do i=1,ix-1
-     FL(i,j,en) = FL(i,j,en) + EtS(i,j) * ( JyS(i,j)*VL(i,j,bz) - JzS(i,j)*VL(i,j,by) )
-     FL(i,j,by) = FL(i,j,by) - EtS(i,j) * JzS(i,j)
-     FL(i,j,bz) = FL(i,j,bz) + EtS(i,j) * JyS(i,j)
-     FR(i,j,en) = FR(i,j,en) + EtS(i,j) * ( JyS(i,j)*VR(i,j,bz) - JzS(i,j)*VR(i,j,by) )
-     FR(i,j,by) = FR(i,j,by) - EtS(i,j) * JzS(i,j)
-     FR(i,j,bz) = FR(i,j,bz) + EtS(i,j) * JyS(i,j)
-  enddo
-  enddo
 
   do j=1,jx
   do i=1,ix-1
@@ -117,6 +90,36 @@ subroutine hll_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 
   enddo
   enddo
+
+!-----------------------------------------------------------------------
+! resistive part
+!-----------------------------------------------------------------------
+
+! surface current (Toth+ 2008, JCP)
+  JyS(:,:) = 0.d0
+  JzS(:,:) = 0.d0
+  f1 = 1.d0 / dx
+  do j=2,jx-1
+  do i=1,ix-1
+!     JxS(i,j) = f1*0.25d0*( U(i,j+1,bz)+U(i+1,j+1,bz)-U(i,j-1,bz)-U(i+1,j-1,bz) )
+     JyS(i,j) = -f1*( U(i+1,j,bz)-U(i,j,bz) )
+     JzS(i,j) = f1*( ( U(i+1,j,by)-U(i,j,by) ) &
+                     - 0.25d0*( U(i,j+1,bx)+U(i+1,j+1,bx)-U(i,j-1,bx)-U(i+1,j-1,bx) ) )
+  enddo
+  enddo
+
+! resistive fix to F
+! Caution: J is surface value
+!          B is taken from the left (VL) and the right states (VR)
+  do j=2,jx-1
+  do i=1,ix-1
+     F(i,j,en) = F(i,j,en) + 0.5d0 * EtS(i,j) * &
+          ( JyS(i,j)*(VL(i,j,bz)+VR(i,j,bz)) - JzS(i,j)*(VL(i,j,by)+VR(i,j,by)) )
+     F(i,j,by) = F(i,j,by) - EtS(i,j) * JzS(i,j)
+     F(i,j,bz) = F(i,j,bz) + EtS(i,j) * JyS(i,j)
+  enddo
+  enddo
+!-----------------------------------------------------------------------
 
   return
 end subroutine hll_resistive_f

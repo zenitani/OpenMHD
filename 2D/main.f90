@@ -1,6 +1,6 @@
 program main
 !-----------------------------------------------------------------------
-!     Open MHD  Riemann solver
+!     OpenMHD  Riemann solver
 !-----------------------------------------------------------------------
 !     2010/09/18  S. Zenitani  2D LLF/HLL/HLLC-G/HLLD solver
 !     2010/09/25  S. Zenitani  Hyperbolic divergence cleaning

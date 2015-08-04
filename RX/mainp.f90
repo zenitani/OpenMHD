@@ -1,6 +1,6 @@
 program main
 !-----------------------------------------------------------------------
-!     Open MHD  Reconnection solver (parallel version)
+!     OpenMHD  Reconnection solver (parallel version)
 !-----------------------------------------------------------------------
 !     2010/09/25  S. Zenitani  HLL reconnection code
 !     2010/09/29  S. Zenitani  MPI version
@@ -16,12 +16,15 @@ program main
   real(8), parameter :: tend  = 120.0d0
   real(8), parameter :: dtout = 5.d0 ! output interval
   real(8), parameter :: cfl   = 0.4d0 ! time step
+  integer, parameter :: n_start = 0     ! If non-zero, load previous data file
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (1: HLL, 3: HLLD)
   integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
+! File I/O  (0: Standard, 1: MPI-IO)
+  integer, parameter :: io_type   = 1
 ! Resistivity
   real(8), parameter :: Rm1 = 60.d0, Rm0 = 500.d0
 !-----------------------------------------------------------------------
@@ -65,8 +68,6 @@ program main
   call mpi_barrier(mpi_comm_world,merr)
   dt = dtg
   ch = chg
-  t_output = -dt/3.d0
-  n_output =  0
 
   if ( dt .gt. dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
@@ -82,6 +83,21 @@ program main
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif
+  call mpi_barrier(mpi_comm_world,merr)
+
+  if ( n_start .ne. 0 ) then
+     if ( io_type .eq. 0 ) then
+        write(6,*) 'reading data ...   rank = ', myrank
+        write(filename,990) myrank, n_start
+        call input(filename,ix,jx,t,x,y,U)
+     else
+        if( myrank.eq.0 )  write(6,*) 'reading data ...'
+        write(filename,980) n_start
+        call mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
+     endif
+  endif
+  t_output = t - dt/3.d0
+  n_output = n_start
 
 !-----------------------------------------------------------------------
   do k=1,loop_max
@@ -95,12 +111,25 @@ program main
 !   -----------------  
 !    [ output ]
      if ( t .ge. t_output ) then
-!        write(6,*) 'data output   t = ', t
-!        write(filename,990) myrank, n_output
-!        call output(filename,ix,jx,t,x,y,U,V)
-        if( myrank.eq.0 )  write(6,*) 'writing data ...   t = ', t
-        write(filename,980) n_output
-        call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
+        if (( k .eq. 1 ).and.( n_start .ne. 0 )) then
+!           if ( io_type .eq. 0 ) then
+!              write(filename,991) myrank, n_start
+!              call output(filename,ix,jx,t,x,y,U,V)
+!           else
+!              write(filename,981) n_output
+!              call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
+!           endif
+        else
+           if ( io_type .eq. 0 ) then
+              write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
+              write(filename,990) myrank, n_output
+              call output(filename,ix,jx,t,x,y,U,V)
+           else
+              if( myrank.eq.0 )  write(6,*) 'writing data ...   t = ', t
+              write(filename,980) n_output
+              call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
+           endif
+        endif
         n_output = n_output + 1
         t_output = t_output + dtout
      endif
@@ -239,6 +268,7 @@ program main
 !    boundary condition
      call mpibc(U,ix,jx,myrank,npe)
      t=t+dt
+
   enddo
 !-----------------------------------------------------------------------
 
@@ -246,7 +276,9 @@ program main
   if( myrank.eq.0 )  write(6,*) '== end =='
 
 980 format ('data/field-',i5.5,'.dat')
-!990 format ('data/field-',i3.3,'-',i5.5,'.dat')
+990 format ('data/field-rank',i4.4,'-',i5.5,'.dat')
+!981 format ('data/field-',i5.5,'.dat.restart')
+!991 format ('data/field-rank',i4.4,'-',i5.5,'.dat.restart')
 
 end program main
 !-----------------------------------------------------------------------

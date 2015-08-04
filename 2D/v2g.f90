@@ -7,13 +7,15 @@ subroutine v2g(V,G,ix,is,ie,jx,js,je)
   include 'param.h'
 !-----------------------------------------------------------------------
   real(8), intent(in) :: V(ix,jx,var1)  ! primitive variables (V) [input]
-  real(8) :: G(ix,jx,var1)  ! numerical flux (G) [output]
+  real(8), intent(out):: G(ix,jx,var1)  ! numerical flux (G) [output]
   integer, intent(in) :: ix, is, ie
   integer, intent(in) :: jx, js, je
 !-----------------------------------------------------------------------
   integer :: i, j
   real(8) :: v2, vB, B2
   real(8), parameter :: f1 = gamma / ( gamma - 1 )
+
+  G(:,:,:) = 0.d0
 
   do j=js,je
   do i=is,ie
@@ -29,9 +31,9 @@ subroutine v2g(V,G,ix,is,ie,jx,js,je)
      G(i,j,mz) = V(i,j,ro)*V(i,j,vy)*V(i,j,vz) - V(i,j,by)*V(i,j,bz)
      G(i,j,en) = ( 0.5d0*V(i,j,ro)*v2 + f1*V(i,j,pr) + B2 ) * V(i,j,vy) - vB * V(i,j,by)
      G(i,j,bx) = V(i,j,vy)*V(i,j,bx)-V(i,j,by)*V(i,j,vx)
-     G(i,j,by) = 0.d0
+!     G(i,j,by) = 0.d0
      G(i,j,bz) = V(i,j,vy)*V(i,j,bz)-V(i,j,by)*V(i,j,vz)
-     G(i,j,ps) = 0.d0
+!     G(i,j,ps) = 0.d0
      
   enddo
   enddo

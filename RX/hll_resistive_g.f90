@@ -33,33 +33,11 @@ subroutine hll_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
   real(8) :: vf, vfL2, vfR2
 
   G(:,:,:) = 0.d0
-  JxS(:,:) = 0.d0
-  JzS(:,:) = 0.d0
 
   call v2u(VL,UL,ix,1,ix,jx,1,jx-1)
   call v2g(VL,GL,ix,1,ix,jx,1,jx-1)
   call v2u(VR,UR,ix,1,ix,jx,1,jx-1)
   call v2g(VR,GR,ix,1,ix,jx,1,jx-1)
-
-! surface current (Toth+ 2008, JCP)
-  f1 = 1.d0 / dx
-  do j=1,jx-1
-     do i=2,ix-1
-        JxS(i,j) = f1*( U(i,j+1,bz)-U(i,j,bz) )
-!        JyS(i,j) = -f1*0.25d0*( U(i+1,j+1,bz)+U(i+1,j,bz)-U(i-1,j+1,bz)-U(i-1,j,bz) )
-        JzS(i,j) = f1*( 0.25d0*( U(i+1,j+1,by)+U(i+1,j,by)-U(i-1,j+1,by)-U(i-1,j,by) ) &
-                        - ( U(i,j+1,bx)-U(i,j,bx) ) )
-     enddo
-  enddo
-
-  do j=1,jx-1
-     GL(:,j,en) = GL(:,j,en) + EtS(:,j) * ( JzS(:,j)*VL(:,j,bx) - JxS(:,j)*VL(:,j,bz) )
-     GL(:,j,bx) = GL(:,j,bx) + EtS(:,j) * JzS(:,j)
-     GL(:,j,bz) = GL(:,j,bz) - EtS(:,j) * JxS(:,j)
-     GR(:,j,en) = GR(:,j,en) + EtS(:,j) * ( JzS(:,j)*VR(:,j,bx) - JxS(:,j)*VR(:,j,bz) )
-     GR(:,j,bx) = GR(:,j,bx) + EtS(:,j) * JzS(:,j)
-     GR(:,j,bz) = GR(:,j,bz) - EtS(:,j) * JxS(:,j)
-  enddo
 
   do j=1,jx-1
   do i=1,ix
@@ -93,10 +71,10 @@ subroutine hll_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
      aL = min( min(VL(i,j,vy),VR(i,j,vy))-vf, 0.d0 )
      aR = max( max(VL(i,j,vy),VR(i,j,vy))+vf, 0.d0 )
 
-!!    F = F(L)
+!!    G = G(L)
 !     if ( aL .ge. 0 ) then
 !        G(i,j,:) = GL(i,j,:)
-!!    F = F(R)
+!!    G = G(R)
 !     elseif ( aR .le. 0 ) then
 !        G(i,j,:) = GR(i,j,:)
 !     else
@@ -112,7 +90,35 @@ subroutine hll_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
 !     endif
 
   enddo
+  enddo  
+
+!-----------------------------------------------------------------------
+! resistive part
+!-----------------------------------------------------------------------
+
+! surface current (Toth+ 2008, JCP)
+  JxS(:,:) = 0.d0
+  JzS(:,:) = 0.d0
+  f1 = 1.d0 / dx
+  do j=1,jx-1
+     do i=2,ix-1
+        JxS(i,j) = f1*( U(i,j+1,bz)-U(i,j,bz) )
+!        JyS(i,j) = -f1*0.25d0*( U(i+1,j+1,bz)+U(i+1,j,bz)-U(i-1,j+1,bz)-U(i-1,j,bz) )
+        JzS(i,j) = f1*( 0.25d0*( U(i+1,j+1,by)+U(i+1,j,by)-U(i-1,j+1,by)-U(i-1,j,by) ) &
+                        - ( U(i,j+1,bx)-U(i,j,bx) ) )
+     enddo
   enddo
-  
+
+! resistive fix to G
+! Caution: J is surface value
+!          B is taken from the left (VL) and the right states (VR)
+  do j=1,jx-1
+     G(:,j,en) = G(:,j,en) + 0.5d0 * EtS(:,j) * &
+          ( JzS(:,j)*(VL(:,j,bx)+VR(:,j,bx)) - JxS(:,j)*(VL(:,j,bz)+VR(:,j,bz)) )
+     G(:,j,bx) = G(:,j,bx) + EtS(:,j) * JzS(:,j)
+     G(:,j,bz) = G(:,j,bz) - EtS(:,j) * JxS(:,j)
+  enddo
+!-----------------------------------------------------------------------
+
   return
 end subroutine hll_resistive_g

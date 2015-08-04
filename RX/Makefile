@@ -19,9 +19,8 @@ OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
 	glm_f.o glm_g.o glm_ss.o
 OBJP = modelp.o  mpibc.o  mpibc_vlvr_f.o  mpioutput.o
 OBJP2= modelp2.o mpibc2.o mpibc_vlvr_f2.o bc_vlvr_g2.o    mpiinput.o mpioutput.o
-OBJP3= modelp.o  mpibc3.o mpibc_vlvr_f3.o mpibc_vlvr_g3.o mpiinput.o mpioutput.o
 
-all: run runp runp2 runp3
+all: run runp runp2
 
 # serial version
 run : main.o $(OBJS)
@@ -34,10 +33,6 @@ runp : mainp.o $(OBJS) $(OBJP)
 # parallel version (1/4 BC for reconnection papers)
 runp2 : mainp2.o $(OBJS) $(OBJP2)
 	$(F90) -o ap2.out mainp2.o $(OBJS) $(OBJP2)
-
-# parallel version (periodic in x; tricky in y)
-runp3 : mainp3.o $(OBJS) $(OBJP3)
-	$(F90) -o ap3.out mainp3.o $(OBJS) $(OBJP3)
 
 %.o: %.f90 param.h
 	$(F90) $(FFLAGS) -c $<
