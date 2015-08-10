@@ -10,7 +10,7 @@ subroutine glm_g(G,VL,VR,ch,ix,jx)
   implicit none
   include 'param.h'
   integer, intent(in) :: ix, jx
-! numerical flux (G) [output]
+! numerical flux (G) [input/output]
   real(8), intent(inout) :: G(ix,jx,var1)
 ! left/right states (VL,VR) [input]
   real(8), intent(in) :: VL(ix,jx,var1), VR(ix,jx,var1)
@@ -31,9 +31,6 @@ subroutine glm_g(G,VL,VR,ch,ix,jx)
 
   enddo
   enddo
-
-  G(:,jx,by) = 0.d0
-  G(:,jx,ps) = 0.d0
 
   return
 end subroutine glm_g

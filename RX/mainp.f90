@@ -79,7 +79,7 @@ program main
      write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
      write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
      write(6,999) lm_type, flux_type, time_type
-998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i5,' (',i5,') x ',i5 )
+998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i6,' (',i5,') x ',i5 )
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif

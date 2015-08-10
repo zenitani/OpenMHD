@@ -4,6 +4,7 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 !       Ref: K. F. Gurski, SIAM J. Sci. Comput., 25, 2165 (2004)
 !-----------------------------------------------------------------------
 !     2010/05/11  S. Zenitani  HLLC-G solver
+!     2015/08/15  S. Zenitani  opitimization
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
@@ -19,10 +20,10 @@ subroutine hllc_g(G,VL,VR,ix,jx)
   integer :: i, j
 
   real(8) :: vB, B2, f1, f2
-  real(8) :: aL, aR, a, aM
-  real(8) :: vf, vfL2, vfR2
-  real(8) :: ptL, ptR
-  real(8) :: U_tmp(var1), ro_hll, pt_tmp
+  real(8) :: aL, aR, aM, ax, az
+  real(8) :: vfL2, vfR2
+  real(8) :: ptL, ptR, pt, ro_tmp, en_tmp
+  real(8) :: U_hll(var1)
 
   G(:,:,:) = 0.d0
 
@@ -61,72 +62,67 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 !     aR = max( VL(i,j,vy) + vfL, VR(i,j,vy) + vfR )
 !     aL = min( VL(i,j,vy), VR(i,j,vy) ) - max( vfL, vfR )
 !     aR = max( VL(i,j,vy), VR(i,j,vy) ) + max( vfL, vfR )
-     vf = sqrt( max( vfL2, vfR2 ) )
-     aL = min( VL(i,j,vy), VR(i,j,vy) ) - vf
-     aR = max( VL(i,j,vy), VR(i,j,vy) ) + vf
+     f1 = sqrt( max( vfL2, vfR2 ) )
+     aL = min( min(VL(i,j,vy),VR(i,j,vy))-f1, 0.d0 ) ! *** if (aL > 0), then G = G(L) ***
+     aR = max( max(VL(i,j,vy),VR(i,j,vy))+f1, 0.d0 ) ! *** if (aR < 0), then G = G(R) ***
+
+!!    G = G(L)
+!     if ( aL .gt. 0 ) then
+!        G(i,j,:) = GL(i,j,:)
+!!    G = G(R)
+!     elseif ( aR .lt. 0 ) then
+!        G(i,j,:) = GR(i,j,:)
+!!    G = G(HLLC)
+!     else
+
+     ! HLL
+     f1 = 1.d0 / ( aR - aL )
+     f2 = aL * aR
+     U_hll(mx:mz) = f1*( aR*UR(i,j,mx:mz) - aL*UL(i,j,mx:mz) - GR(i,j,mx:mz) + GL(i,j,mx:mz) )
+     U_hll(ro:bz) = f1*( aR*VR(i,j,ro:bz) - aL*VL(i,j,ro:bz) - GR(i,j,ro:bz) + GL(i,j,ro:bz) )
+     G(i,j,bx)    = f1*( aR*GL(i,j,bx) - aL*GR(i,j,bx) + f2*(VR(i,j,bx)-VL(i,j,bx)) )
+     G(i,j,bz)    = f1*( aR*GL(i,j,bz) - aL*GR(i,j,bz) + f2*(VR(i,j,bz)-VL(i,j,bz)) )
 
 !    entropy wave
-     aM = ( &
-          ( (aR-VR(i,j,vy))*VR(i,j,ro)*VR(i,j,vy) - ptR ) - &
-          ( (aL-VL(i,j,vy))*VL(i,j,ro)*VL(i,j,vy) - ptL ) &
-          ) / ( (aR-VR(i,j,vy))*VR(i,j,ro) - (aL-VL(i,j,vy))*VL(i,j,ro) )
+     f2 = 1 / U_hll(ro)
+     ax = U_hll(mx) * f2 ! vx_HLL
+     aM = U_hll(my) * f2 ! vy_HLL
+     az = U_hll(mz) * f2 ! vz_HLL
+!    Total pressure (these two are identical)
+     pt = ptL + VL(i,j,ro) * ( aL - VL(i,j,vy) ) * ( aM - VL(i,j,vy) )
+!    pt = ptR + VR(i,j,ro) * ( aR - VR(i,j,vy) ) * ( aM - VR(i,j,vy) )
 
-!     if ( aL .gt. aM .or. aR .lt. aM ) then
-!        write(6,*) 'error', aL, aM, aR
-!        write(6,*) ' fast mode: ', vfL, vfR
-!        stop
-!     endif
+!    G = G(L*) or G(L)
+     if ( aM .ge. 0 ) then
 
+        ro_tmp = VL(i,j,ro) * ( aL - VL(i,j,vy) ) / ( aL - aM )
+        vB     = dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
+        en_tmp = ( ( aL - VL(i,j,vy) )*UL(i,j,en) - ptL*VL(i,j,vy) + pt * aM + &
+             U_hll(by)*( vB - ax*U_hll(bx) - aM*U_hll(by) - az*U_hll(bz) ) ) /  ( aL - aM )
 
-!    G = G(L)
-     if ( aL .gt. 0 ) then
-        G(i,j,:) = GL(i,j,:)
-!    G = G(R)
-     elseif ( aR .lt. 0 ) then
-        G(i,j,:) = GR(i,j,:)
-!    G = G(HLLC)
+        G(i,j,mx) = aL *( ro_tmp*ax - UL(i,j,mx) ) + GL(i,j,mx)
+        G(i,j,my) = aL *( ro_tmp*aM - UL(i,j,my) ) + GL(i,j,my)
+        G(i,j,mz) = aL *( ro_tmp*az - UL(i,j,mz) ) + GL(i,j,mz)
+        G(i,j,en) = aL *( en_tmp    - UL(i,j,en) ) + GL(i,j,en)
+        G(i,j,ro) = aL *( ro_tmp    - VL(i,j,ro) ) + GL(i,j,ro)
+
+!    G = G(R*) or G(R)
      else
-        a = 1.d0 / ( aR - aL )
 
-        U_tmp(mx) = a*( aR*UR(i,j,mx) - aL*UL(i,j,mx) - GR(i,j,mx) + GL(i,j,mx) ) ! ( ro*vx )_HLL
-        U_tmp(mz) = a*( aR*UR(i,j,mz) - aL*UL(i,j,mz) - GR(i,j,mz) + GL(i,j,mz) ) ! ( ro*vz )_HLL
-        ro_hll    = a*( aR*VR(i,j,ro) - aL*VL(i,j,ro) - GR(i,j,ro) + GL(i,j,ro) )
-        U_tmp(bx) = a*( aR*VR(i,j,bx) - aL*VL(i,j,bx) - GR(i,j,bx) + GL(i,j,bx) ) ! Bx_hll
-        U_tmp(bz) = a*( aR*VR(i,j,bz) - aL*VL(i,j,bz) - GR(i,j,bz) + GL(i,j,bz) ) ! Bz_hll
+        ro_tmp = VR(i,j,ro) * ( aR - VR(i,j,vy) ) / ( aR - aM )
+        vB     = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
+        en_tmp = ( ( aR - VR(i,j,vy) )*UR(i,j,en) - ptR*VR(i,j,vy) + pt * aM + &
+             U_hll(by)*( vB - ax*U_hll(bx) - aM*U_hll(by) - az*U_hll(bz) ) ) /  ( aR - aM )
 
-!       G = G(L*)
-        if ( aM .ge. 0 ) then
-           vB        = dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
-           U_tmp(ro) = VL(i,j,ro) * ( aL - VL(i,j,vy) ) / ( aL - aM )
-           pt_tmp    = ptL + VL(i,j,ro) * ( aL - VL(i,j,vy) ) * ( aM - VL(i,j,vy) )
-           U_tmp(en) = ( ( aL - VL(i,j,vy) )*UL(i,j,en) - ptL*VL(i,j,vy) + pt_tmp * aM + &
-                VL(i,j,by)*( vB - aM*VL(i,j,by) - (U_tmp(mx)*U_tmp(bx)+U_tmp(mz)*U_tmp(bz))/ro_hll ) ) /  ( aL - aM )
-           U_tmp(mx) = U_tmp(mx) * U_tmp(ro) / ro_hll
-           U_tmp(my) = U_tmp(ro) * aM
-           U_tmp(mz) = U_tmp(mz) * U_tmp(ro) / ro_hll
-           G(i,j,mx:en) = aL *( U_tmp(mx:en) - UL(i,j,mx:en) ) + GL(i,j,mx:en)
-           G(i,j,ro) = aL *( U_tmp(ro) - VL(i,j,ro) ) + GL(i,j,ro)
-           G(i,j,bx) = aL *( U_tmp(bx) - VL(i,j,bx) ) + GL(i,j,bx)
-           G(i,j,bz) = aL *( U_tmp(bz) - VL(i,j,bz) ) + GL(i,j,bz)
-
-!       G = G(R*)
-        else
-           vB        = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
-           U_tmp(ro) = VR(i,j,ro) * ( aR - VR(i,j,vy) ) / ( aR - aM )
-           pt_tmp    = ptR + VR(i,j,ro) * ( aR - VR(i,j,vy) ) * ( aM - VR(i,j,vy) )
-           U_tmp(en) = ( ( aR - VR(i,j,vy) )*UR(i,j,en) - ptR*VR(i,j,vy) + pt_tmp * aM + &
-                VR(i,j,by)*( vB - aM*VR(i,j,by) - (U_tmp(mx)*U_tmp(bx)+U_tmp(mz)*U_tmp(bz))/ro_hll ) ) /  ( aR - aM )
-           U_tmp(mx) = U_tmp(mx) * U_tmp(ro) / ro_hll
-           U_tmp(my) = U_tmp(ro) * aM
-           U_tmp(mz) = U_tmp(mz) * U_tmp(ro) / ro_hll
-           G(i,j,mx:en) = aR *( U_tmp(mx:en) - UR(i,j,mx:en) ) + GR(i,j,mx:en)
-           G(i,j,ro) = aR *( U_tmp(ro) - VR(i,j,ro) ) + GR(i,j,ro)
-           G(i,j,bx) = aR *( U_tmp(bx) - VR(i,j,bx) ) + GR(i,j,bx)
-           G(i,j,bz) = aR *( U_tmp(bz) - VR(i,j,bz) ) + GR(i,j,bz)
-
-        endif
+        G(i,j,mx) = aR *( ro_tmp*ax - UR(i,j,mx) ) + GR(i,j,mx)
+        G(i,j,my) = aR *( ro_tmp*aM - UR(i,j,my) ) + GR(i,j,my)
+        G(i,j,mz) = aR *( ro_tmp*az - UR(i,j,mz) ) + GR(i,j,mz)
+        G(i,j,en) = aR *( en_tmp    - UR(i,j,en) ) + GR(i,j,en)
+        G(i,j,ro) = aR *( ro_tmp    - VR(i,j,ro) ) + GR(i,j,ro)
 
      endif
+
+!     endif
 
   enddo
   enddo

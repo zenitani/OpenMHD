@@ -29,7 +29,7 @@ subroutine hll_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 
   real(8) :: B2, f1, f2
   real(8) :: aL, aR
-  real(8) :: vf, vfL2, vfR2
+  real(8) :: vfL2, vfR2
 
   F(:,:,:) = 0.d0
 
@@ -66,9 +66,9 @@ subroutine hll_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 !     aR = max( VL(i,j,vx) + vfL, VR(i,j,vx) + vfR )
 !     aL = min( VL(i,j,vx), VR(i,j,vx) ) - max( vfL, vfR )
 !     aR = max( VL(i,j,vx), VR(i,j,vx) ) + max( vfL, vfR )
-     vf = sqrt( max( vfL2, vfR2 ) )
-     aL = min( min(VL(i,j,vx),VR(i,j,vx))-vf, 0.d0 )
-     aR = max( max(VL(i,j,vx),VR(i,j,vx))+vf, 0.d0 )
+     f1 = sqrt( max( vfL2, vfR2 ) )  ! faster fast-wave
+     aL = min( min(VL(i,j,vx),VR(i,j,vx))-f1, 0.d0 ) ! *** if (aL > 0), then F = F(L) ***
+     aR = max( max(VL(i,j,vx),VR(i,j,vx))+f1, 0.d0 ) ! *** if (aR < 0), then F = F(R) ***
 
 !!    F = F(L)
 !     if ( aL .ge. 0 ) then

@@ -15,14 +15,17 @@ program main
   include 'mpif.h' ! for MPI
   include 'param.h'
   integer, parameter :: version = 20150730   ! version number
-!--------------------------------------- Zenitani (2015) ---------------
-  integer, parameter :: ix =   22   !  20 x 600 --> 12000 cells = 200 x 60
-  integer, parameter :: jx = 9002   !                9000 cells = 150 x 60
-!--------------------------------------- Zenitani & Miyoshi (2011) -----
-! integer, parameter :: ix =   77   !  75 x  80  --> 6000 cells = 200 x 30
+!-----------------------------------------------------------------------
+  integer, parameter :: ix =  502   ! 500 x   4 -->  2000 cells = 200 x 10
+  integer, parameter :: jx =  502   !                 500 cells =  50 x 10
+!--- Zenitani (2015): 600 nodes, Zenitani & Miyoshi (2011): 80 nodes ---
+! integer, parameter :: ix =   22   !  20 x 600 --> 12000 cells = 200 x 60
+! integer, parameter :: jx = 9002   !                9000 cells = 150 x 60
+! integer, parameter :: ix =   77   !  75 x  80 -->  6000 cells = 200 x 30
 ! integer, parameter :: jx = 4502   !                4500 cells = 150 x 30
+!-----------------------------------------------------------------------
   integer, parameter :: loop_max = 1000000
-  real(8), parameter :: tend  = 350.0d0
+  real(8), parameter :: tend  = 251.0d0
   real(8), parameter :: dtout =  25.0d0  ! output interval
   real(8), parameter :: cfl   =   0.35d0 ! time step
   integer, parameter :: n_start = 0     ! If non-zero, load previous data file
@@ -35,7 +38,7 @@ program main
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 ! File I/O  (0: Standard, 1: MPI-IO)
-  integer, parameter :: io_type = 1
+  integer, parameter :: io_type   = 1
 ! Resistivity
   real(8), parameter :: Rm1 = 60.d0, Rm0 = 1000.d0
 !-----------------------------------------------------------------------
@@ -91,7 +94,7 @@ program main
      write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
      write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
      write(6,999) lm_type, flux_type, time_type
-998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i5,' (',i5,') x ',i5 )
+998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i6,' (',i5,') x ',i5 )
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif
