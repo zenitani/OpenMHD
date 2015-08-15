@@ -7,30 +7,36 @@ subroutine u2v(U,V,ix,jx)
   real(8), intent(out) :: V(ix,jx,var2)  ! primitive variables  [output]
 !-----------------------------------------------------------------------
   integer :: i, j
-  real(8) :: B2, M2
+  real(8) :: B2, mv2
   real(8), parameter :: f1 = gamma - 1
+  integer :: pos(2)
 
+  V(:,:,:) = 0.d0
   do j=1,jx
   do i=1,ix
 
-     B2 = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )  ! B**2
-     M2 = dot_product( U(i,j,mx:mz), U(i,j,mx:mz) )  ! M**2
      V(i,j,vx:vz) = U(i,j,mx:mz) / U(i,j,ro)
-     V(i,j,pr)    = f1 * ( U(i,j,en) - 0.5d0*(M2/U(i,j,ro)+B2) )
-
-     if( U(i,j,ro) .le. 0 ) then
-        write(6,*) 'negative density at ', i, j
-        write(6,*) 'density: ',U(i,j,ro)
-        stop
-     endif
-     if( V(i,j,pr) .le. 0 ) then
-        write(6,*) 'negative pressure at ', i, j
-        write(6,*) ' E: ', U(i,j,en), '  E_B: ', 0.5d0*B2, '  E_K: ', 0.5d0*(M2/U(i,j,ro))
-        stop
-     endif
+     mv2 = dot_product( V(i,j,vx:vz), U(i,j,mx:mz) )  ! m v**2
+     B2  = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )  ! B**2
+     V(i,j,pr)    = f1 * ( U(i,j,en) - 0.5d0*(mv2+B2) )
 
   enddo
   enddo
+
+  if( minval( V(:,:,pr) ) .le. 0 ) then
+     pos = minloc(V(:,:,pr))
+     i = pos(1)
+     j = pos(2)
+     write(6,*) 'negative pressure at ', i, j, ' E: ', U(i,j,en)
+     stop
+  endif
+  if( minval( U(:,:,ro) ) .le. 0 ) then
+     pos = minloc(U(:,:,ro))
+     i = pos(1)
+     j = pos(2)
+     write(6,*) 'negative density at ', i, j, ' ro: ', U(i,j,ro)
+     stop
+  endif
 
   return
 end subroutine u2v

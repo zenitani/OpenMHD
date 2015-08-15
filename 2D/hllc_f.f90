@@ -19,10 +19,10 @@ subroutine hllc_f(F,VL,VR,ix,jx)
   real(8) :: FL(ix,jx,var1), FR(ix,jx,var1)
   integer :: i, j
 
-  real(8) :: vB, B2, f1, f2
+  real(8) :: B2, f1, f2
   real(8) :: aL, aR, aM, ay, az
   real(8) :: vfL2, vfR2
-  real(8) :: ptL, ptR, pt, ro_tmp, en_tmp
+  real(8) :: ptL, ptR, pt, roL, roR, enL, enR, vBL, vBR
   real(8) :: U_hll(var1)
 
   F(:,:,:) = 0.d0
@@ -92,35 +92,49 @@ subroutine hllc_f(F,VL,VR,ix,jx)
      pt = ptL + VL(i,j,ro) * ( aL - VL(i,j,vx) ) * ( aM - VL(i,j,vx) )
 !    pt = ptR + VR(i,j,ro) * ( aR - VR(i,j,vx) ) * ( aM - VR(i,j,vx) )
 
-!    F = F(L*) or F(L)
-     if ( aM .ge. 0 ) then
+!!    F = F(L*) or F(L)
+!     if ( aM .ge. 0 ) then
 
-        ro_tmp = VL(i,j,ro) * ( aL - VL(i,j,vx) ) / ( aL - aM )
-        vB     = dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
-        en_tmp = ( ( aL - VL(i,j,vx) )*UL(i,j,en) - ptL*VL(i,j,vx) + pt * aM + &
-             U_hll(bx)*( vB - aM*U_hll(bx) - ay*U_hll(by) - az*U_hll(bz) ) ) / ( aL - aM )
+     roL = VL(i,j,ro) * ( aL - VL(i,j,vx) ) / ( aL - aM )
+     vBL = dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
+     enL = ( ( aL - VL(i,j,vx) )*UL(i,j,en) - ptL*VL(i,j,vx) + pt * aM + &
+          U_hll(bx)*( vBL - aM*U_hll(bx) - ay*U_hll(by) - az*U_hll(bz) ) ) / ( aL - aM )
+!        F(i,j,mx) = aL *( roL*aM - UL(i,j,mx) ) + FL(i,j,mx)
+!        F(i,j,my) = aL *( roL*ay - UL(i,j,my) ) + FL(i,j,my)
+!        F(i,j,mz) = aL *( roL*az - UL(i,j,mz) ) + FL(i,j,mz)
+!        F(i,j,en) = aL *( enL    - UL(i,j,en) ) + FL(i,j,en)
+!        F(i,j,ro) = aL *( roL    - VL(i,j,ro) ) + FL(i,j,ro)
 
-        F(i,j,mx) = aL *( ro_tmp*aM - UL(i,j,mx) ) + FL(i,j,mx)
-        F(i,j,my) = aL *( ro_tmp*ay - UL(i,j,my) ) + FL(i,j,my)
-        F(i,j,mz) = aL *( ro_tmp*az - UL(i,j,mz) ) + FL(i,j,mz)
-        F(i,j,en) = aL *( en_tmp    - UL(i,j,en) ) + FL(i,j,en)
-        F(i,j,ro) = aL *( ro_tmp    - VL(i,j,ro) ) + FL(i,j,ro)
+!!    F = F(R*) or F(R)
+!     else
 
-!    F = F(R*) or F(R)
-     else
+     roR = VR(i,j,ro) * ( aR - VR(i,j,vx) ) / ( aR - aM )
+     vBR = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
+     enR = ( ( aR - VR(i,j,vx) )*UR(i,j,en) - ptR*VR(i,j,vx) + pt * aM + &
+          U_hll(bx)*( vBR - aM*U_hll(bx) - ay*U_hll(by) + az*U_hll(bz) ) ) /  ( aR - aM )
+!        F(i,j,mx) = aR *( roR*aM - UR(i,j,mx) ) + FR(i,j,mx)
+!        F(i,j,my) = aR *( roR*ay - UR(i,j,my) ) + FR(i,j,my)
+!        F(i,j,mz) = aR *( roR*az - UR(i,j,mz) ) + FR(i,j,mz)
+!        F(i,j,en) = aR *( enR    - UR(i,j,en) ) + FR(i,j,en)
+!        F(i,j,ro) = aR *( roR    - VR(i,j,ro) ) + FR(i,j,ro)
 
-        ro_tmp = VR(i,j,ro) * ( aR - VR(i,j,vx) ) / ( aR - aM )
-        vB     = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
-        en_tmp = ( ( aR - VR(i,j,vx) )*UR(i,j,en) - ptR*VR(i,j,vx) + pt * aM + &
-             U_hll(bx)*( vB - aM*U_hll(bx) - ay*U_hll(by) + az*U_hll(bz) ) ) /  ( aR - aM )
+!    Weight factor, 0 or 1.  This looks tricky.
+!    The code runs 1.0x times slower on Intel, but it runs 1.6 times faster on SPARC.
+     f1 = max(0.d0, sign(1.d0,aM))     !!  F = F(L*) or F(L)
+     f2 = 1.d0 - f1                    !!  F = F(R*) or F(R)
 
-        F(i,j,mx) = aR *( ro_tmp*aM - UR(i,j,mx) ) + FR(i,j,mx)
-        F(i,j,my) = aR *( ro_tmp*ay - UR(i,j,my) ) + FR(i,j,my)
-        F(i,j,mz) = aR *( ro_tmp*az - UR(i,j,mz) ) + FR(i,j,mz)
-        F(i,j,en) = aR *( en_tmp    - UR(i,j,en) ) + FR(i,j,en)
-        F(i,j,ro) = aR *( ro_tmp    - VR(i,j,ro) ) + FR(i,j,ro)
+     F(i,j,mx) = f1*( aL *( roL*aM - UL(i,j,mx) ) + FL(i,j,mx) ) &
+               + f2*( aR *( roR*aM - UR(i,j,mx) ) + FR(i,j,mx) )
+     F(i,j,my) = f1*( aL *( roL*ay - UL(i,j,my) ) + FL(i,j,my) ) &
+               + f2*( aR *( roR*ay - UR(i,j,my) ) + FR(i,j,my) )
+     F(i,j,mz) = f1*( aL *( roL*az - UL(i,j,mz) ) + FL(i,j,mz) ) &
+               + f2*( aR *( roR*az - UR(i,j,mz) ) + FR(i,j,mz) )
+     F(i,j,en) = f1*( aL *( enL    - UL(i,j,en) ) + FL(i,j,en) ) &
+               + f2*( aR *( enR    - UR(i,j,en) ) + FR(i,j,en) )
+     F(i,j,ro) = f1*( aL *( roL    - VL(i,j,ro) ) + FL(i,j,ro) ) &
+               + f2*( aR *( roR    - VR(i,j,ro) ) + FR(i,j,ro) )
 
-     endif
+!     endif
 
 !     endif
 
