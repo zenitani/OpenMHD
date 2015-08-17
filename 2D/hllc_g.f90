@@ -111,7 +111,7 @@ subroutine hllc_g(G,VL,VR,ix,jx)
      roR = VR(i,j,ro) * ( aR - VR(i,j,vy) ) / ( aR - aM )
      vBR = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
      enR = ( ( aR - VR(i,j,vy) )*UR(i,j,en) - ptR*VR(i,j,vy) + pt * aM + &
-          U_hll(by)*( vBR - ax*U_hll(bx) - aM*U_hll(by) - az*U_hll(bz) ) ) /  ( aR - aM )
+          U_hll(by)*( vBR - ax*U_hll(bx) - aM*U_hll(by) - az*U_hll(bz) ) ) / ( aR - aM )
 !     G(i,j,mx) = aR *( ro_tmp*ax - UR(i,j,mx) ) + GR(i,j,mx)
 !     G(i,j,my) = aR *( ro_tmp*aM - UR(i,j,my) ) + GR(i,j,my)
 !     G(i,j,mz) = aR *( ro_tmp*az - UR(i,j,mz) ) + GR(i,j,mz)
@@ -120,8 +120,8 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 
 !    Weight factor, 0 or 1.  This looks tricky.
 !    The code runs 1.0x times slower on Intel, but it runs 1.6 times faster on SPARC.
-     f1 = max(0.d0, sign(1.d0,aM))     !!  G = G(L*) or G(L)
-     f2 = 1.d0 - f1                    !!  G = G(R*) or G(R)
+     f1 = 0.5d0 + sign(0.5d0,aM)  !!  G = G(L*) or G(L)
+     f2 = 1.d0 - f1               !!  G = G(R*) or G(R)
 
      G(i,j,mx) = f1 * ( aL *( roL*ax - UL(i,j,mx) ) + GL(i,j,mx) ) &
                + f2 * ( aR *( roR*ax - UR(i,j,mx) ) + GR(i,j,mx) )
