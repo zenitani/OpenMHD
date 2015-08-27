@@ -22,7 +22,7 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
   do j=1,jx
   do i=1,ix
 
-     B2  = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )
+     B2 = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )
      f1 = gamma * V(i,j,pr)
 
 !    fast mode in the X direction

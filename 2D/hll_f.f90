@@ -29,6 +29,7 @@ subroutine hll_f(F,VL,VR,ix,jx)
   call v2u(VR,UR,ix,1,ix-1,jx,1,jx)
   call v2f(VR,FR,ix,1,ix-1,jx,1,jx)
 
+!$omp parallel do private(i,B2,f1,f2,aL,aR,vfL2,vfR2)
   do j=1,jx
   do i=1,ix-1
 
@@ -82,6 +83,7 @@ subroutine hll_f(F,VL,VR,ix,jx)
 
   enddo
   enddo
+!$omp end parallel do
 
   return
 end subroutine hll_f
