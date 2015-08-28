@@ -31,7 +31,6 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 
   real(8) :: B2, f1, f2
   real(8) :: aL, aL1, aM, aR1, aR, aVL, aVR, vBL, vBR
-  real(8) :: vf, vfL2, vfR2
   real(8) :: ptL, ptR
   real(8) :: UL1(var1), UR1(var1), U2(var1), U_hll(var1), pt
   real(8) :: ro_L1, ro_R1, vy_L1, vy_R1, vz_L1, vz_R1, vy_2, vz_2
@@ -45,6 +44,10 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
   call v2u(VR,UR,ix,1,ix-1,jx,1,jx)
   call v2f(VR,FR,ix,1,ix-1,jx,1,jx)
 
+!$omp parallel do &
+!$omp private(i,j,B2,f1,f2,aL,aL1,aM,aR1,aR,aVL,aVR,vBL,vBR) &
+!$omp private(ptL,ptR,UL1,UR1,U2,U_hll,pt) &
+!$omp private(ro_L1,ro_R1,vy_L1,vy_R1,vz_L1,vz_R1,vy_2,vz_2,ro_Ls,ro_Rs)
   do j=1,jx
   do i=1,ix-1
 
@@ -55,8 +58,8 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
      f1 = gamma * VL(i,j,pr)
      f2 = 4 * f1 * VL(i,j,bx)**2
 !    fast mode^2, total pressure, v dot B
-!     vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     vfL2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
+     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
      vBL = dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
 
@@ -67,8 +70,8 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
      f1 = gamma * VR(i,j,pr)
      f2 = 4 * f1 * VR(i,j,bx)**2
 !    fast mode^2, total pressure, v dot B
-!     vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     vfR2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
+     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
      vBR = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
 
@@ -77,9 +80,9 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 !     aR = max( VL(i,j,vx) + vfL, VR(i,j,vx) + vfR )
 !     aL = min( VL(i,j,vx), VR(i,j,vx) ) - max( vfL, vfR )
 !     aR = max( VL(i,j,vx), VR(i,j,vx) ) + max( vfL, vfR )
-     vf = sqrt( max( vfL2, vfR2 ) )
-     aL = min( VL(i,j,vx), VR(i,j,vx) ) - vf
-     aR = max( VL(i,j,vx), VR(i,j,vx) ) + vf
+     f1 = sqrt( max( aL, aR ) )  ! faster fast-wave (This aL [aR] stores vfL^2 [vfR^2])
+     aL = min( VL(i,j,vx), VR(i,j,vx) ) - f1
+     aR = max( VL(i,j,vx), VR(i,j,vx) ) + f1
 
 !    F = F(L)
      if ( aL .ge. 0 ) then
@@ -99,13 +102,6 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 !       entropy wave
         aM = U_hll(mx) / U_hll(ro)
         
-!!       Can we mathematically prove this? -- I have never met this case.
-!        if ( aL .gt. aM .or. aR .lt. aM ) then
-!           write(6,*) 'error', aL, aM, aR
-!           write(6,*) ' fast mode: ', vfL, vfR
-!           stop
-!        endif
-
 !       Total pressure
         pt    = ptL + VL(i,j,ro) * ( aL - VL(i,j,vx) ) * ( aM - VL(i,j,vx) )
         ro_L1 = VL(i,j,ro) * ( aL - VL(i,j,vx) ) / ( aL - aM ) ! ro(L*)
@@ -216,7 +212,7 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
               ro_Ls = sqrt( ro_L1 )  ! sqrt(ro(L*))
               ro_Rs = sqrt( ro_R1 )  ! sqrt(ro(R*))
               f1    = 1.d0 / ( ro_Ls + ro_Rs )
-              f2    = dsign( 1.d0, U_hll(bx) )
+              f2    = sign( 1.d0, U_hll(bx) )
               vy_2   = f1 * ( ro_Ls*vy_L1 + ro_Rs*vy_R1 + ( UR1(by)-UL1(by) )*f2 )
               vz_2   = f1 * ( ro_Ls*vz_L1 + ro_Rs*vz_R1 + ( UR1(bz)-UL1(bz) )*f2 )
               U2(by) = f1 * ( ro_Ls*UR1(by) + ro_Rs*UL1(by) + ro_Ls*ro_Rs*( vy_R1-vy_L1 )*f2 )
@@ -262,6 +258,7 @@ subroutine hlld_resistive_f(F,U,VL,VR,EtS,dx,ix,jx)
 
   enddo
   enddo
+!$omp end parallel do
 
 !-----------------------------------------------------------------------
 ! resistive part

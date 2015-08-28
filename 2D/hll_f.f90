@@ -17,10 +17,7 @@ subroutine hll_f(F,VL,VR,ix,jx)
 ! numerical flux (FL & FR local)
   real(8) :: FL(ix,jx,var1), FR(ix,jx,var1)
   integer :: i, j
-
-  real(8) :: B2, f1, f2
-  real(8) :: aL, aR
-  real(8) :: vfL2, vfR2
+  real(8) :: B2, f1, f2, aL, aR
 
   F(:,:,:) = 0.d0
 
@@ -29,7 +26,7 @@ subroutine hll_f(F,VL,VR,ix,jx)
   call v2u(VR,UR,ix,1,ix-1,jx,1,jx)
   call v2f(VR,FR,ix,1,ix-1,jx,1,jx)
 
-!$omp parallel do private(i,B2,f1,f2,aL,aR,vfL2,vfR2)
+!$omp parallel do private(i,j,B2,f1,f2,aL,aR)
   do j=1,jx
   do i=1,ix-1
 
@@ -41,7 +38,7 @@ subroutine hll_f(F,VL,VR,ix,jx)
      f2 = 4 * f1 * VL(i,j,bx)**2
 !    fast mode^2
 !     vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     vfL2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+     aL = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
 
 !    VR -> coefficients
      B2 = dot_product( VR(i,j,bx:bz), VR(i,j,bx:bz) )
@@ -51,14 +48,14 @@ subroutine hll_f(F,VL,VR,ix,jx)
      f2 = 4 * f1 * VR(i,j,bx)**2
 !    fast mode^2
 !     vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     vfR2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+     aR = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
 
 !    Riemann fan speed (MK05 eq. 67)
 !     aL = min( VL(i,j,vx) - vfL, VR(i,j,vx) - vfR )
 !     aR = max( VL(i,j,vx) + vfL, VR(i,j,vx) + vfR )
 !     aL = min( VL(i,j,vx), VR(i,j,vx) ) - max( vfL, vfR )
 !     aR = max( VL(i,j,vx), VR(i,j,vx) ) + max( vfL, vfR )
-     f1 = sqrt( max( vfL2, vfR2 ) )  ! faster fast-wave
+     f1 = sqrt( max( aL, aR ) )  ! faster fast-wave (This aL [aR] stores vfL^2 [vfR^2])
      aL = min( min(VL(i,j,vx),VR(i,j,vx))-f1, 0.d0 ) ! *** if (aL > 0), then F = F(L) ***
      aR = max( max(VL(i,j,vx),VR(i,j,vx))+f1, 0.d0 ) ! *** if (aR < 0), then F = F(R) ***
 

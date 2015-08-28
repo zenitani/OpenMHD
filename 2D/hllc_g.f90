@@ -21,7 +21,6 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 
   real(8) :: B2, f1, f2
   real(8) :: aL, aR, aM, ax, az
-  real(8) :: vfL2, vfR2
   real(8) :: ptL, ptR, pt, roL, roR, enL, enR, vBL, vBR
   real(8) :: U_hll(var1)
 
@@ -33,7 +32,7 @@ subroutine hllc_g(G,VL,VR,ix,jx)
   call v2g(VR,GR,ix,1,ix,jx,1,jx-1)
 
 !$omp parallel do &
-!$omp private(i,B2,f1,f2,aL,aR,aM,ax,az,vfL2,vfR2) &
+!$omp private(i,j,B2,f1,f2,aL,aR,aM,ax,az) &
 !$omp private(ptL,ptR,pt,roL,roR,enL,enR,vBL,vBR,U_hll)
   do j=1,jx-1
   do i=1,ix
@@ -45,8 +44,8 @@ subroutine hllc_g(G,VL,VR,ix,jx)
      f1 = gamma * VL(i,j,pr)
      f2 = 4 * f1 * VL(i,j,by)**2
 !    fast mode^2
-!     vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     vfL2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
+     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
 
 !    VR -> coefficients
@@ -56,8 +55,8 @@ subroutine hllc_g(G,VL,VR,ix,jx)
      f1 = gamma * VR(i,j,pr)
      f2 = 4 * f1 * VR(i,j,by)**2
 !    fast mode^2
-!     vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     vfR2 = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
+     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
 
 !    Riemann fan speed (MK05 eq. 67)
@@ -65,7 +64,7 @@ subroutine hllc_g(G,VL,VR,ix,jx)
 !     aR = max( VL(i,j,vy) + vfL, VR(i,j,vy) + vfR )
 !     aL = min( VL(i,j,vy), VR(i,j,vy) ) - max( vfL, vfR )
 !     aR = max( VL(i,j,vy), VR(i,j,vy) ) + max( vfL, vfR )
-     f1 = sqrt( max( vfL2, vfR2 ) )
+     f1 = sqrt( max( aL, aR ) )  ! faster fast-wave (This aL [aR] stores vfL^2 [vfR^2])
      aL = min( min(VL(i,j,vy),VR(i,j,vy))-f1, 0.d0 ) ! *** if (aL > 0), then G = G(L) ***
      aR = max( max(VL(i,j,vy),VR(i,j,vy))+f1, 0.d0 ) ! *** if (aR < 0), then G = G(R) ***
 
