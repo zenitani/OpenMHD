@@ -6,6 +6,7 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
 !     2010/05/14  S. Zenitani  added van Leer limiter
 !     2012/07/05  S. Zenitani  added Koren limiter (bug fixed)
 !     2015/07/19  S. Zenitani  removed if-statements from minmod/MC limiters
+!     2015/12/23  S. Zenitani  removed if-statements from Koren limiter
 !-----------------------------------------------------------------------
   implicit none
   integer, intent(in)  :: ix, jx
@@ -135,28 +136,30 @@ subroutine limiter_f(wk,wL,wR,ix,jx,type)
            gA =       ( wk(i,j)  -wk(i-1,j))
            gB =       ( wk(i+1,j)-wk(i,j)  )
 
-           if( gA*gB .le. 0 ) then
-              wR(i-1,j) = wk(i,j)
-              wL(i,j)   = wk(i,j)
-           else
+!           if( gA*gB .le. 0 ) then
+!              wR(i-1,j) = wk(i,j)
+!              wL(i,j)   = wk(i,j)
+!           else
 
-              gC = f1*( 2*gA+gB )
-              if( gA .gt. 0 ) then
-                 grad = min(gA,gB,gC)
-              else
-                 grad = max(gA,gB,gC)
-              endif
-              wR(i-1,j) = wk(i,j) - grad
+           gC = f1*( 2*gA+gB )
+           wR(i-1,j) = wk(i,j) - (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+!              if( gA .gt. 0 ) then
+!                 grad = min(gA,gB,gC)
+!              else
+!                 grad = max(gA,gB,gC)
+!              endif
+!           wR(i-1,j) = wk(i,j) - grad
 
-              gC = f1*( gA+2*gB )
-              if( gA .gt. 0 ) then
-                 grad = min(gA,gB,gC)
-              else
-                 grad = max(gA,gB,gC)
-              endif
-              wL(i,j)   = wk(i,j) + grad
+           gC = f1*( gA+2*gB )
+           wL(i,j) = wk(i,j) + (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+!              if( gA .gt. 0 ) then
+!                 grad = min(gA,gB,gC)
+!              else
+!                 grad = max(gA,gB,gC)
+!              endif
+!           wL(i,j)   = wk(i,j) + grad
 
-           endif
+!           endif
         enddo
      enddo
      do i=ix,ix

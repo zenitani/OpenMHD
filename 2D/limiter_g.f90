@@ -6,6 +6,7 @@ subroutine limiter_g(wk,wD,wU,ix,jx,type)
 !     2010/05/14  S. Zenitani  added van Leer limiter
 !     2012/07/05  S. Zenitani  added Koren limiter (bug fixed)
 !     2015/07/19  S. Zenitani  removed if-statements from minmod/MC limiters
+!     2015/12/23  S. Zenitani  removed if-statements from Koren limiter
 !-----------------------------------------------------------------------
   implicit none
   integer, intent(in)  :: ix, jx
@@ -131,27 +132,30 @@ subroutine limiter_g(wk,wD,wU,ix,jx,type)
         do i=1,ix
            gA =     ( wk(i,j)  -wk(i,j-1))
            gB =     ( wk(i,j+1)-wk(i,j)  )
-           if( gA*gB .le. 0 ) then
-              wU(i,j-1) = wk(i,j)
-              wD(i,j)   = wk(i,j)
-           else
+!           if( gA*gB .le. 0 ) then
+!              wU(i,j-1) = wk(i,j)
+!              wD(i,j)   = wk(i,j)
+!           else
 
-              gC = f1*( 2*gA+gB )
-              if( gA .gt. 0 ) then
-                 grad = min(gA,gB,gC)
-              else
-                 grad = max(gA,gB,gC)
-              endif
-              wU(i,j-1) = wk(i,j) - grad
+           gC = f1*( 2*gA+gB )
+           wU(i,j-1) = wk(i,j) - (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+!              if( gA .gt. 0 ) then
+!                 grad = min(gA,gB,gC)
+!              else
+!                 grad = max(gA,gB,gC)
+!              endif
+!           wU(i,j-1) = wk(i,j) - grad
 
-              gC = f1*( gA+2*gB )
-              if( gA .gt. 0 ) then
-                 grad = min(gA,gB,gC)
-              else
-                 grad = max(gA,gB,gC)
-              endif
-              wD(i,j)   = wk(i,j) + grad
-           endif
+           gC = f1*( gA+2*gB )
+           wD(i,j) = wk(i,j) + (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+!              if( gA .gt. 0 ) then
+!                 grad = min(gA,gB,gC)
+!              else
+!                 grad = max(gA,gB,gC)
+!              endif
+!           wD(i,j)   = wk(i,j) + grad
+
+!           endif
         enddo
      enddo
      do j=jx,jx
