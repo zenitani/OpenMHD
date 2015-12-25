@@ -26,8 +26,8 @@ subroutine hlld_g(G,VL,VR,ix,jx)
   real(8) :: aL, aL1, aM, aR1, aR, aVL, aVR, vBL, vBR
   real(8) :: ptL, ptR
   real(8) :: UL1(var1), UR1(var1), U2(var1), U_hll(var1), pt
-  real(8) :: ro_L1, ro_R1, vx_L1, vx_R1, vz_L1, vz_R1, vx_2, vz_2
-  real(8) :: ro_Ls, ro_Rs
+  real(8) :: roL, roR, vxL, vxR, vzL, vzR, ax, az
+  real(8) :: roLs, roRs
 !-----------------------------------------------------------------------
 
   G(:,:,:) = 0.d0
@@ -40,7 +40,7 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !$omp parallel do &
 !$omp private(i,j,B2,f1,f2,aL,aL1,aM,aR1,aR,aVL,aVR,vBL,vBR) &
 !$omp private(ptL,ptR,UL1,UR1,U2,U_hll,pt) &
-!$omp private(ro_L1,ro_R1,vx_L1,vx_R1,vz_L1,vz_R1,vx_2,vz_2,ro_Ls,ro_Rs)
+!$omp private(roL,roR,vxL,vxR,vzL,vzR,ax,az,roLs,roRs)
   do j=1,jx-1
   do i=1,ix
 
@@ -97,31 +97,31 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 
 !       Total pressure
         pt    = ptL + VL(i,j,ro) * ( aL - VL(i,j,vy) ) * ( aM - VL(i,j,vy) )
-        ro_L1 = VL(i,j,ro) * ( aL - VL(i,j,vy) ) / ( aL - aM ) ! ro(L*)
-        ro_R1 = VR(i,j,ro) * ( aR - VR(i,j,vy) ) / ( aR - aM ) ! ro(R*)
+        roL = VL(i,j,ro) * ( aL - VL(i,j,vy) ) / ( aL - aM ) ! ro(L*)
+        roR = VR(i,j,ro) * ( aR - VR(i,j,vy) ) / ( aR - aM ) ! ro(R*)
 
 !       For logical consistency, we employ By_hll as B_y in the intermediate states
-        aVL = abs( U_hll(by) )/sqrt( ro_L1 )  ! Alfven wave (L)
-        aVR = abs( U_hll(by) )/sqrt( ro_R1 )  ! Alfven wave (R)
+        aVL = abs( U_hll(by) )/sqrt( roL )  ! Alfven wave (L)
+        aVR = abs( U_hll(by) )/sqrt( roR )  ! Alfven wave (R)
 
 ! ========== revert to HLLC-G ==========
         if ( ( aL .ge. ( aM - hllg_factor*aVL ) ) .or. &
              ( ( aM + hllg_factor*aVR ) .ge. aR ) ) then
 
-           vx_2 = U_hll(mx) / U_hll(ro) ! vx_HLL
-           vz_2 = U_hll(mz) / U_hll(ro) ! vz_HLL
+           ax = U_hll(mx) / U_hll(ro) ! vx_HLL
+           az = U_hll(mz) / U_hll(ro) ! vz_HLL
 
 !          G = G(L*)
            if ( aM .ge. 0 ) then
               
               U2(en) = ( ( aL-VL(i,j,vy) )*UL(i,j,en) - ptL*VL(i,j,vy) + pt*aM + &
-                   U_hll(by)*( vBL - vx_2*U_hll(bx) - aM*U_hll(by) - vz_2*U_hll(bz) ) ) / ( aL - aM )
-              U2(mx) = ro_L1 * vx_2
-              U2(my) = ro_L1 * aM
-              U2(mz) = ro_L1 * vz_2
+                   U_hll(by)*( vBL - ax*U_hll(bx) - aM*U_hll(by) - az*U_hll(bz) ) ) / ( aL - aM )
+              U2(mx) = roL * ax
+              U2(my) = roL * aM
+              U2(mz) = roL * az
 
               G(i,j,mx:en) = aL *( U2(mx:en) - UL(i,j,mx:en) ) + GL(i,j,mx:en)
-              G(i,j,ro)    = aL *( ro_L1     - VL(i,j,ro) )    + GL(i,j,ro)
+              G(i,j,ro)    = aL *( roL       - VL(i,j,ro) )    + GL(i,j,ro)
               G(i,j,bx)    = aL *( U_hll(bx) - VL(i,j,bx) )    + GL(i,j,bx)
               G(i,j,bz)    = aL *( U_hll(bz) - VL(i,j,bz) )    + GL(i,j,bz)
 
@@ -129,13 +129,13 @@ subroutine hlld_g(G,VL,VR,ix,jx)
            else
               
               U2(en) = ( ( aR-VR(i,j,vy) )*UR(i,j,en) - ptR*VR(i,j,vy) + pt*aM + &
-                   U_hll(by)*( vBR - vx_2*U_hll(bx) - aM*U_hll(by) - vz_2*U_hll(bz) ) ) / ( aR - aM )
-              U2(mx) = ro_R1 * vx_2
-              U2(my) = ro_R1 * aM
-              U2(mz) = ro_R1 * vz_2
+                   U_hll(by)*( vBR - ax*U_hll(bx) - aM*U_hll(by) - az*U_hll(bz) ) ) / ( aR - aM )
+              U2(mx) = roR * ax
+              U2(my) = roR * aM
+              U2(mz) = roR * az
 
               G(i,j,mx:en) = aR *( U2(mx:en) - UR(i,j,mx:en) ) + GR(i,j,mx:en)
-              G(i,j,ro)    = aR *( ro_R1     - VR(i,j,ro) )    + GR(i,j,ro)
+              G(i,j,ro)    = aR *( roR       - VR(i,j,ro) )    + GR(i,j,ro)
               G(i,j,bx)    = aR *( U_hll(bx) - VR(i,j,bx) )    + GR(i,j,bx)
               G(i,j,bz)    = aR *( U_hll(bz) - VR(i,j,bz) )    + GR(i,j,bz)
 
@@ -148,29 +148,29 @@ subroutine hlld_g(G,VL,VR,ix,jx)
            f1 = 1.d0 / ( VL(i,j,ro)*(aL-VL(i,j,vy))*(aL-aM) - U_hll(by)**2 )
            UL1(bx) = VL(i,j,bx) * f1 * ( VL(i,j,ro)*(aL-VL(i,j,vy))**2 - U_hll(by)**2 )
            UL1(bz) = VL(i,j,bz) * f1 * ( VL(i,j,ro)*(aL-VL(i,j,vy))**2 - U_hll(by)**2 )
-           vx_L1   = VL(i,j,vx) - f1 * U_hll(by)*VL(i,j,bx)*(aM-VL(i,j,vy))
-           vz_L1   = VL(i,j,vz) - f1 * U_hll(by)*VL(i,j,bz)*(aM-VL(i,j,vy))
+           vxL     = VL(i,j,vx) - f1 * U_hll(by)*VL(i,j,bx)*(aM-VL(i,j,vy))
+           vzL     = VL(i,j,vz) - f1 * U_hll(by)*VL(i,j,bz)*(aM-VL(i,j,vy))
            
-           UL1(ro) = ro_L1
+           UL1(ro) = roL
            UL1(en) = ( ( aL-VL(i,j,vy) )*UL(i,j,en) - ptL*VL(i,j,vy) + pt*aM + &
-                U_hll(by)*( vBL - vx_L1*UL1(bx) - aM*U_hll(by) - vz_L1*UL1(bz)) ) / ( aL - aM )
-           UL1(mx) = ro_L1 * vx_L1
-           UL1(my) = ro_L1 * aM
-           UL1(mz) = ro_L1 * vz_L1
+                U_hll(by)*( vBL - vxL*UL1(bx) - aM*U_hll(by) - vzL*UL1(bz)) ) / ( aL - aM )
+           UL1(mx) = roL * vxL
+           UL1(my) = roL * aM
+           UL1(mz) = roL * vzL
 
 !          Intermediate state (R*)
            f1 = 1.d0 / ( VR(i,j,ro)*(aR-VR(i,j,vy))*(aR-aM) - U_hll(by)**2 )
            UR1(bx) = VR(i,j,bx) * f1 * ( VR(i,j,ro)*(aR-VR(i,j,vy))**2 - U_hll(by)**2 )
            UR1(bz) = VR(i,j,bz) * f1 * ( VR(i,j,ro)*(aR-VR(i,j,vy))**2 - U_hll(by)**2 )
-           vx_R1   = VR(i,j,vx) - f1 * U_hll(by)*VR(i,j,bx)*(aM-VR(i,j,vy))
-           vz_R1   = VR(i,j,vz) - f1 * U_hll(by)*VR(i,j,bz)*(aM-VR(i,j,vy))
+           vxR     = VR(i,j,vx) - f1 * U_hll(by)*VR(i,j,bx)*(aM-VR(i,j,vy))
+           vzR     = VR(i,j,vz) - f1 * U_hll(by)*VR(i,j,bz)*(aM-VR(i,j,vy))
            
-           UR1(ro) = ro_R1
+           UR1(ro) = roR
            UR1(en) = ( ( aR-VR(i,j,vy) )*UR(i,j,en) - ptR*VR(i,j,vy) + pt*aM + &
-                U_hll(by)*( vBR - vx_R1*UR1(bx) - aM*U_hll(by) - vz_R1*UR1(bz)) ) / ( aR - aM )
-           UR1(mx) = ro_R1 * vx_R1
-           UR1(my) = ro_R1 * aM
-           UR1(mz) = ro_R1 * vz_R1
+                U_hll(by)*( vBR - vxR*UR1(bx) - aM*U_hll(by) - vzR*UR1(bz)) ) / ( aR - aM )
+           UR1(mx) = roR * vxR
+           UR1(my) = roR * aM
+           UR1(mz) = roR * vzR
            
 !          rotational waves
            aL1 = aM - aVL
@@ -196,24 +196,24 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !          Question: can we really rule out U_hll(by) == 0 ?
            else
 
-              ro_Ls = sqrt( ro_L1 )  ! sqrt(ro(L*))
-              ro_Rs = sqrt( ro_R1 )  ! sqrt(ro(R*))
-              f1    = 1.d0 / ( ro_Ls + ro_Rs )
-              f2    = sign( 1.d0, U_hll(by) )
-              vx_2   = f1 * ( ro_Ls*vx_L1 + ro_Rs*vx_R1 + ( UR1(bx)-UL1(bx) )*f2 )
-              vz_2   = f1 * ( ro_Ls*vz_L1 + ro_Rs*vz_R1 + ( UR1(bz)-UL1(bz) )*f2 )
-              U2(bx) = f1 * ( ro_Ls*UR1(bx) + ro_Rs*UL1(bx) + ro_Ls*ro_Rs*( vx_R1-vx_L1 )*f2 )
-              U2(bz) = f1 * ( ro_Ls*UR1(bz) + ro_Rs*UL1(bz) + ro_Ls*ro_Rs*( vz_R1-vz_L1 )*f2 )
+              roLs = sqrt( roL )  ! sqrt(ro(L*))
+              roRs = sqrt( roR )  ! sqrt(ro(R*))
+              f1   = 1.d0 / ( roLs + roRs )
+              f2   = sign( 1.d0, U_hll(by) )
+              ax   = f1 * ( roLs*vxL + roRs*vxR + ( UR1(bx)-UL1(bx) )*f2 )
+              az   = f1 * ( roLs*vzL + roRs*vzR + ( UR1(bz)-UL1(bz) )*f2 )
+              U2(bx) = f1 * ( roLs*UR1(bx) + roRs*UL1(bx) + roLs*roRs*( vxR-vxL )*f2 )
+              U2(bz) = f1 * ( roLs*UR1(bz) + roRs*UL1(bz) + roLs*roRs*( vzR-vzL )*f2 )
 
 !             G = G(L**)
               if( aM .ge. 0 ) then
 
-                 U2(ro) = ro_L1
-                 U2(en) = UL1(en) - ro_Ls * ( vx_L1*UL1(bx) + vz_L1*UL1(bz) &
-                      - vx_2*U2(bx) - vz_2*U2(bz) ) * f2
-                 U2(mx) = ro_L1 * vx_2
-                 U2(my) = ro_L1 * aM
-                 U2(mz) = ro_L1 * vz_2
+                 U2(ro) = roL
+                 U2(en) = UL1(en) - roLs * ( vxL*UL1(bx) + vzL*UL1(bz) &
+                      - ax*U2(bx) - az*U2(bz) ) * f2
+                 U2(mx) = roL * ax
+                 U2(my) = roL * aM
+                 U2(mz) = roL * az
 
                  G(i,j,mx:en) = aL1*U2(mx:en) - (aL1-aL)*UL1(mx:en) - aL*UL(i,j,mx:en) + GL(i,j,mx:en)
                  G(i,j,ro)    = aL1*U2(ro) - (aL1-aL)*UL1(ro) - aL*VL(i,j,ro) + GL(i,j,ro)
@@ -223,12 +223,12 @@ subroutine hlld_g(G,VL,VR,ix,jx)
 !             G = G(R**)
               else
 
-                 U2(ro) = ro_R1
-                 U2(en) = UR1(en) + ro_Rs * ( vx_R1*UR1(bx) + vz_R1*UR1(bz) &
-                      - vx_2*U2(bx) - vz_2*U2(bz) ) * f2
-                 U2(mx) = ro_R1 * vx_2
-                 U2(my) = ro_R1 * aM
-                 U2(mz) = ro_R1 * vz_2
+                 U2(ro) = roR
+                 U2(en) = UR1(en) + roRs * ( vxR*UR1(bx) + vzR*UR1(bz) &
+                      - ax*U2(bx) - az*U2(bz) ) * f2
+                 U2(mx) = roR * ax
+                 U2(my) = roR * aM
+                 U2(mz) = roR * az
 
                  G(i,j,mx:en) = aR1*U2(mx:en) - (aR1-aR)*UR1(mx:en) - aR*UR(i,j,mx:en) + GR(i,j,mx:en)
                  G(i,j,ro)    = aR1*U2(ro) - (aR1-aR)*UR1(ro) - aR*VR(i,j,ro) + GR(i,j,ro)
