@@ -6,6 +6,7 @@
 # F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -g -m64
 F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays -openmp
 ### XC
 # F90 = ftn
 ### JAXA/FX100

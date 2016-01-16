@@ -6,6 +6,7 @@
 # F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -g -m64
 # F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays -openmp
 ### NAOJ/XC
 F90 = ftn
 ### JAXA/FX100
@@ -17,8 +18,8 @@ OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
 	hll_resistive_f.o hll_resistive_g.o \
 	hlld_resistive_f.o hlld_resistive_g.o \
 	glm_f.o glm_g.o glm_ss.o
-OBJP = modelp.o  mpibc.o  mpibc_vlvr_f.o  mpioutput.o
-OBJP2= modelp2.o mpibc2.o mpibc_vlvr_f2.o bc_vlvr_g2.o    mpiinput.o mpioutput.o
+OBJP = modelp.o  mpibc.o  mpibc_vlvr_f.o  mpiinput.o  mpioutput.o
+OBJP2= modelp2.o mpibc2.o mpibc_vlvr_f2.o bc_vlvr_g2.o  mpiinput.o mpioutput.o
 
 all: run runp runp2
 
