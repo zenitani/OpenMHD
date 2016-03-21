@@ -2,8 +2,8 @@
 !     data converter for gnuplot
 ! -*- compile-command: "gfortran -O2 gp_convert_wave.f90" -*-
 !-----------------------------------------------------------------------
-!     2016/03/03  T. Wada      original code
-!     2016/03/20  S. Zenitani  minor fix
+!     2016/03/03  T. Wada      original version
+!     2016/03/21  S. Zenitani  modified for the latest data format
 !-----------------------------------------------------------------------
 program gp_convert_wada
   implicit none
