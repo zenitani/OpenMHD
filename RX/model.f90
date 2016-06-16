@@ -15,7 +15,7 @@ subroutine model(U,V,x,y,dx,ix,jx)
   real(8), parameter :: beta =   0.2d0
 ! ---------------------------------------------------
   integer :: i, j, izero, jzero
-  real(8) :: B2, v2, f1
+  real(8) :: B2, v2, f1, r2, b1
 
 ! grid
   dx = Lx / dble(ix-2)
@@ -50,6 +50,13 @@ subroutine model(U,V,x,y,dx,ix,jx)
      U(i,j,by) = 0.d0
      U(i,j,bz) = 0.d0
      U(i,j,ps) = 0.d0
+
+! -- initial perturbation ---
+     b1 = 0.03d0
+     r2 = x(i)**2 + y(j)**2
+     U(i,j,bx) = U(i,j,bx) - b1 * y(j) * exp(-r2/4.d0)
+     U(i,j,by) = U(i,j,by) + b1 * x(i) * exp(-r2/4.d0)
+! -- initial perturbation ---
 
      f1 = 1.d0 / ( gamma - 1 )
      v2 = dot_product( V(i,j,vx:vz), V(i,j,vx:vz) )

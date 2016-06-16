@@ -1,6 +1,6 @@
 program main
 !-----------------------------------------------------------------------
-!     Open MHD  Reconnection solver (serial version)
+!     OpenMHD  Reconnection solver (serial version)
 !-----------------------------------------------------------------------
 !     2010/09/25  S. Zenitani  HLL reconnection code
 !-----------------------------------------------------------------------
