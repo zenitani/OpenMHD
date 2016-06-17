@@ -37,6 +37,17 @@ subroutine mpibc_vlvr_f2(VL,VR,ix,jx,myrank,npe)
   if (myrank.ne.(npe-1)) then
      VR(ix-1,:,:)=bufrcv(:,:)
   endif
+  if (myrank.eq.(npe-1)) then
+     VR(ix-1,:, ro) =  VL(ix-1,:, ro)
+     VR(ix-1,:, mx) = -VL(ix-1,:, mx)
+     VR(ix-1,:, my) =  VL(ix-1,:, my)
+     VR(ix-1,:, mz) = -VL(ix-1,:, mz)
+     VR(ix-1,:, en) =  VL(ix-1,:, en)
+     VR(ix-1,:, bx) =  VL(ix-1,:, bx)
+     VR(ix-1,:, by) = -VL(ix-1,:, by)
+     VR(ix-1,:, bz) =  VL(ix-1,:, bz)
+     VR(ix-1,:, ps) = -VL(ix-1,:, ps)
+  endif
 
 !----------------------------------------------------------------------
 !  from PE(myrank) to PE(myrank+1) for new da(1)
