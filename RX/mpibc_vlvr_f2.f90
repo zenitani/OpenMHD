@@ -36,13 +36,12 @@ subroutine mpibc_vlvr_f2(VL,VR,ix,jx,myrank,npe)
       
   if (myrank.ne.(npe-1)) then
      VR(ix-1,:,:)=bufrcv(:,:)
-  endif
-  if (myrank.eq.(npe-1)) then
+  else
      VR(ix-1,:, ro) =  VL(ix-1,:, ro)
-     VR(ix-1,:, mx) = -VL(ix-1,:, mx)
-     VR(ix-1,:, my) =  VL(ix-1,:, my)
-     VR(ix-1,:, mz) = -VL(ix-1,:, mz)
-     VR(ix-1,:, en) =  VL(ix-1,:, en)
+     VR(ix-1,:, vx) = -VL(ix-1,:, vx)
+     VR(ix-1,:, vy) =  VL(ix-1,:, vy)
+     VR(ix-1,:, vz) = -VL(ix-1,:, vz)
+     VR(ix-1,:, pr) =  VL(ix-1,:, pr)
      VR(ix-1,:, bx) =  VL(ix-1,:, bx)
      VR(ix-1,:, by) = -VL(ix-1,:, by)
      VR(ix-1,:, bz) =  VL(ix-1,:, bz)
@@ -68,13 +67,12 @@ subroutine mpibc_vlvr_f2(VL,VR,ix,jx,myrank,npe)
 
   if (myrank.ne.0) then
      VL(1,:,:)=bufrcv(:,:)
-  endif
-  if (myrank.eq.0) then
+  else
      VL(1,:, ro) =  VR(1,:, ro)
-     VL(1,:, mx) = -VR(1,:, mx)
-     VL(1,:, my) =  VR(1,:, my)
-     VL(1,:, mz) = -VR(1,:, mz)
-     VL(1,:, en) =  VR(1,:, en)
+     VL(1,:, vx) = -VR(1,:, vx)
+     VL(1,:, vy) =  VR(1,:, vy)
+     VL(1,:, vz) = -VR(1,:, vz)
+     VL(1,:, pr) =  VR(1,:, pr)
      VL(1,:, bx) =  VR(1,:, bx)
      VL(1,:, by) = -VR(1,:, by)
      VL(1,:, bz) =  VR(1,:, bz)

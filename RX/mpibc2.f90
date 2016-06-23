@@ -32,6 +32,16 @@ subroutine mpibc2(U,ix,jx,myrank,npe)
       
   if( myrank.ne.(npe-1) ) then
      U(ix,:,:) = bufrcv(:,:)
+  else
+     U(ix,:, ro) =  U(ix-1,:, ro)
+     U(ix,:, mx) = -U(ix-1,:, mx)
+     U(ix,:, my) =  U(ix-1,:, my)
+     U(ix,:, mz) = -U(ix-1,:, mz)
+     U(ix,:, en) =  U(ix-1,:, en)
+     U(ix,:, bx) =  U(ix-1,:, bx)
+     U(ix,:, by) = -U(ix-1,:, by)
+     U(ix,:, bz) =  U(ix-1,:, bz)
+     U(ix,:, ps) = -U(ix-1,:, ps)
   endif
 
 !----------------------------------------------------------------------
@@ -53,14 +63,7 @@ subroutine mpibc2(U,ix,jx,myrank,npe)
 
   if( myrank.ne.0 ) then
      U(1,:,:) = bufrcv(:,:)
-  endif
-
-!----------------------------------------------------------------------
-!  outflow BC
-!----------------------------------------------------------------------
-
-  if( myrank.eq.0 ) then
-!     U(1,:,:) = U(2,:,:)
+  else
      U(1,:, ro) =  U(2,:, ro)
      U(1,:, mx) = -U(2,:, mx)
      U(1,:, my) =  U(2,:, my)
@@ -70,18 +73,6 @@ subroutine mpibc2(U,ix,jx,myrank,npe)
      U(1,:, by) = -U(2,:, by)
      U(1,:, bz) =  U(2,:, bz)
      U(1,:, ps) = -U(2,:, ps)
-  endif
-  if( myrank.eq.(npe-1) ) then
-!     U(ix,:,:) = U(ix-1,:,:)
-     U(ix,:, ro) =  U(ix-1,:, ro)
-     U(ix,:, mx) = -U(ix-1,:, mx)
-     U(ix,:, my) =  U(ix-1,:, my)
-     U(ix,:, mz) = -U(ix-1,:, mz)
-     U(ix,:, en) =  U(ix-1,:, en)
-     U(ix,:, bx) =  U(ix-1,:, bx)
-     U(ix,:, by) = -U(ix-1,:, by)
-     U(ix,:, bz) =  U(ix-1,:, bz)
-     U(ix,:, ps) = -U(ix-1,:, ps)
   endif
 
 !----------------------------------------------------------------------
