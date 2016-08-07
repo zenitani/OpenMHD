@@ -20,9 +20,11 @@ OBJP = modelp.o mpibc.o mpibc_vlvr_f.o mpiinput.o mpioutput.o
 
 all: run runp
 
+# serial version
 run : main.o $(OBJS)
 	$(F90) -o a.out main.o $(OBJS)
 
+# parallel version
 runp : mainp.o $(OBJS) $(OBJP)
 	$(F90) -o ap.out mainp.o $(OBJS) $(OBJP)
 
