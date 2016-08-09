@@ -10,11 +10,11 @@ program main
   include 'mpif.h' ! for MPI
   include 'param.h'
   integer, parameter :: version = 20150405   ! version number
-  integer, parameter :: ix =  62  ! 60 (cells per core) x 8 (cores) + 2 = 482
-  integer, parameter :: jx = 602
+  integer, parameter :: ix =  82  ! 80 (cells per core) x 2 (cores) + 2 = 162
+  integer, parameter :: jx = 202
   integer, parameter :: loop_max = 200000
-  real(8), parameter :: tend  = 100.0d0
-  real(8), parameter :: dtout =   5.0d0 ! output interval
+  real(8), parameter :: tend  =  50.0d0
+  real(8), parameter :: dtout =   2.0d0 ! output interval
   real(8), parameter :: cfl   =   0.4d0 ! time step
   integer, parameter :: n_start = 0     ! If non-zero, load previous data file
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)

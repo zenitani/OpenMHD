@@ -9,7 +9,7 @@ subroutine modelp(U,V,x,y,dx,ix,jx,myrank,npe)
   real(8) :: tmpx(npe*(ix-2)+2)  ! for MPI
 ! ---------------------------------------------------
   real(8), parameter :: Lx    = 16.d0
-  real(8), parameter :: alpha = 0.5d0
+  real(8), parameter :: alpha = 0.2d0
 ! ---------------------------------------------------
   real(8), parameter :: pi2   = 8.d0 * atan(1.d0)
   integer :: i, j, izero, jzero

@@ -3,7 +3,7 @@ import openmhd
 # dummy index
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
-x,y,t,data = openmhd.data_read(10)
+x,y,t,data = openmhd.data_read(25)
 
 plt.clf()
 # extent: [left, right, bottom, top]

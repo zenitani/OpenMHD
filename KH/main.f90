@@ -7,11 +7,11 @@ program main
   implicit none
   include 'param.h'
   integer, parameter :: version = 20120705   ! version number
-  integer, parameter :: ix = 322
-  integer, parameter :: jx = 402
+  integer, parameter :: ix = 162
+  integer, parameter :: jx = 202
   integer, parameter :: loop_max = 200000
-  real(8), parameter :: tend  = 20.0d0
-  real(8), parameter :: dtout =  1.0d0 ! output interval
+  real(8), parameter :: tend  = 50.0d0
+  real(8), parameter :: dtout =  2.0d0 ! output interval
   real(8), parameter :: cfl   =  0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
