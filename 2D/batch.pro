@@ -9,6 +9,7 @@ data_read,data,x,y,t,20
 
 ;; 2D image
 myimg = image(data[*,*,pr],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01,font_size=16,rgb_table=13,dimensions=[600,600])
+;; ,renderer=1) ;; use software rendering over a remote connection.
 
 ;; options
 ;myimg.font_name = 'Times'

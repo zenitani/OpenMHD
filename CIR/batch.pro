@@ -6,6 +6,7 @@ data1 = (read_ascii('data/x-00000.dat',data_start=1)).FIELD01
 data2 = (read_ascii('data/x-00006.dat',data_start=1)).FIELD01
 
 mypl1 = plot(data1[x,*],data1[ro,*],xtitle='x',ytitle='$\rho$',name='t=000')
+;; ,renderer=1) ;; use software rendering over a remote connection.
 mypl2 = plot(data2[x,*],data2[ro,*],/overplot,name='t=600')
 ;; mypl.symbol = 'circle'
 ;; mypl.color  = 'red'

@@ -5,6 +5,7 @@ x=0 & y=1 & ro=2 & pr=3 & vx=4 & vy=5 & vz=6 & bx=7 & by=8 & bz=9
 data = (read_ascii('data/x-00002.dat',data_start=1)).FIELD01
 
 mypl= plot(data[x,*],data[ro,*],position=[-0.5,0.5],xtitle='x',ytitle='$\rho$')
+;; ,renderer=1) ;; use software rendering over a remote connection.
 ;mypl = plot(data[x,*],data[by,*],position=[-0.5,0.5],xtitle='x',ytitle='$B_y$')
 
 ;mypl.xrange = [-0.5,0.5]
