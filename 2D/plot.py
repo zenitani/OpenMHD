@@ -6,6 +6,7 @@ from pylab import *
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 x,y,t,data = openmhd.data_read(20)
+#x,y,t,data = openmhd.data_read(20,ix1=0,ix2=100,jx1=11)
 
 plt.clf()
 # extent: [left, right, bottom, top]

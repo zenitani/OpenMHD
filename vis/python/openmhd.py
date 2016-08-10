@@ -1,4 +1,4 @@
-def data_read(it):
+def data_read(it,ix1=None,ix2=None,jx1=None,jx2=None):
     import numpy as np
 
     filename = "data/field-%05d.dat" % it
@@ -19,13 +19,25 @@ def data_read(it):
     print( ' t = ', t0 )
     print( ' size = (',ix0,' x ',jx0,')' )
 
-    ix1=0; ix2=ix0-1
-    jx1=0; jx2=jx0-1
+    if ix1 is None:
+        ix1 = 0
+
+    if ix2 is None:
+        ix2 = ix0-1
+
+    if jx1 is None:
+       jx1 = 0
+
+    if jx2 is None:
+       jx2 = jx0-1
     
-    tmpx = np.zeros((ix0),np.int32)
-    tmpy = np.zeros((jx0),np.int32)
+    ix = ix2-ix1+1
+    jx = jx2-jx1+1
+
+    tmpx = np.ndarray((ix0),np.double)
+    tmpy = np.ndarray((jx0),np.double)
     tmp  = np.ndarray((ix0,jx0),np.double)
-    data = np.ndarray((ix0,jx0,9),np.double)
+    data = np.ndarray((ix,jx,9),np.double)
     
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmpx = np.fromfile(file=f,dtype=np.double, count=ix0)
@@ -85,9 +97,6 @@ def data_read(it):
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     f.close()
 
-    t=t0
-    x=tmpx
-    y=tmpy
-    return x,y,t,data
+    return tmpx[ix1:ix2],tmpy[jx1:jx2],t0,data
 
 # end

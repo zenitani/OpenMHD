@@ -35,18 +35,18 @@ x=dblarr(ix)
 y=dblarr(jx)
 data=dblarr(ix,jx,9)
 
-readu,unit, x2 & x=x2(ix1:ix2)
-readu,unit, y2 & y=y2(jx1:jx2)
+readu,unit, x2 & x=x2[ix1:ix2]
+readu,unit, y2 & y=y2[jx1:jx2]
 readu,unit,tmp & readu,unit,tmp & readu,unit,tmp & readu,unit,tmp
-readu,unit,tmp & data[*,*,4]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,5]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,6]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,7]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,8]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,0]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,1]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,2]=tmp(ix1:ix2,jx1:jx2)
-readu,unit,tmp & data[*,*,3]=tmp(ix1:ix2,jx1:jx2)
+readu,unit,tmp & data[*,*,4]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,5]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,6]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,7]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,8]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,0]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,1]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,2]=tmp[ix1:ix2,jx1:jx2]
+readu,unit,tmp & data[*,*,3]=tmp[ix1:ix2,jx1:jx2]
 close,unit
 free_lun,unit
 
