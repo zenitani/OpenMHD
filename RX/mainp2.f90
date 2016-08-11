@@ -16,8 +16,8 @@ program main
   include 'param.h'
   integer, parameter :: version = 20150730   ! version number
 !-----------------------------------------------------------------------
-  integer, parameter :: ix =  502   ! 500 x   4 -->  2000 cells = 200 x 10
-  integer, parameter :: jx =  502   !                 500 cells =  50 x 10
+  integer, parameter :: ix =  500 + 2  ! 500 x   4 -->  2000 cells = 200 x 10
+  integer, parameter :: jx =  500 + 2  !                 500 cells =  50 x 10
 !--- Zenitani (2015): 600 nodes, Zenitani & Miyoshi (2011): 80 nodes ---
 ! integer, parameter :: ix =   22   !  20 x 600 --> 12000 cells = 200 x 60
 ! integer, parameter :: jx = 9002   !                9000 cells = 150 x 60

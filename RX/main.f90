@@ -7,8 +7,8 @@ program main
   implicit none
   include 'param.h'
   integer, parameter :: version = 20150730   ! version number
-  integer, parameter :: ix = 802
-  integer, parameter :: jx = 202
+  integer, parameter :: ix = 800 + 2
+  integer, parameter :: jx = 200 + 2
   integer, parameter :: loop_max = 30000
   real(8), parameter :: tend  = 40.0d0
   real(8), parameter :: dtout =  5.d0 ! output interval
@@ -16,7 +16,7 @@ program main
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (1: HLL, 3: HLLD)
-  integer, parameter :: flux_type = 1
+  integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 ! Resistivity

@@ -5,10 +5,10 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 resolve_routine, "data_read"
 ;; reading data ...
 data_read,data,x,y,t,8
-;data_read,data,x,y,t,8,ix1=0,ix2=1501,jx1=0,jx2=201
+;data_read,data,x,y,t,10,ix1=0,ix2=1301,jx1=0,jx2=151
 
 ;; 2D image
-myimg = image(data[*,*,ro],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01,font_size=16,rgb_table=13,dimensions=[1000,500])
+myimg = image(data[*,*,vx],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01,font_size=16,rgb_table=13,dimensions=[1000,500])
 ;; ,renderer=1) ;; use software rendering over a remote connection.
 
 ;; options

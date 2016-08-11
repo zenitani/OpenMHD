@@ -6,11 +6,12 @@ from pylab import *
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 x,y,t,data = openmhd.data_read(8)
+#x,y,t,data = openmhd.data_read(10,ix1=0,ix2=1301,jx1=0,jx2=151)
 
 plt.clf()
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-plt.imshow(data[:,:,ro].T,origin='lower',extent=extent,aspect='auto')
+plt.imshow(data[:,:,vx].T,origin='lower',extent=extent,aspect='auto')
 
 # plt.grid()
 plt.xlabel("X",size=16)

@@ -8,7 +8,7 @@ program main
   include 'param.h'
   integer, parameter :: version = 20100917   ! version number
   integer, parameter :: ix = 1
-  integer, parameter :: jx = 302
+  integer, parameter :: jx = 300 + 2
   integer, parameter :: loop_max = 30000
   real(8), parameter :: tend  = 0.2d0
   real(8), parameter :: dtout = 0.1d0 ! output interval

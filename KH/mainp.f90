@@ -10,8 +10,8 @@ program main
   include 'mpif.h' ! for MPI
   include 'param.h'
   integer, parameter :: version = 20150405   ! version number
-  integer, parameter :: ix =  82  ! 80 (cells per core) x 2 (cores) + 2 = 162
-  integer, parameter :: jx = 202
+  integer, parameter :: ix =  80 + 2  ! 80 (cells per core) x 2 (cores) = 160
+  integer, parameter :: jx = 200 + 2
   integer, parameter :: loop_max = 200000
   real(8), parameter :: tend  =  50.0d0
   real(8), parameter :: dtout =   2.0d0 ! output interval

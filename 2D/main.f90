@@ -8,8 +8,8 @@ program main
   implicit none
   include 'param.h'
   integer, parameter :: version = 20100928   ! version number
-  integer, parameter :: ix = 202
-  integer, parameter :: jx = 202
+  integer, parameter :: ix = 200 + 2
+  integer, parameter :: jx = 200 + 2
   integer, parameter :: loop_max = 30000
   real(8), parameter :: tend  = 4.0d0
   real(8), parameter :: dtout = 0.1d0 ! output interval
