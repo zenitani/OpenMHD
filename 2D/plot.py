@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import openmhd
-from pylab import *
+
 # dummy index
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
@@ -30,7 +30,7 @@ for i in range(1,x.size):
     for j in range(1,y.size):
         az[i,j] = az[i,j-1] + 0.5*(data[i,j-1,bx]+data[i,j,bx])
 
-contour(az[:,:].T,origin='lower',extent=extent)
+plt.contour(az[:,:].T,origin='lower',extent=extent)
 
 plt.show()
 #plt.savefig('output.png', dpi=144)
