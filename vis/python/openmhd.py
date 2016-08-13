@@ -61,42 +61,42 @@ def data_read(it,ix1=None,ix2=None,jx1=None,jx2=None):
     
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,4] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,4] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,5] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,5] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,6] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,6] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,7] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,7] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,8] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,8] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,0] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,0] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,1] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,1] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,2] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,2] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     tmp = (np.fromfile(file=f,dtype=np.double, count=ix0*jx0)).reshape((ix0,jx0),order='F')
-    data[0:-1,0:-1,3] = tmp[ix1:ix2,jx1:jx2]
+    data[:,:,3] = tmp[ix1:ix2+1,jx1:jx2+1]
     buf = np.fromfile(file=f,dtype=record_marker,count=1)
     f.close()
 
-    return tmpx[ix1:ix2],tmpy[jx1:jx2],t0,data
+    return tmpx[ix1:ix2+1],tmpy[jx1:jx2+1],t0,data
 
 # end
