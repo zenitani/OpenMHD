@@ -8,7 +8,7 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -openmp
 ### XC
-# F90 = ftn
+# F90 = ftn -hnoomp
 ### JAXA/FX100
 # F90 = f90sjx -Umpi
 
