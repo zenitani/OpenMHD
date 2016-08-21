@@ -27,16 +27,10 @@ myimg.position = [0.15,0.15,0.85,0.85]
 ix = (size(x))[1]
 jx = (size(y))[1]
 az = dblarr(ix,jx)
-az[0,0] = 0.0d0
-for j=1,jx-1 do begin
-   az[0,j] = az[0,j-1] + 0.5*(data[0,j-1,bx]+data[0,j,bx])
-endfor
-for i=1,ix-1 do begin
-   az[i,0] = az[i-1,0] - 0.5*(data[i-1,0,by]+data[i,0,by])
-   for j=1,jx-1 do begin
-      az[i,j] = az[i,j-1] + 0.5*(data[i,j-1,bx]+data[i,j,bx])
-   endfor
-endfor
+;az[0,0] = 0.0d0
+az[0,-1] = 0.5d0*(data[0,-1,bx] - data[0,-1,by]) ; Set the top-left cornder (az[0.5,-1.5]) to zero
+for j=jx-1,1,-1 do az[0,j-1] = az[0,j]   - 0.5d0*(data[*,j-1,bx]+data[*,j,bx])
+for i=1,ix-1    do az[i,*]   = az[i-1,*] - 0.5d0*(data[i-1,*,by]+data[i,*,by])
 
 ;; contour plot
 myct = contour(az,x,y,/overplot,color='white',c_label_show=0)
