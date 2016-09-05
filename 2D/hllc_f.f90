@@ -113,7 +113,7 @@ subroutine hllc_f(F,VL,VR,ix,jx)
      roR = VR(i,j,ro) * ( aR - VR(i,j,vx) ) / ( aR - aM )
      vBR = dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
      enR = ( ( aR - VR(i,j,vx) )*UR(i,j,en) - ptR*VR(i,j,vx) + pt * aM + &
-          U_hll(bx)*( vBR - aM*U_hll(bx) - ay*U_hll(by) + az*U_hll(bz) ) ) / ( aR - aM )
+          U_hll(bx)*( vBR - aM*U_hll(bx) - ay*U_hll(by) - az*U_hll(bz) ) ) / ( aR - aM )
 !     F(i,j,mx) = aR *( roR*aM - UR(i,j,mx) ) + FR(i,j,mx)
 !     F(i,j,my) = aR *( roR*ay - UR(i,j,my) ) + FR(i,j,my)
 !     F(i,j,mz) = aR *( roR*az - UR(i,j,mz) ) + FR(i,j,mz)
