@@ -6,7 +6,7 @@ program main
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, parameter :: version = 20100917   ! version number
+  integer, parameter :: version = 20160910   ! version number
   integer, parameter :: ix = 300 + 2
   integer, parameter :: jx = 1
   integer, parameter :: loop_max = 30000
@@ -84,26 +84,18 @@ program main
      dtx = dt/dx
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter_f(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,lm_type)
-     call limiter_f(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,lm_type)
-     call limiter_f(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,lm_type)
-     call limiter_f(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,lm_type)
-     call limiter_f(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,lm_type)
-     call limiter_f(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,lm_type)
-     call limiter_f(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,lm_type)
-     call limiter_f(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
-     call limiter_f(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
+     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
+     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
+     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
+     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
+     call limiter(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
+     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
+     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
+     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
+     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     if( flux_type .eq. 0 )then
-        call llf_f(F,VL,VR,ix,jx)
-     elseif( flux_type .eq. 1 )then
-        call hll_f(F,VL,VR,ix,jx)
-     elseif( flux_type .eq. 2 )then
-        call hllc_f(F,VL,VR,ix,jx)
-     elseif( flux_type .eq. 3 )then
-        call hlld_f(F,VL,VR,ix,jx)
-     endif
+     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
 
      if( time_type .eq. 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -125,26 +117,18 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter_f(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,lm_type)
-     call limiter_f(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,lm_type)
-     call limiter_f(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,lm_type)
-     call limiter_f(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,lm_type)
-     call limiter_f(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,lm_type)
-     call limiter_f(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,lm_type)
-     call limiter_f(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,lm_type)
-     call limiter_f(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
-     call limiter_f(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
+     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
+     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
+     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
+     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
+     call limiter(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
+     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
+     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
+     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
+     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     if( flux_type .eq. 0 )then
-        call llf_f(F,VL,VR,ix,jx)
-     elseif( flux_type .eq. 1 )then
-        call hll_f(F,VL,VR,ix,jx)
-     elseif( flux_type .eq. 2 )then
-        call hllc_f(F,VL,VR,ix,jx)
-     elseif( flux_type .eq. 3 )then
-        call hlld_f(F,VL,VR,ix,jx)
-     endif
+     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
 
      if( time_type .eq. 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'

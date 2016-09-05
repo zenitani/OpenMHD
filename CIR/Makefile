@@ -3,8 +3,7 @@ F90 = gfortran -O2 -m64 -Wall
 ### intel fortran ("-heap-arrays" option is useful)
 # F90 = ifort -heap-arrays
 
-OBJS = model.o set_dt.o u2v.o output.o \
-	v2u.o v2f.o limiter_f.o hlld_f.o hllc_f.o hll_f.o llf_f.o
+OBJS = model.o set_dt.o u2v.o output.o flux_solver.o limiter.o
 
 all: a.out
 

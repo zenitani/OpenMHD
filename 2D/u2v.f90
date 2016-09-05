@@ -11,7 +11,8 @@ subroutine u2v(U,V,ix,jx)
   real(8), parameter :: f1 = gamma - 1
   integer :: pos(2)
 
-  V(:,:,:) = 0.d0
+  V = 0.d0
+
   do j=1,jx
   do i=1,ix
 

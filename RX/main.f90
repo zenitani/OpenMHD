@@ -6,7 +6,7 @@ program main
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, parameter :: version = 20150730   ! version number
+  integer, parameter :: version = 20160910   ! version number
   integer, parameter :: ix = 800 + 2
   integer, parameter :: jx = 200 + 2
   integer, parameter :: loop_max = 30000
@@ -15,7 +15,7 @@ program main
   real(8), parameter :: cfl   = 0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
-! Numerical flux (1: HLL, 3: HLLD)
+! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
   integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
@@ -93,45 +93,39 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter_f(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,lm_type)
-     call limiter_f(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,lm_type)
-     call limiter_f(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,lm_type)
-     call limiter_f(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,lm_type)
-     call limiter_f(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,lm_type)
-     call limiter_f(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,lm_type)
-     call limiter_f(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,lm_type)
-     call limiter_f(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
-     call limiter_f(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
+     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
+     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
+     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
+     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
+     call limiter(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
+     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
+     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
+     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
+     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     if( flux_type .eq. 1 )then
-        call hll_resistive_f(F,U,VL,VR,EF,dx,ix,jx)
-     elseif( flux_type .eq. 3 )then
-        call hlld_resistive_f(F,U,VL,VR,EF,dx,ix,jx)
-     endif
-     call glm_f(F,VL,VR,ch,ix,jx)
+     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
+     call flux_glm(F,VL,VR,ch,ix,jx,1)
+     call flux_resistive_f(F,U,VL,VR,EF,dx,ix,jx)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
-     call limiter_g(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,lm_type)
-     call limiter_g(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,lm_type)
-     call limiter_g(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,lm_type)
-     call limiter_g(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,lm_type)
-     call limiter_g(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,lm_type)
-     call limiter_g(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,lm_type)
-     call limiter_g(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,lm_type)
-     call limiter_g(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
-     call limiter_g(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
+     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,2,lm_type)
+     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,2,lm_type)
+     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,2,lm_type)
+     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,2,lm_type)
+     call limiter(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,2,lm_type)
+     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,2,lm_type)
+     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,2,lm_type)
+     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
+     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
 !    fix flux bc (G)
      call bc_vlvr_g(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     if( flux_type .eq. 1 )then
-        call hll_resistive_g(G,U,VL,VR,EG,dx,ix,jx)
-     elseif( flux_type .eq. 3 )then
-        call hlld_resistive_g(G,U,VL,VR,EG,dx,ix,jx)
-     endif
-     call glm_g(G,VL,VR,ch,ix,jx)
+     call flux_solver(G,VL,VR,ix,jx,2,flux_type)
+     call flux_glm(G,VL,VR,ch,ix,jx,2)
+     call flux_resistive_g(G,U,VL,VR,EG,dx,ix,jx)
 
      if( time_type .eq. 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -146,45 +140,39 @@ program main
      call u2v(U1,V,ix,jx)
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter_f(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,lm_type)
-     call limiter_f(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,lm_type)
-     call limiter_f(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,lm_type)
-     call limiter_f(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,lm_type)
-     call limiter_f(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,lm_type)
-     call limiter_f(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,lm_type)
-     call limiter_f(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,lm_type)
-     call limiter_f(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
-     call limiter_f(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
+     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
+     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
+     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
+     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
+     call limiter(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
+     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
+     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
+     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
+     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     if( flux_type .eq. 1 )then
-        call hll_resistive_f(F,U1,VL,VR,EF,dx,ix,jx)
-     elseif( flux_type .eq. 3 )then
-        call hlld_resistive_f(F,U1,VL,VR,EF,dx,ix,jx)
-     endif
-     call glm_f(F,VL,VR,ch,ix,jx)
+     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
+     call flux_glm(F,VL,VR,ch,ix,jx,1)
+     call flux_resistive_f(F,U1,VL,VR,EF,dx,ix,jx)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
-     call limiter_g(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,lm_type)
-     call limiter_g(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,lm_type)
-     call limiter_g(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,lm_type)
-     call limiter_g(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,lm_type)
-     call limiter_g(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,lm_type)
-     call limiter_g(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,lm_type)
-     call limiter_g(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,lm_type)
-     call limiter_g(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,lm_type)
-     call limiter_g(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,lm_type)
+     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,2,lm_type)
+     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,2,lm_type)
+     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,2,lm_type)
+     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,2,lm_type)
+     call limiter(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,2,lm_type)
+     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,2,lm_type)
+     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,2,lm_type)
+     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
+     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
 !    fix flux bc (G)
      call bc_vlvr_g(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     if( flux_type .eq. 1 )then
-        call hll_resistive_g(G,U1,VL,VR,EG,dx,ix,jx)
-     elseif( flux_type .eq. 3 )then
-        call hlld_resistive_g(G,U1,VL,VR,EG,dx,ix,jx)
-     endif
-     call glm_g(G,VL,VR,ch,ix,jx)
+     call flux_solver(G,VL,VR,ix,jx,2,flux_type)
+     call flux_glm(G,VL,VR,ch,ix,jx,2)
+     call flux_resistive_g(G,U1,VL,VR,EG,dx,ix,jx)
 
      if( time_type .eq. 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
