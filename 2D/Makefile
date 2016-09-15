@@ -10,7 +10,7 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### XC
 # F90 = ftn -hnoomp
 ### JAXA/FX100
-# F90 = f90sjx -Umpi
+# F90 = f90sjx -Umpi -Uflat
 
 OBJS = model.o set_dt.o u2v.o input.o output.o rk21.o rk22.o step1.o step2.o bc.o \
 	flux_solver.o limiter.o flux_glm.o glm_ss.o

@@ -10,7 +10,9 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### NAOJ/XC
 # F90 = ftn -hnoomp
 ### JAXA/FX100
-# F90 = f90sjx -Umpi
+# F90 = f90sjx -Umpi -Uflat
+### Nagoya U/FX100
+# F90 = mpifrtpx
 
 OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
 	rk21.o rk22.o step1.o step2.o bc.o \

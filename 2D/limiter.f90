@@ -10,14 +10,13 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !     2016/09/07  S. Zenitani  X and Y directions
 !-----------------------------------------------------------------------
   implicit none
-  integer, intent(in)  :: ix, jx
-  real(8), intent(in)  :: wk(ix,jx)            ! work array (input)
-  real(8), intent(out) :: wL(ix,jx), wR(ix,jx) ! interpolated values (output)
 !-----------------------------------------------------------------------
+  integer, intent(in)  :: ix, jx               ! size of arrays [input]
+  real(8), intent(in)  :: wk(ix,jx)            ! work array [input]
+  real(8), intent(out) :: wL(ix,jx), wR(ix,jx) ! interpolated values [output]
 ! direction [input]: 1 (X), 2 (Y), 3 (Z)
   integer, intent(in)  :: dir
-!-----------------------------------------------------------------------
-! 0 (flat), 1 (minmod), 2 (MC), 3 (van Leer), 4 (Koren)
+! slope limiters [input]: 0 (flat), 1 (minmod), 2 (MC), 3 (van Leer), 4 (Koren)
   integer, intent(in)  :: type
 !-----------------------------------------------------------------------
   integer :: i, j, is, ie, js, je

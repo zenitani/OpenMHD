@@ -2,36 +2,33 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !-----------------------------------------------------------------------
 !     HLLC-G flux solver
 !       Ref: K. F. Gurski, SIAM J. Sci. Comput., 25, 2165 (2004)
+!     HLLD flux solver
+!       Ref: T. Miyoshi, K. Kusano, J. Comput. Phys., 208, 315 (2005)
 !-----------------------------------------------------------------------
 !     2010/05/11  S. Zenitani  HLLC-G solver
+!     2010/05/12  S. Zenitani  HLLD solver
+!     2010/09/18  S. Zenitani  HLLD solver: fixed some bugs
 !     2015/07/29  S. Zenitani  HLL solver: if-statements ==> max/min functions
 !     2015/08/15  S. Zenitani  HLLC-G solver: opitimization
 !     2016/09/06  S. Zenitani  X/Y/Z directions
 !-----------------------------------------------------------------------
-!     HLLD flux solver
-!       Ref: T. Miyoshi, K. Kusano, J. Comput. Phys., 208, 315 (2005)
-!-----------------------------------------------------------------------
-!     2010/05/12  S. Zenitani  HLLD solver
-!     2010/09/18  S. Zenitani  fixed some bugs
-!     2016/09/06  S. Zenitani  X/Y/Z directions
-!-----------------------------------------------------------------------
   implicit none
   include 'param.h'
+!-----------------------------------------------------------------------
+! size of arrays [input]
   integer, intent(in)  :: ix, jx
 ! numerical flux (F) [output]
   real(8), intent(out) :: F(ix,jx,var1)
 ! left/right states (VL,VR) [input]
   real(8), intent(in)  :: VL(ix,jx,var1), VR(ix,jx,var1)
-!-----------------------------------------------------------------------
 ! direction [input]: 1 (X), 2 (Y), 3 (Z)
   integer, intent(in)  :: dir
-!-----------------------------------------------------------------------
-! 0 (LLF Rusanov), 1 (HLL), 2 (HLLC), 3 (HLLD)
+! numerical flux [input]: 0 (LLF Rusanov), 1 (HLL), 2 (HLLC), 3 (HLLD)
   integer, intent(in)  :: type
 !-----------------------------------------------------------------------
 ! left/right conserved variables (UL & UR; local)
   real(8) :: UL(var2), UR(var2)
-! numerical flux (FL & FR local)
+! left/right numerical flux (FL & FR; local)
   real(8) :: FL(var1), FR(var1)
   integer :: i, j, is=0, ie=0, js=0, je=0
 ! directions
