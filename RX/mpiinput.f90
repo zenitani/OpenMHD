@@ -1,1 +1,0 @@
-../2D/mpiinput.f90
