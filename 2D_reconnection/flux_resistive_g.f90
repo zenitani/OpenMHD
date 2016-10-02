@@ -26,7 +26,7 @@ subroutine flux_resistive_g(G,U,VL,VR,EtS,dx,ix,jx)
   integer :: i, j, is, ie, js, je
   real(8) :: f1
 
-  is = min(2,jx); ie = max(1,ix-1)
+  is = min(2,ix); ie = max(1,ix-1)
   js = 1        ; je = jx-1
 
 ! surface current (Toth+ 2008, JCP)
