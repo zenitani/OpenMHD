@@ -5,8 +5,25 @@ import openmhd
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-x,y,t,data = openmhd.data_read(8)
-#x,y,t,data = openmhd.data_read(10,ix1=0,ix2=1301,jx1=0,jx2=151)
+#x,y,t,data = openmhd.data_read(8)
+x,y,t,data = openmhd.data_read(10,ix1=0,ix2=1301,jx1=0,jx2=151)
+
+# 2D mirroring (This depends on the BC)
+ix = x.size
+jx = 2*y.size-2
+jxh= y.size-1
+tmp  = data
+data = np.ndarray((ix,jx,9),np.double)
+data[:,jxh:,:]   =  tmp[:,1:,:]
+data[:,0:jxh, :] =  tmp[:,-1:-jxh-1:-1, :]
+data[:,0:jxh,vy] = -tmp[:,-1:-jxh-1:-1,vy]
+data[:,0:jxh,vz] = -tmp[:,-1:-jxh-1:-1,vz]
+data[:,0:jxh,bx] = -tmp[:,-1:-jxh-1:-1,bx]
+data[:,0:jxh,ps] = -tmp[:,-1:-jxh-1:-1,ps]
+tmp = y
+y = np.ndarray((jx),np.double)
+y[jxh:]  =  tmp[1:]
+y[0:jxh] = -tmp[-1:-jxh-1:-1]
 
 # preparing the canvas
 fig = plt.figure(figsize=(12, 6), dpi=80)
