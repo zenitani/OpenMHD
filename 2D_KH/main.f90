@@ -7,12 +7,12 @@ program main
   implicit none
   include 'param.h'
   integer, parameter :: version = 20160910   ! version number
-  integer, parameter :: ix = 160 + 2
-  integer, parameter :: jx = 200 + 2
+  integer, parameter :: ix = 320 + 2
+  integer, parameter :: jx = 400 + 2
   integer, parameter :: loop_max = 200000
-  real(8), parameter :: tend  = 50.0d0
-  real(8), parameter :: dtout =  2.0d0 ! output interval
-  real(8), parameter :: cfl   =  0.4d0 ! time step
+  real(8), parameter :: tend  = 100.0d0
+  real(8), parameter :: dtout =   5.0d0 ! output interval
+  real(8), parameter :: cfl   =   0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)

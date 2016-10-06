@@ -75,7 +75,7 @@ program main
   endif
   if( myrank.eq.0 ) then
      write(6,*) '[Params]'
-     write(6,*) 'Code version: ', version, '  Core # : ', npe
+     write(6,*) 'Code version: ', version, '  MPI node # : ', npe
      write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
      write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
      write(6,999) lm_type, flux_type, time_type

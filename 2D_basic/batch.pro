@@ -41,6 +41,7 @@ mycb = colorbar(target=myimg,orientation=1,tickdir=1,minor=4,border=1,font_size=
 mycb.font_size = '14'
 
 ;; image file
-;myimg.save,'output.png',resolution=200
+;myimg.save,'output.png',resolution=72
+;myimg.save,'output.png',width=1000
 
 end

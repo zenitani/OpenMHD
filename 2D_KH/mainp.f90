@@ -10,11 +10,11 @@ program main
   include 'mpif.h' ! for MPI
   include 'param.h'
   integer, parameter :: version = 20160910   ! version number
-  integer, parameter :: ix =  80 + 2  ! 80 (cells per core) x 2 (cores) = 160
-  integer, parameter :: jx = 200 + 2
+  integer, parameter :: ix = 120 + 2  ! 120 (cells per core) x 4 (cores) = 480
+  integer, parameter :: jx = 600 + 2
   integer, parameter :: loop_max = 200000
-  real(8), parameter :: tend  =  50.0d0
-  real(8), parameter :: dtout =   2.0d0 ! output interval
+  real(8), parameter :: tend  = 100.0d0
+  real(8), parameter :: dtout =   5.0d0 ! output interval
   real(8), parameter :: cfl   =   0.4d0 ! time step
   integer, parameter :: n_start = 0     ! If non-zero, load previous data file
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
@@ -71,7 +71,7 @@ program main
   endif
   if( myrank.eq.0 ) then
      write(6,*) '[Params]'
-     write(6,*) 'Code version: ', version, '  Core # : ', npe
+     write(6,*) 'Code version: ', version, '  MPI node # : ', npe
      write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
      write(6,999) lm_type, flux_type, time_type
 998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i6,' (',i5,') x ',i5 )

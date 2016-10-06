@@ -4,7 +4,7 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 resolve_routine, "data_read"
 
 ;; reading data ...
-data_read,data,x,y,t,25
+data_read,data,x,y,t,15
 ;data_read,data,x,y,t,8,ix1=0,ix2=1501,jx1=0,jx2=201
 
 ;; 2D image
@@ -41,6 +41,7 @@ mycb = colorbar(target=myimg,orientation=1,tickdir=1,minor=4,border=1,font_size=
 mycb.font_size = '14'
 
 ;; image file
-;myimg.save,'output.png',resolution=200
+;myimg.save,'output.png',resolution=72
+;myimg.save,'output.png',width=1000
 
 end

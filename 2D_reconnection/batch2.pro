@@ -3,9 +3,13 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 ;; find and compile data_read routine
 resolve_routine, "data_read"
 
+;; ---------------------------------------------------------------------
 ;; reading data ...
-;data_read,data0,x,y,t,8
+;data_read,data,x,y,t,8
 data_read,data,x,y,t,10,ix1=0,ix2=1301,jx1=0,jx2=151
+;; Zenitani & Miyoshi 2011 [6000 x 4500]
+;data_read,data,x,y,t,10,ix1=0,ix2=3901,jx1=0,jx2=451
+;; ---------------------------------------------------------------------
 
 ;; 2D mirroring (This depends on the BC)
 ix = (size(x))[1]
@@ -59,6 +63,7 @@ mycb = colorbar(target=myimg,orientation=1,tickdir=1,minor=4,border=1,font_size=
 mycb.font_size = '14'
 
 ;; image file
-;myimg.save,'output.png',resolution=200
+;myimg.save,'output.png',resolution=72
+;myimg.save,'output.png',width=1000
 
 end
