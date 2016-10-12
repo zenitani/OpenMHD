@@ -50,7 +50,7 @@ jx = (size(y))[1]
 az = dblarr(ix,jx)
 ;az[0,0] = 0.0d0
 az[0,-1] = 0.5d0*(data[0,-1,bx] - data[0,-1,by]) ; Set the top-left corner (az[0.5,-1.5]) to zero
-for j=jx-1,1,-1 do az[0,j-1] = az[0,j]   - 0.5d0*(data[*,j-1,bx]+data[*,j,bx])
+for j=jx-1,1,-1 do az[0,j-1] = az[0,j]   - 0.5d0*(data[0,j-1,bx]+data[0,j,bx])
 for i=1,ix-1    do az[i,*]   = az[i-1,*] - 0.5d0*(data[i-1,*,by]+data[i,*,by])
 
 ;; contour of Az = magnetic field lines

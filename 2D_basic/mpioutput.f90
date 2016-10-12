@@ -13,7 +13,7 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
   integer :: gsize(2), subsize(2), start(2)
   integer(kind=mpi_offset_kind) :: disp
   integer, parameter :: mksize = 4
-  character*256 :: filename      
+  character*256 :: filename
 
   iix = npe*(ix-2)+2
   call mpi_file_open(mpi_comm_world, filename, & 
@@ -136,8 +136,6 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
 ! --------- 2D matrix of iix * jx -------------------------------------------------
 
   call mpi_file_close( fh, ierr )
-
-  close(16)
 
   return
 end subroutine mpioutput

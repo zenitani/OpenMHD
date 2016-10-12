@@ -2,7 +2,7 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
   implicit none
   include 'param.h'
   include 'mpif.h'
-  character*256 :: filename      
+  character*256 :: filename
   integer, intent(in) :: ix, jx, myrank, npe
   real(8), intent(out) :: t
   real(8), intent(out) :: x(ix), y(jx)
@@ -135,8 +135,6 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
 ! --------- 2D matrix of iix * jx -------------------------------------------------
 
   call mpi_file_close( fh, ierr )
-
-  close(16)
 
   return
 end subroutine mpiinput

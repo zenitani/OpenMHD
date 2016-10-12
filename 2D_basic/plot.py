@@ -32,7 +32,7 @@ for i in range(1,x.size):
     az[i,:] = az[i-1,:] - 0.5*(data[i-1,:,by]+data[i,:,by])
 
 # contour of Az = magnetic field lines
-plt.contour(az[:,:].T,origin='lower',extent=extent,colors='w',linestyles='solid')
+plt.contour(az.T,extent=extent,colors='w',linestyles='solid')
 
 # plot
 plt.show()
