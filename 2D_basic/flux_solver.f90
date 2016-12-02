@@ -9,7 +9,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !     2010/05/12  S. Zenitani  HLLD solver
 !     2010/09/18  S. Zenitani  HLLD solver: fixed some bugs
 !     2015/07/29  S. Zenitani  HLL solver: if-statements ==> max/min functions
-!     2015/08/15  S. Zenitani  HLLC-G solver: opitimization
+!     2015/08/15  S. Zenitani  HLLC-G solver: optimization
 !     2016/09/06  S. Zenitani  X/Y/Z directions
 !-----------------------------------------------------------------------
   implicit none
@@ -506,8 +506,8 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
            vt1R     = VR(i,j,vt1) - f1 * U_hll(bn)*VR(i,j,bt1)*(aM-VR(i,j,vn))
            vt2R     = VR(i,j,vt2) - f1 * U_hll(bn)*VR(i,j,bt2)*(aM-VR(i,j,vn))
            
-           UR1(ro) = roR
-           UR1(en) = ( ( aR-VR(i,j,vn) )*UR(en) - ptR*VR(i,j,vn) + pt*aM + &
+           UR1(ro)  = roR
+           UR1(en)  = ( ( aR-VR(i,j,vn) )*UR(en) - ptR*VR(i,j,vn) + pt*aM + &
                 U_hll(bn)*( vBR - aM*U_hll(bn) - vt1R*UR1(bt1) - vt2R*UR1(bt2)) ) / ( aR - aM )
            UR1(mn)  = roR * aM
            UR1(mt1) = roR * vt1R
@@ -533,7 +533,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
               F(i,j,bt1)   = aR *( UR1(bt1)   - VR(i,j,bt1) ) + FR(bt1)
               F(i,j,bt2)   = aR *( UR1(bt2)   - VR(i,j,bt2) ) + FR(bt2)
 
-!          Centeral states are tricky
+!          Central states are tricky
 !          Question: can we really rule out U_hll(bn) == 0 ?
            else
 
