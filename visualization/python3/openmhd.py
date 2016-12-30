@@ -26,10 +26,10 @@ def data_read(it,ix1=None,ix2=None,jx1=None,jx2=None):
         ix2 = ix0-1
 
     if jx1 is None:
-       jx1 = 0
+        jx1 = 0
 
     if jx2 is None:
-       jx2 = jx0-1
+        jx2 = jx0-1
     
     ix = ix2-ix1+1
     jx = jx2-jx1+1
