@@ -9,7 +9,7 @@ subroutine output(filename,ix,jx,t,x,y,U,V)
   integer :: i, j
   character*256 :: filename      
 
-  open(16,file=filename,form='unformatted')
+  open(16,file=filename,form='unformatted',access='stream')
   write(16) t
   write(16) ix
   write(16) jx

@@ -13,7 +13,7 @@ subroutine input(filename,ix,jx,t,x,y,U)
   U(:,:,:) = 0.d0
 !  V(:,:,:) = 0.d0
 
-  open(15,file=filename,form='unformatted')
+  open(15,file=filename,form='unformatted',access='stream')
   read(15) t
   read(15) ix0
   read(15) jx0

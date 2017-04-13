@@ -80,7 +80,7 @@ program gp_convert_wada
 !  end if
 
   !データ読み取り
-  open (16, file=INPUT,form='unformatted')
+  open (16, file=INPUT,form='unformatted',access='stream')
   read(16) t
   read(16) ix
   read(16) jx

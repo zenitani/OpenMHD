@@ -5,13 +5,17 @@ jx=0
 if not keyword_set(ix1) then ix1=0
 if not keyword_set(jx1) then jx1=0
 t0=0.d0
-ix0=0
-jx0=0
+ix0=0L
+jx0=0L
 
 spawn, 'printf "data/field-%05d.dat" ' + string(it), retvars
 filename = retvars(0)
 
-openr,/get_lun,/f77,unit,filename ;,/swap_endian
+; no record marker
+openr,/get_lun,unit,filename ;,/swap_endian
+; with record marker (/f77)
+;openr,/get_lun,/f77,unit,filename ;,/swap_endian
+
 print,'reading '+filename+'...'
 readu,unit,t0
 readu,unit,ix0
