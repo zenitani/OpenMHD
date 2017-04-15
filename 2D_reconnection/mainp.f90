@@ -9,7 +9,6 @@ program main
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: version = 20160910   ! version number
   integer, parameter :: ix = 150 + 2  ! 150 (cells per core) x 8 (cores) = 1200
   integer, parameter :: jx = 600 + 2
   integer, parameter :: loop_max = 30000

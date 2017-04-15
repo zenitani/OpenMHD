@@ -16,7 +16,7 @@ plt.clf()
 # 2D image
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-plt.imshow(data[:,:,vx].T,origin='lower',extent=extent,aspect='auto')
+plt.imshow(data[:,:,vx].T,origin='lower',cmap='bwr',extent=extent,aspect='auto')
 
 # useful options
 # plt.grid()

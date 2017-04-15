@@ -6,6 +6,7 @@ vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
 #x,y,t,data = openmhd.data_read(8)
+# reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
 x,y,t,data = openmhd.data_read(10,ix1=0,ix2=1301,jx1=0,jx2=151)
 
 # 2D mirroring (This depends on the BC)
@@ -33,7 +34,11 @@ plt.clf()
 # 2D image
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-plt.imshow(data[:,:,vx].T,origin='lower',extent=extent,aspect='auto')
+myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='bwr',extent=extent,aspect='auto')
+
+# image operations (e.g. color map)
+#myimg.set_cmap('jet')
+#myimg.set_cmap('bwr')
 
 # useful options
 # plt.grid()

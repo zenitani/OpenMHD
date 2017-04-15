@@ -4,8 +4,9 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 resolve_routine, "data_read"
 
 ;; ---------------------------------------------------------------------
-;; reading data ...
+;; reading the data ...
 ;data_read,data,x,y,t,8
+;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
 data_read,data,x,y,t,10,ix1=0,ix2=1301,jx1=0,jx2=151
 ;; Zenitani & Miyoshi 2011 [6000 x 4500]
 ;data_read,data,x,y,t,10,ix1=0,ix2=3901,jx1=0,jx2=451

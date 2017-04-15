@@ -1,7 +1,7 @@
 ;; dummy index
 x=0 & y=1 & ro=2 & pr=3 & vx=4 & vy=5 & vz=6 & bx=7 & by=8 & bz=9
 
-;; reading data ... (skipping the header)
+;; reading the data ... (skipping the header)
 data = (read_ascii('data/x-00002.dat',data_start=1)).FIELD01
 
 mypl= plot(data[x,*],data[ro,*],position=[-0.5,0.5],xtitle='x',ytitle='$\rho$')

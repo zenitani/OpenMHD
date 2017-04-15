@@ -6,7 +6,6 @@ program main
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, parameter :: version = 20160910   ! version number
   integer, parameter :: ix = 320 + 2
   integer, parameter :: jx = 400 + 2
   integer, parameter :: loop_max = 200000

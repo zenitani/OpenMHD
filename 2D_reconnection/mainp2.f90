@@ -14,7 +14,6 @@ program main
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: version = 20160910   ! version number
 !-----------------------------------------------------------------------
   integer, parameter :: ix =  500 + 2  ! 500 x   4 -->  2000 cells = 200 x 10
   integer, parameter :: jx =  500 + 2  !                 500 cells =  50 x 10

@@ -10,7 +10,8 @@ plt.clf()
 
 # 2D image
 # extent: [left, right, bottom, top]
-plt.imshow(data[:,:,ro].T,origin='lower',extent=[x[0],x[-1],y[0],y[-1]])
+extent=[x[0],x[-1],y[0],y[-1]]
+myimg = plt.imshow(data[:,:,ro].T,origin='lower',cmap='bwr',extent=extent)
 
 # useful options
 # plt.grid()

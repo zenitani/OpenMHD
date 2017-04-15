@@ -3,8 +3,9 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 ;; find and compile data_read routine
 resolve_routine, "data_read"
 
-;; reading data ...
+;; reading the data ...
 data_read,data,x,y,t,20
+;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
 ;data_read,data,x,y,t,8,ix1=0,ix2=1501,jx1=0,jx2=201
 
 ;; 2D image

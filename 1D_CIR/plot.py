@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 # dummy index
 x=0;y=1;ro=2;pr=3;vx=4;vy=5;vz=6;bx=7;by=8;bz=9
 
-# reading data...
+# reading the data...
 d1 = np.loadtxt('data/x-00000.dat')
 d2 = np.loadtxt('data/x-00006.dat')
 
