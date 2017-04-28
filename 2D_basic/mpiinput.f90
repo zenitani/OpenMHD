@@ -8,11 +8,10 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
   real(8), intent(out) :: x(ix), y(jx)
   real(8), intent(out) :: U(ix,jx,var1)
 !  real(8), intent(out) :: V(ix,jx,var2)
-  integer :: mk
   integer :: iix, iix0, jx0
   integer :: fh, ierr, ftype
   integer :: gsize(2), subsize(2), start(2)
-  integer(kind=mpi_offset_kind) :: disp
+  integer(kind=mpi_offset_kind) :: disp, mk, mkiix, mkjx
 
   call mpi_file_open(mpi_comm_world, filename, & 
        mpi_mode_rdonly, &
@@ -41,7 +40,10 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
   call mpi_type_create_subarray(2,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype,ierr)
   call mpi_type_commit( ftype,ierr )
 
-  mk=8*iix*jx
+  mkiix= iix
+  mkjx = jx
+  mk = 8*mkiix*mkjx
+! mk = 8*iix*jx
   call mpi_file_set_view(fh, disp, mpi_real8, ftype, "native", mpi_info_null, ierr)
   call mpi_file_read_all( fh, U(1,1,mx), ix*jx, mpi_real8, mpi_status_ignore, ierr) ; disp = disp + mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype, "native", mpi_info_null, ierr)
