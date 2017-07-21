@@ -6,6 +6,7 @@ program main
 !-----------------------------------------------------------------------
 !     2009/08/01  S. Zenitani  1D HLL/HLLD solver
 !     2010/04/26  S. Zenitani  a bug fixed (sound speed in HLL flux)
+!     2017/07/20  S. Zenitani  changed primitive variables: v --> u
 !     2017/07/21  S. Zenitani  included in OpenMHD
 !-----------------------------------------------------------------------
   implicit none

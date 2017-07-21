@@ -3,6 +3,8 @@ Relativistic jet
 
 One dimensional relativistic magnetohydrodynamic (RMHD) code
 without the normal magnetic field (B_x=0).
+Since the 2010 paper, primitive variables have been changed
+from v to u = gamma v.
 
 
 Usage
