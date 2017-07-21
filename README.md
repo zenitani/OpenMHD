@@ -10,7 +10,7 @@ The latest version is available at the following URLs.
 Usage
 -------
 
-1. Edit Makefile in the relevant directory.
+1. Edit Makefile in the subdirectories.
 2. Configure physical parameters in the main file (usually main.f90) and
    the initial configuration file (model.f90).
 3. If not found, create an output directory "data/".
@@ -27,7 +27,7 @@ See the COPYING file.
 References
 -------------
 
-Numerical Schemes
+Numerical schemes
 
  * C. W. Shu, S. Osher, J. Comput. Phys. 77, 439 (1988)
  * B. van Leer, J. Comput. Phys. 23, 276 (1977)
@@ -45,4 +45,11 @@ Kelvin-Helmholtz instability
  * Y. Matsumoto, M. Hoshino, Geophys. Res. Lett. 31, L02807 (2004)
 
 Corotating interaction region
+
  * K. Tsubouchi, J. Geophys. Res. 114, A02101 (2009)
+
+Relativistic jet and relativistic MHD schemes
+
+ * S. Zenitani, M. Hesse, A. Klimas, ApJ, 712, 951 (2010)
+ * A. Mignone, M. Ugliano, G. Bodo, MNRAS, 393, 1141 (2009)
+ * A. Mignone, J. C. McKinney, MNRAS, 378, 1118 (2007)
