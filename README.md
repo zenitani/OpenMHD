@@ -35,18 +35,26 @@ Numerical schemes
  * K. F. Gurski, SIAM J. Sci. Comput. 25, 2165 (2004)
  * A. Dedner, F. Kemm, D. Kroner, C.-D. Munz, T. Schnitzer, M. Wesenberg, J. Comput. Phys. 175, 645 (2002)
 
-Magnetic reconnection
+1D Riemann problem
 
- * S. Zenitani, Phys. Plasmas 22, 032114 (2015)
- * S. Zenitani, T. Miyoshi, Phys. Plasmas 18, 022105 (2011)
+ * M. Brio, C. C. Wu, J. Comput. Phys. 75, 400 (1988)
+
+Corotating interaction region
+
+ * K. Tsubouchi, J. Geophys. Res. 114, A02101 (2009)
+
+Orszag-Tang vortex
+
+ * S. A. Orszag, C.-M. Tang, J. Fluid Mech. 90, 129 (1979)
 
 Kelvin-Helmholtz instability
 
  * Y. Matsumoto, M. Hoshino, Geophys. Res. Lett. 31, L02807 (2004)
 
-Corotating interaction region
+Magnetic reconnection
 
- * K. Tsubouchi, J. Geophys. Res. 114, A02101 (2009)
+ * S. Zenitani, T. Miyoshi, Phys. Plasmas 18, 022105 (2011)
+ * S. Zenitani, Phys. Plasmas 22, 032114 (2015)
 
 Relativistic jet and relativistic MHD schemes
 
