@@ -9,8 +9,18 @@ data_read,data,x,y,t,15
 ;data_read,data,x,y,t,8,ix1=0,ix2=1501,jx1=0,jx2=201
 
 ;; 2D image
-myimg = image(data[*,*,ro],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01,font_size=16,rgb_table=13,dimensions=[600,600])
+myimg = image(data[*,*,ro],x,y, $
+              axis_style=2,xtitle='$X$',ytitle='$Y$', $
+              xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01, $
+              font_size=16,rgb_table=13,dimensions=[600,600])
 ;; ,renderer=1) ;; use software rendering over a remote connection.
+
+;; flow vectors
+myvec = vector(data[*,*,vx],data[*,*,vy],x,y, $
+               x_subsample=40, y_subsample=20, thick=0.5, $
+               color='white', transparency=50, $
+;;                auto_color=1,rgb_table=54, $
+               /overplot)
 
 ;; useful options
 ;myimg.font_name = 'Times'
