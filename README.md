@@ -10,12 +10,23 @@ The latest version is available at the following URLs.
 Usage
 -------
 
-1. Edit Makefile in the subdirectories.
-2. Configure physical parameters in the main file (usually main.f90) and
+1. Edit Makefile in a subdirectory.
+2. Configure parameters in the main file (usually main.f90) and
    the initial configuration file (model.f90).
-3. If not found, create an output directory "data/".
-4. Make and run the program.
+3. Make and run the program.
+4. The program will output the data in the "data/" directory.
+5. Analyze the data. Sample IDL and python scripts are provided.
+   One can use them in the following way.
 
+IDL:
+
+    $ idl
+    IDL> .r batch
+
+python3/matplotlib:
+
+    $ ipython3 --pylab
+    In [1]: %run plot.py
 
 License
 ---------

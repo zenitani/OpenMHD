@@ -1,5 +1,5 @@
 !-*- mode: f90 -*-
-  integer, parameter :: version = 20170428
+  integer, parameter :: version = 20170728
   real(8), parameter :: gamma = 5.d0 / 3.d0
 !  real(8), parameter :: gamma = 2.d0
 ! do not edit

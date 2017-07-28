@@ -6,13 +6,7 @@ bx=11 & by=12 & bz=13 & ex=14 & ey=15 & ez=16 & pt=17
 d1 = (read_ascii('data/x-00000.dat',data_start=1)).FIELD01
 d2 = (read_ascii('data/x-00002.dat',data_start=1)).FIELD01
 
-;; Y axis (density)
-;; mypl1 = plot(d1[x,*],d1[ro,*],xtitle='x',ytitle='$\rho$',name='t=000')
-;; ;; ,renderer=1) ;; use software rendering over a remote connection.
-;; mypl2 = plot(d2[x,*],d2[ro,*],/overplot,name='t=600')
-;; mylg = legend(target=[mypl1,mypl2],position=[2000,6],/data,/auto_text_color)
-
-;; Y axis (|B|)
+;; Y axis (Lorentz factor)
 mypl1 = plot(d1[x,*],d1[u0,*],xrange=[-0.1,0.1],xtitle='x',ytitle='$\gamma$',name='t=0.0')
 ;; ,renderer=1) ;; use software rendering over a remote connection.
 mypl2 = plot(d2[x,*],d2[u0,*],/overplot,name='t=0.2')
@@ -27,7 +21,7 @@ mypl2.linestyle = 'solid'
 ;; mypl1.font_name = 'Times'
 ;; mypl1.font_name = 'Helivetica'
 
-;mylg.font_name = 'Times'
+;; mylg.font_name = 'Times'
 ;; mylg.shadow = 0
 mylg.font_size = '14'
 ;mylg.horizontal_spacing = 0.05

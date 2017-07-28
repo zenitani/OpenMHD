@@ -11,7 +11,7 @@ Usage
 -------
 
 1. Edit Makefile.
-2. Edit main.f90 and model.f90 for paraters.
+2. Edit parameters in the main.f90 and model.f90 files.
 3. If not found, create an output directory "data/".
 4. Make and run the program.
 
