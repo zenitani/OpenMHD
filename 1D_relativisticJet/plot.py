@@ -14,7 +14,7 @@ plt.xlim( -0.1, 0.1)
 plt.xlabel(r'$X$',fontsize=16)
 plt.ylabel(r'$\gamma$', fontsize=16)
 
-plt.legend( (line1, line2), ('t=0.0', 't=0.2'), loc='upper left', shadow=True)
+plt.legend( (line1, line2), ('t=0.0', 't=0.2'), loc='upper left', fontsize=14, shadow=True)
 
 #plt.tight_layout() # if necessary
 plt.show()

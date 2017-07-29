@@ -11,7 +11,7 @@ mypl1 = plot(d1[x,*],d1[u0,*],xrange=[-0.1,0.1],xtitle='x',ytitle='$\gamma$',nam
 ;; ,renderer=1) ;; use software rendering over a remote connection.
 mypl2 = plot(d2[x,*],d2[u0,*],/overplot,name='t=0.2')
 ;; legend
-mylg = legend(target=[mypl1,mypl2],position=[-0.05,18.0],/data,/auto_text_color)
+mylg = legend(target=[mypl1,mypl2],position=[-0.05,11.0],/data,/auto_text_color)
 
 ;; mypl.symbol = 'circle'
 ;; mypl.color  = 'red'
