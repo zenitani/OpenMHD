@@ -45,6 +45,10 @@ function eta(xx,yy,eta0,eta01)
   real(8), intent(in) :: xx, yy, eta0, eta01
 
 !  eta = eta0 + eta01 * ( cosh( sqrt( xx**2+yy**2 )/2.d0 ) )**(-2)
-  eta = eta0 + eta01 * ( cosh( sqrt( xx**2+yy**2 ) ) )**(-2)
+  eta = eta0 + eta01 * ( cosh(min( sqrt( xx**2+yy**2 ), 25.d0 )) )**(-2)
+
+! Here we use min(..., 25) to avoid an overflow problem on JSS/JAXA.
+! Note that (cosh(25))**(-2) = 7.7E-22 is much smaller than
+! the machine epsilon 10**(-16) in the 8-bit floating-point format.
 
 end function eta
