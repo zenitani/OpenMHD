@@ -7,7 +7,7 @@ subroutine step1(wk,wk1,wF,wG,dt,dx,ix,jx)
 !-----------------------------------------------------------------------
   integer, intent(in) :: ix, jx
   real(8), intent(in) :: wk(ix,jx,var1)
-  real(8) :: wk1(ix,jx,var1)
+  real(8), intent(out):: wk1(ix,jx,var1)
   real(8), intent(in) :: wF(ix,jx,var1), wG(ix,jx,var1)
   real(8), intent(in) :: dt, dx
 !-----------------------------------------------------------------------

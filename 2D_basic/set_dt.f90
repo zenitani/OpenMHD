@@ -17,7 +17,6 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
   real(8) :: B2, f1, f2, vfx, vfy, vtmp
 
   vmax = 0.d0
-  dt   = 99999.d0
 
   do j=1,jx
   do i=1,ix

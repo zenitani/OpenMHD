@@ -19,7 +19,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 ! slope limiters [input]: 0 (flat), 1 (minmod), 2 (MC), 3 (van Leer), 4 (Koren)
   integer, intent(in)  :: type
 !-----------------------------------------------------------------------
-  integer :: i, j, is, ie, js, je
+  integer :: i, j, is=0, ie=0, js=0, je=0
   real(8) :: gA, gB, gC      ! average, left, and right gradients
   real(8) :: grad
   real(8), parameter :: f1 = 1.d0 / 6.d0
@@ -29,9 +29,6 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !  wR = 0.d0
 !  wL = -999999999.d0
 !  wR = -999999999.d0
-
-  ! dummy values (to avoid a bug)
-  is=0; ie=0; js=0; je=0
 
   select case(dir)
   case(1)

@@ -25,7 +25,7 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
   if(( iix0.ne.iix ) .or. ( jx0.ne.jx )) then
      write(6,*) 'parameter mismatch'
      write(6,*) ' ix= ',iix,' ix0= ',iix0
-     write(6,*) ' jx= ',jx,' jx0= ',jx0
+     write(6,*) ' jx= ', jx,' jx0= ', jx0
      stop
   endif
 
