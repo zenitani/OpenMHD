@@ -13,11 +13,11 @@ x,y,t,data = openmhd.data_read(20)
 plt.clf()
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-myimg = plt.imshow(data[:,:,pr].T,origin='lower',cmap='bwr',extent=extent)
+myimg = plt.imshow(data[:,:,pr].T,origin='lower',cmap='seismic',extent=extent)
 
 # image operations (e.g. color map)
 #myimg.set_cmap('jet')
-#myimg.set_cmap('bwr')
+#myimg.set_cmap('seismic')
 
 # useful options
 # plt.grid()

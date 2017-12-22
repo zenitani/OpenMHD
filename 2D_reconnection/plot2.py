@@ -34,11 +34,11 @@ plt.clf()
 # 2D image
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='bwr',extent=extent,aspect='auto')
+myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='seismic',extent=extent,aspect='auto')
 
 # image operations (e.g. color map)
 #myimg.set_cmap('jet')
-#myimg.set_cmap('bwr')
+#myimg.set_cmap('seismic')
 
 # useful options
 # plt.grid()

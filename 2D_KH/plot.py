@@ -13,7 +13,7 @@ plt.clf()
 # extent: [left, right, bottom, top]
 # Note: ().T is necessary, because the imshow routine uses the image coordinates
 extent=[x[0],x[-1],y[0],y[-1]]
-myimg = plt.imshow((data[:,:,ro]).T,origin='lower',cmap='bwr',extent=extent)
+myimg = plt.imshow((data[:,:,ro]).T,origin='lower',cmap='seismic',extent=extent)
 
 # useful options
 # plt.grid()
