@@ -15,18 +15,18 @@ Usage
    the initial configuration file (model.f90).
 3. Make and run the program.
 4. The program will output the data in the "data/" directory.
-5. Analyze the data. Sample IDL and python scripts are provided.
+5. Analyze the data. Sample Python and IDL scripts are provided.
    One can use them in the following way.
+
+Python 3 (matplotlib):
+
+    $ ipython3 --pylab
+    In [1]: %run plot.py
 
 IDL:
 
     $ idl
     IDL> .r batch
-
-python3/matplotlib:
-
-    $ ipython3 --pylab
-    In [1]: %run plot.py
 
 License
 ---------
