@@ -14,6 +14,7 @@ subroutine step2(wk,wF,wG,dt,dx,ix,jx)
   real(8) :: dtx
 
   dtx = dt/dx
+!$omp parallel do private(i,j,k)
   do k=1,var1
      do j=2,jx-1
         do i=2,ix-1
@@ -22,6 +23,7 @@ subroutine step2(wk,wF,wG,dt,dx,ix,jx)
         enddo
      enddo
   enddo
+!$omp end parallel do
   
   return
 end subroutine step2
