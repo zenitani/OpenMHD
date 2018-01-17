@@ -9,7 +9,7 @@ program main
   implicit none
   include 'mpif.h' ! for MPI
   include 'param.h'
-  integer, parameter :: ix =  25 + 2 ! 25 (cells per core) x 8 (cores) = 200
+  integer, parameter :: ix =  50 + 2 ! 50 (cells per core) x 4 (cores) = 200
   integer, parameter :: jx = 200 + 2
   integer, parameter :: loop_max = 200000
   real(8), parameter :: tend  = 4.0d0
