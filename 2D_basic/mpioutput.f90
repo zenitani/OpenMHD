@@ -1,4 +1,11 @@
 subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
+!-----------------------------------------------------------------------
+!     MPI-IO file output routine
+!-----------------------------------------------------------------------
+!     2015/04/06  S. Zenitani  MPI-IO
+!     2017/04/14  S. Zenitani  no longer use record markers
+!     2018/01/17  S. Zenitani  subarray for mpi_file_write_all
+!-----------------------------------------------------------------------
   implicit none
   include 'param.h'
   include 'mpif.h'
@@ -55,10 +62,10 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
   disp = disp+8*jx
 
 ! --------- 2D matrix of iix * jx -------------------------------------------------
-  gsize = (/iix,jx/) ;  subsize = (/(ie-is+1),jx/) ;  start = (/myrank*(ix-2)+(is-1), 0/)
+  gsize = (/iix,jx/);  subsize = (/(ie-is+1),jx/);  start = (/myrank*(ix-2)+(is-1), 0/)
   call mpi_type_create_subarray(2,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype1,ierr)
   call mpi_type_commit( ftype1,ierr )
-  gsize = (/ix,jx/) ;  subsize = (/(ie-is+1),jx/) ;  start = (/(is-1), 0/)
+  gsize = (/ix,jx/);  subsize = (/(ie-is+1),jx/);  start = (/(is-1), 0/)
   call mpi_type_create_subarray(2,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype2,ierr)
   call mpi_type_commit( ftype2,ierr )
 
@@ -67,32 +74,32 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
   mk = 8*mkiix*mkjjx
 ! mk = 8*iix*jx
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,mx), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,mx), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,my), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,my), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,mz), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,mz), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,en), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,en), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,ro), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,ro), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
 
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,bx), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,bx), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,by), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,by), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,bz), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,bz), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, U(1,1,ps), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, U(1,1,ps), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, V(1,1,vx), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, V(1,1,vx), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, V(1,1,vy), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, V(1,1,vy), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, V(1,1,vz), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, V(1,1,vz), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
-  call mpi_file_write_all( fh, V(1,1,pr), 1, ftype2, mpi_status_ignore, ierr) ; disp = disp + mk
+  call mpi_file_write_all( fh, V(1,1,pr), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
 ! --------- 2D matrix of iix * jx -------------------------------------------------
 
   call mpi_file_close( fh, ierr )

@@ -276,10 +276,10 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
      aR = max( max(VL(i,j,vn),VR(i,j,vn))+f1, 0.d0 ) ! *** if (aR < 0), then F = F(R) ***
 
 !!    F = F(L)
-!     if ( aL .ge. 0 ) then
+!     if ( aL >= 0 ) then
 !        F(i,j,:) = FL(:)
 !!    F = F(R)
-!     elseif ( aR .le. 0 ) then
+!     elseif ( aR <= 0 ) then
 !        F(i,j,:) = FR(:)
 !!    F = F(HLLC)
 !     else
@@ -302,7 +302,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !    pt = ptR + VR(i,j,ro) * ( aR - VR(i,j,vn) ) * ( aM - VR(i,j,vn) )
 
 !!    F = F(L*) or F(L)
-!     if ( aM .ge. 0 ) then
+!     if ( aM >= 0 ) then
 
      roL = VL(i,j,ro) * ( aL - VL(i,j,vn) ) / ( aL - aM )
      enL = ( ( aL - VL(i,j,vn) )*UL(en) - ptL*VL(i,j,vn) + pt * aM + &
@@ -412,10 +412,10 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
      aR = max( VL(i,j,vn), VR(i,j,vn) ) + f1
 
 !    F = F(L)
-     if ( aL .ge. 0 ) then
+     if ( aL >= 0 ) then
         F(i,j,:) = FL(:)
 !    F = F(R)
-     elseif ( aR .le. 0 ) then
+     elseif ( aR <= 0 ) then
         F(i,j,:) = FR(:)
 
 !    HLLC/HLLD flux
@@ -446,14 +446,14 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !       we should employ HLLC-G method for logical consistency:
 !       i.e.:  vy_L* = vy_R* (HLLC-G)  <==>  vy_L** = vy_R** (HLLD).
 !       if ( .true. ) then
-        if ( ( aL .ge. ( aM - hllg_factor*aVL ) ) .or. &
-             ( ( aM + hllg_factor*aVR ) .ge. aR ) ) then
+        if ( ( aL >= ( aM - hllg_factor*aVL ) ) .or. &
+             ( ( aM + hllg_factor*aVR ) >= aR ) ) then
 
            at1 = U_hll(mt1) / U_hll(ro) ! vt1_HLL
            at2 = U_hll(mt2) / U_hll(ro) ! vt2_HLL
 
 !          F = F(L*)
-           if ( aM .ge. 0 ) then
+           if ( aM >= 0 ) then
 
               U2(en) = ( ( aL-VL(i,j,vn) )*UL(en) - ptL*VL(i,j,vn) + pt*aM + &
                    U_hll(bn)*( vBL - aM*U_hll(bn) - at1*U_hll(bt1) - at2*U_hll(bt2) ) ) / ( aL - aM )
@@ -518,7 +518,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
            aR1 = aM + aVR
 
 !          F = F(L*)
-           if( aL1 .ge. 0 ) then
+           if( aL1 >= 0 ) then
 
               F(i,j,mx:en) = aL *( UL1(mx:en) - UL(mx:en)   ) + FL(mx:en)
               F(i,j,ro)    = aL *( UL1(ro)    - VL(i,j,ro)  ) + FL(ro)
@@ -526,7 +526,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
               F(i,j,bt2)   = aL *( UL1(bt2)   - VL(i,j,bt2) ) + FL(bt2)
 
 !          F = F(R*)
-           elseif( aR1 .le. 0 ) then
+           elseif( aR1 <= 0 ) then
 
               F(i,j,mx:en) = aR *( UR1(mx:en) - UR(mx:en)   ) + FR(mx:en)
               F(i,j,ro)    = aR *( UR1(ro)    - VR(i,j,ro)  ) + FR(ro)
@@ -547,7 +547,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
               U2(bt2) = f1 * ( roLs*UR1(bt2) + roRs*UL1(bt2) + roLs*roRs*( vt2R-vt2L )*f2 )
 
 !             F = F(L**)
-              if( aM .ge. 0 ) then
+              if( aM >= 0 ) then
 
                  U2(ro) = roL
                  U2(en) = UL1(en) - roLs * ( vt1L*UL1(bt1) + vt2L*UL1(bt2) &

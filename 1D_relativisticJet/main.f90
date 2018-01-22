@@ -41,7 +41,7 @@ program main
   tout = -dt/3.d0
   kout =  0
 
-  if ( dt .gt. dtout ) then
+  if ( dt > dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
      stop
   endif
@@ -58,7 +58,7 @@ program main
      call u2v(U,V,ix,jx)
 !   -----------------  
 !    [ output ]
-     if ( t .ge. tout ) then
+     if ( t >= tout ) then
         write(6,*) 'data output   t = ', t
         write(filename,990) kout
 990     format ('data/x-',i5.5,'.dat')
@@ -67,11 +67,11 @@ program main
         tout = tout + dtout
      endif
 !    [ end? ]
-     if ( k .eq. loop_max ) then
-        write(6,*) 'max loop'
+     if ( t >= tend ) then
         goto 1000
      endif
-     if ( t .ge. tend ) then
+     if ( k >= loop_max ) then
+        write(6,*) 'max loop'
         goto 1000
      endif
 !   -----------------  
@@ -88,12 +88,12 @@ program main
 !    VR, VL ==> Riemann Flux
      call flux_solver(F,VL,VR,ix,jx,1,hlld)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
         do i=2,ix-1
            U1(i,1,:) = U(i,1,:) + dtx*( F(i-1,1,:) - F(i,1,:) )
         enddo
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
         do i=2,ix-1
            U1(i,1,:) = U(i,1,:) + 0.5d0*dtx*( F(i-1,1,:) - F(i,1,:) )
@@ -119,12 +119,12 @@ program main
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    VR, VL ==> Riemann Flux
      call flux_solver(F,VL,VR,ix,jx,1,hlld)
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
         do i=2,ix-1
            U(i,1,:) = 0.5d0*( U(i,1,:)+U1(i,1,:) + dtx*( F(i-1,1,:)-F(i,1,:) ) )
         enddo
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
         do i=2,ix-1
            U(i,1,:) = U(i,1,:) + dtx * ( F(i-1,1,:) - F(i,1,:) )

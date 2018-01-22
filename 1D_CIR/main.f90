@@ -46,7 +46,7 @@ program main
   t_output = -dt/3.d0
   n_output =  0
 
-  if ( dt .gt. dtout ) then
+  if ( dt > dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
   endif
   write(6,*) '[Params]'
@@ -65,7 +65,7 @@ program main
      call u2v(U,V,ix,jx)
 !   -----------------  
 !    [ output ]
-     if ( t .ge. t_output ) then
+     if ( t >= t_output ) then
         write(6,*) 'data output   t = ', t
         write(filename,990) n_output
 990     format ('data/x-',i5.5,'.dat')
@@ -74,8 +74,8 @@ program main
         t_output = t_output + dtout
      endif
 !    [ end? ]
-     if ( t .ge. tend )  exit
-     if ( k .eq. loop_max ) then
+     if ( t >= tend )  exit
+     if ( k >= loop_max ) then
         write(6,*) 'max loop'
         exit
      endif
@@ -98,12 +98,12 @@ program main
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
         do i=2,ix-1
            U1(i,1,:) = U(i,1,:) + dtx*( F(i-1,1,:) - F(i,1,:) )
         enddo
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
         do i=2,ix-1
            U1(i,1,:) = U(i,1,:) + 0.5d0*dtx*( F(i-1,1,:) - F(i,1,:) )
@@ -131,12 +131,12 @@ program main
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
         do i=2,ix-1
            U(i,1,:) = 0.5d0*( U(i,1,:)+U1(i,1,:) + dtx*( F(i-1,1,:)-F(i,1,:) ) )
         enddo
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
         do i=2,ix-1
            U(i,1,:) = U(i,1,:) + dtx * ( F(i-1,1,:) - F(i,1,:) )

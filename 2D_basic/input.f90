@@ -17,7 +17,7 @@ subroutine input(filename,ix,jx,t,x,y,U)
   read(15) t
   read(15) ix0
   read(15) jx0
-  if(( ix0.ne.ix ) .or. ( jx0.ne.jx )) then
+  if(( ix0 /= ix ) .or. ( jx0 /= jx )) then
      write(6,*) 'parameter mismatch'
      write(6,*) ' ix= ',ix,' ix0= ',ix0
      write(6,*) ' jx= ',jx,' jx0= ',jx0

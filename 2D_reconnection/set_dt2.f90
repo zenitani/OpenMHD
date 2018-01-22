@@ -7,7 +7,7 @@ subroutine set_dt2(Rm,dt,dx,cfl)
   real(8), intent(in) :: Rm, dx, cfl
   real(8), intent(inout) :: dt
 
-  if( dt .gt. 0.5d0*cfl*Rm*(dx**2) ) then
+  if( dt > 0.5d0*cfl*Rm*(dx**2) ) then
      dt = 0.5d0*cfl*Rm*(dx**2)
   endif
 

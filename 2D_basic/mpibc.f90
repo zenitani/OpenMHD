@@ -16,36 +16,27 @@ subroutine mpibc(U,ix,jx,myrank,npe)
 
   mright = myrank+1
   mleft  = myrank-1
-  if (myrank.eq.(npe-1))  mright  = 0
-  if (myrank.eq.0      )  mleft   = npe-1
+  if( myrank == npe-1 )  mright = 0
+  if( myrank == 0     )  mleft  = npe-1
 
   bufsnd(:,:) = U(2,:,:)
-
-  call mpi_barrier(mpi_comm_world,merr)
+! call mpi_barrier(mpi_comm_world,merr)
   call mpi_sendrecv( &
-       bufsnd,mmx,mpi_double_precision,mleft ,0, &
-       bufrcv,mmx,mpi_double_precision,mright,0, &
+       bufsnd,mmx,mpi_real8,mleft ,0, &
+       bufrcv,mmx,mpi_real8,mright,0, &
        mpi_comm_world,mstatus,merr)
-      
   U(ix,:,:) = bufrcv(:,:)
 
 !----------------------------------------------------------------------
 !  rightward transfer :  PE(myrank)  --->  PE(myrank+1)
 !----------------------------------------------------------------------
 
-  mright = myrank+1
-  mleft  = myrank-1
-  if (myrank.eq.(npe-1))  mright  = 0
-  if (myrank.eq.0      )  mleft   = npe-1
-
   bufsnd(:,:) = U(ix-1,:,:)
-
-  call mpi_barrier(mpi_comm_world,merr)
+! call mpi_barrier(mpi_comm_world,merr)
   call mpi_sendrecv( &
-       bufsnd,mmx,mpi_double_precision,mright,1, &
-       bufrcv,mmx,mpi_double_precision,mleft ,1, &
+       bufsnd,mmx,mpi_real8,mright,1, &
+       bufrcv,mmx,mpi_real8,mleft ,1, &
        mpi_comm_world,mstatus,merr)
-
   U(1,:,:) = bufrcv(:,:)
 
 !----------------------------------------------------------------------

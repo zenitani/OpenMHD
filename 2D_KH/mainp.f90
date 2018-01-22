@@ -56,17 +56,15 @@ program main
   call mpibc(U,ix,jx,myrank,npe)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
 
-  call mpi_allreduce(mpi_in_place,dt,1,mpi_double_precision, &
-       mpi_min,mpi_comm_world,merr)
-  call mpi_allreduce(mpi_in_place,ch,1,mpi_double_precision, &
-       mpi_max,mpi_comm_world,merr)
+  call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
+  call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
   call mpi_barrier(mpi_comm_world,merr)
 
-  if ( dt .gt. dtout ) then
+  if ( dt > dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
      stop
   endif
-  if( myrank.eq.0 ) then
+  if( myrank == 0 ) then
      write(6,*) '[Params]'
      write(6,*) 'Code version: ', version, '  MPI node # : ', npe
      write(6,998) dt, dtout, npe*(ix-2)+2, ix, jx
@@ -77,13 +75,13 @@ program main
   endif
   call mpi_barrier(mpi_comm_world,merr)
 
-  if ( n_start .ne. 0 ) then
-     if ( io_type .eq. 0 ) then
+  if ( n_start /= 0 ) then
+     if ( io_type == 0 ) then
         write(6,*) 'reading data ...   rank = ', myrank
         write(filename,990) myrank, n_start
         call input(filename,ix,jx,t,x,y,U)
      else
-        if( myrank.eq.0 )  write(6,*) 'reading data ...'
+        if( myrank == 0 )  write(6,*) 'reading data ...'
         write(filename,980) n_start
         call mpiinput(filename,ix,jx,t,x,y,U,myrank,npe)
      endif
@@ -94,7 +92,7 @@ program main
 !-----------------------------------------------------------------------
   do k=1,loop_max
 
-     if( myrank.eq.0 ) then
+     if( myrank == 0 ) then
         write(6,*) ' t = ', t
      endif
 !    Recovering primitive variables
@@ -102,22 +100,14 @@ program main
      call u2v(U,V,ix,jx)
 !   -----------------  
 !    [ output ]
-     if ( t .ge. t_output ) then
-        if (( k .eq. 1 ).and.( n_start .ne. 0 )) then
-!           if ( io_type .eq. 0 ) then
-!              write(filename,991) myrank, n_start
-!              call output(filename,ix,jx,t,x,y,U,V)
-!           else
-!              write(filename,981) n_output
-!              call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
-!           endif
-        else
-           if ( io_type .eq. 0 ) then
+     if ( t >= t_output ) then
+        if (( k > 1 ).or.( n_start == 0 )) then
+           if ( io_type == 0 ) then
               write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
               write(filename,990) myrank, n_output
               call output(filename,ix,jx,t,x,y,U,V)
            else
-              if( myrank.eq.0 )  write(6,*) 'writing data ...   t = ', t
+              if( myrank == 0 )  write(6,*) 'writing data ...   t = ', t
               write(filename,980) n_output
               call mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
            endif
@@ -127,18 +117,16 @@ program main
         call mpi_barrier(mpi_comm_world,merr)
      endif
 !    [ end? ]
-     if ( t .ge. tend )  exit
-     if ( k .eq. loop_max ) then
+     if ( t >= tend )  exit
+     if ( k >= loop_max ) then
         write(6,*) 'max loop'
         exit
      endif
 !   -----------------  
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-     call mpi_allreduce(mpi_in_place,dt,1,mpi_double_precision, &
-          mpi_min,mpi_comm_world,merr)
-     call mpi_allreduce(mpi_in_place,ch,1,mpi_double_precision, &
-          mpi_max,mpi_comm_world,merr)
+     call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
+     call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
 
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
@@ -181,10 +169,10 @@ program main
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
      call flux_glm(G,VL,VR,ch,ix,jx,2)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
         call rk21(U,U1,F,G,dt,dx,ix,jx)
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
         call step1(U,U1,F,G,dt,dx,ix,jx)
      endif
@@ -229,10 +217,10 @@ program main
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
      call flux_glm(G,VL,VR,ch,ix,jx,2)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
         call rk22(U,U1,F,G,dt,dx,ix,jx)
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
         call step2(U,F,G,dt,dx,ix,jx)
      endif
@@ -248,7 +236,7 @@ program main
 !-----------------------------------------------------------------------
 
   call mpi_finalize(merr)
-  if( myrank.eq.0 )  write(6,*) '== end =='
+  if( myrank == 0 )  write(6,*) '== end =='
 
 980 format ('data/field-',i5.5,'.dat')
 990 format ('data/field-rank',i4.4,'-',i5.5,'.dat')

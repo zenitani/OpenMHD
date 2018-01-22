@@ -29,13 +29,13 @@ subroutine u2v(U,V,ix,jx)
 
 !$omp end sections
 !$omp end section
-  if( minval( V(:,:,pr) ) .le. 0 ) then
+  if( minval( V(:,:,pr) ) <= 0 ) then
      pos1 = minloc(V(:,:,pr))
      write(6,*) 'negative pressure at ',pos1,' P: ',V(pos1(1),pos1(2),pr)
      stop
   endif
 !$omp end section
-  if( minval( U(:,:,ro) ) .le. 0 ) then
+  if( minval( U(:,:,ro) ) <= 0 ) then
      pos2 = minloc(U(:,:,ro))
      write(6,*) 'negative density at ',pos2,' rho: ',U(pos2(1),pos2(2),ro)
      stop

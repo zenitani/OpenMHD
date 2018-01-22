@@ -41,9 +41,9 @@ subroutine u2v(U,V,ix,jx)
      f1 = - 4 * ( Ue - B2 )
      f2 = M2 + ( B2 - 2*Ue )*B2
      W = ( - f1 + sqrt(f1**2 - 12*f2))/6.d0
-     if( W.lt.Ud ) then
+     if( W < Ud ) then
         W = Ud
-     elseif( W.gt.(4.d0/3.d0)*(Ue-B2/2.d0) ) then
+     elseif( W > (4.d0/3.d0)*(Ue-B2/2.d0) ) then
         W = (4.d0/3.d0)*(Ue-B2/2.d0)
      endif
      
@@ -56,7 +56,7 @@ subroutine u2v(U,V,ix,jx)
         f1 = W + B2
 
         v2 = (M2 + S2_W2*(f1 + W))/(f1*f1)
-        if( v2.gt.1 )then
+        if( v2 > 1.d0 )then
            write(6,*) 'stop: v2 > 1', k, 'th iteration'
            stop
         endif
@@ -76,12 +76,12 @@ subroutine u2v(U,V,ix,jx)
 
         W = W - dW
 !        write(6,*) k, ' W, dW, dW/W', W, dW, dW/W
-        if (abs(dW).lt.(threshold*W)) then
-           if( pre.gt.0.d0 ) then
+        if (abs(dW) < (threshold*W)) then
+           if( pre > 0.d0 ) then
               goto 1000
            endif
         endif
-        if( k.eq.loop_max ) then
+        if( k >= loop_max ) then
            write(6,*) 'No convergence'
            write(6,*) 'U: ', i, Ud, Ue, Um(1:3)
            stop
@@ -95,7 +95,7 @@ subroutine u2v(U,V,ix,jx)
 
      Vv(1:3) = (1.d0/(W+B2))*( Um(1:3) + (S/W)*Ub(1:3) )
      v2 = dot_product( Vv(1:3), Vv(1:3) )
-     if( v2 .ge. 1 ) then
+     if( v2 >= 1.d0 ) then
         write(6,*) 'error: superluminous velocity', i, v2
         stop
      endif

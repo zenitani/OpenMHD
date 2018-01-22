@@ -43,7 +43,7 @@ program main
   t_output = -dt/3.d0
   n_output =  0
 
-  if ( dt .gt. dtout ) then
+  if ( dt > dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
      stop
   endif
@@ -63,7 +63,7 @@ program main
      call u2v(U,V,ix,jx)
 !   -----------------  
 !    [ output ]
-     if ( t .ge. t_output ) then
+     if ( t >= t_output ) then
         write(6,*) 'data output   t = ', t
         write(filename,990) n_output
 990     format ('data/field-',i5.5,'.dat')
@@ -72,8 +72,8 @@ program main
         t_output = t_output + dtout
      endif
 !    [ end? ]
-     if ( t .ge. tend )  exit
-     if ( k .eq. loop_max ) then
+     if ( t >= tend )  exit
+     if ( k >= loop_max ) then
         write(6,*) 'max loop'
         exit
      endif
@@ -122,10 +122,10 @@ program main
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
      call flux_glm(G,VL,VR,ch,ix,jx,2)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
         call rk21(U,U1,F,G,dt,dx,ix,jx)
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
         call step1(U,U1,F,G,dt,dx,ix,jx)
      endif
@@ -171,10 +171,10 @@ program main
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
      call flux_glm(G,VL,VR,ch,ix,jx,2)
 
-     if( time_type .eq. 0 ) then
+     if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
         call rk22(U,U1,F,G,dt,dx,ix,jx)
-     elseif( time_type .eq. 1 ) then
+     elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
         call step2(U,F,G,dt,dx,ix,jx)
      endif

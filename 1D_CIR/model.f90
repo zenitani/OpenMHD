@@ -78,7 +78,7 @@ subroutine model(U,V,x,y,dx,ix,jx)
 !    V(i,j,pr) = pr0
 ! pressure balance model (MA is constant... B is variable)
      V(i,j,pr) = ptot - 0.5d0 * B2
-     if( V(i,j,pr) .lt. 0 ) then
+     if( V(i,j,pr) < 0.d0 ) then
         write(6,*) 'init error'
         stop
      endif

@@ -24,7 +24,7 @@ subroutine model(U,V,x,y,dx,ix,jx)
   do j=1,jx
   do i=1,ix
 ! -------- left --------------------
-     if ( x(i) .lt. 0.d0 ) then
+     if ( x(i) < 0.d0 ) then
 ! Dai & Woodward (1994)
         ro0 = 1.08d0
         pr0 = 0.95d0

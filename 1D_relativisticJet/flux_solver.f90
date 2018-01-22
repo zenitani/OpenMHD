@@ -151,7 +151,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,hlld)
 
 ! ========== standard HLL ==========
 !    F = F(L)
-     if ( aL .gt. 0 ) then
+     if ( aL > 0 ) then
         Fd(i)   = FL(de)
         Fm(i,1) = FL(mn)
         Fm(i,2) = FL(mt1)
@@ -161,7 +161,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,hlld)
         Fb(i,2) = FL(bt1)
         Fb(i,3) = FL(bt2)
 !    F = F(R)
-     elseif ( aR .lt. 0 ) then
+     elseif ( aR < 0 ) then
         Fd(i)   = FR(de)
         Fm(i,1) = FR(mn)
         Fm(i,2) = FR(mt1)
@@ -196,17 +196,17 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,hlld)
 !       aM : speed of contact/tangential discon.
            aM = ( pt + aR*UR(mn) - FR(mn) ) &
                 / ( aR*( UR(en)+pt ) - FR(en) )
-           if ( ( aM .lt. aL).or.( aM .gt. aR )) then
+           if ( ( aM < aL).or.( aM > aR )) then
               write(6,*) 'something is wrong in HLLD: ', aL, aM, aR
               stop
            endif
 !          use HLLD only when |aR-aM| or |aM-aL| > threshold
-           if( ( (aR-aM).gt.threshold ).and.( (aM-aL).gt.threshold ) ) then
+           if( ( (aR-aM) > threshold ).and.( (aM-aL) > threshold ) ) then
 !              write(6,*) 'HLLD'
 !             HLLF flux : F_aL = FL + aL*(U_aL-UL)
 !             Anyway, we are dealing with discrete numerical values
 !             f2 = lambda * p + Re = E + p
-              if ( aM .ge. 0 ) then
+              if ( aM >= 0 ) then
                  f1 = 1.d0 / ( aL - aM )
                  Rd   = ( aL*UL(de)  - FL(de)  )
                  Rmn  = ( aL*UL(mn)  - FL(mn)  )

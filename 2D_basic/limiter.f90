@@ -88,10 +88,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            do i=2,ix-1
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
-!             if( gA*gB .le. 0 ) then
+!             if( gA*gB <= 0 ) then
 !                grad = 0.d0
 !             else
-!                if( gA .gt. 0 ) then
+!                if( gA > 0 ) then
 !                   grad = min(gA,gB)
 !                else
 !                   grad = max(gA,gB)
@@ -147,10 +147,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
               gB =        ( wk(i+1,j)-wk(i,j)  )
               gC = 0.25d0*( wk(i+1,j)-wk(i-1,j))
 !             gC = 0.5d0*( wk(i+1,j)-wk(i-1,j))
-!             if( gA*gB .le. 0 ) then
+!             if( gA*gB <= 0 ) then
 !                grad = 0.d0
 !             else
-!                if( gA .gt. 0 ) then
+!                if( gA > 0 ) then
 !                   grad = min(gA,gB,gC)
 !!                   grad = min(2*gA,2*gB,gC)
 !                else
@@ -207,7 +207,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            do i=2,ix-1
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
-              if( gA*gB .le. 0 ) then
+              if( gA*gB <= 0 ) then
                  grad = 0.d0
               else
                  grad = gA*gB / ( gA + gB )
@@ -233,7 +233,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            do i=is,ie
               gA = ( wk(i,j)  -wk(i,j-1))
               gB = ( wk(i,j+1)-wk(i,j)  )
-              if( gA*gB .le. 0 ) then
+              if( gA*gB <= 0 ) then
                  grad = 0.d0
               else
                  grad = gA*gB / ( gA + gB )
@@ -264,13 +264,13 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            do i=2,ix-1
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
-!             if( gA*gB .le. 0 ) then
+!             if( gA*gB <= 0 ) then
 !                wR(i-1,j) = wk(i,j)
 !                wL(i,j)   = wk(i,j)
 !             else
               gC = f1*( 2*gA+gB )
               wR(i-1,j) = wk(i,j) - (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
-!             if( gA .gt. 0 ) then
+!             if( gA > 0 ) then
 !                grad = min(gA,gB,gC)
 !             else
 !                grad = max(gA,gB,gC)
@@ -279,7 +279,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
               gC = f1*( gA+2*gB )
               wL(i,j) = wk(i,j) + (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
-!             if( gA .gt. 0 ) then
+!             if( gA > 0 ) then
 !                grad = min(gA,gB,gC)
 !             else
 !                grad = max(gA,gB,gC)

@@ -21,39 +21,30 @@ subroutine mpibc_vlvr_f(VL,VR,ix,jx,myrank,npe)
 !  from PE(myrank) to PE(myrank-1) for new da(ix)
 !----------------------------------------------------------------------
 
-  mright=  myrank+1
-  mleft =  myrank-1
-  if (myrank.eq.(npe-1)) mright  = 0
-  if (myrank.eq.0      ) mleft   = npe-1
+  mright = myrank+1
+  mleft  = myrank-1
+  if( myrank == npe-1 )  mright = 0
+  if( myrank == 0     )  mleft  = npe-1
 
-  bufsnd(:,:)=VR(1,:,:)
-
-  call mpi_barrier(mpi_comm_world,merr)
+  bufsnd(:,:) = VR(1,:,:)
+! call mpi_barrier(mpi_comm_world,merr)
   call mpi_sendrecv( &
-       bufsnd,mmx,mpi_double_precision,mleft ,0, &
-       bufrcv,mmx,mpi_double_precision,mright,0, &
+       bufsnd,mmx,mpi_real8,mleft ,0, &
+       bufrcv,mmx,mpi_real8,mright,0, &
        mpi_comm_world,mstatus,merr)
-      
-  VR(ix-1,:,:)=bufrcv(:,:)
+  VR(ix-1,:,:) = bufrcv(:,:)
 
 !----------------------------------------------------------------------
 !  from PE(myrank) to PE(myrank+1) for new da(1)
 !----------------------------------------------------------------------
 
-  mright=  myrank+1
-  mleft =  myrank-1
-  if (myrank.eq.(npe-1)) mright  = 0
-  if (myrank.eq.0      ) mleft   = npe-1
-
-  bufsnd(:,:)=VL(ix-1,:,:)
-
-  call mpi_barrier(mpi_comm_world,merr)
+  bufsnd(:,:) = VL(ix-1,:,:)
+! call mpi_barrier(mpi_comm_world,merr)
   call mpi_sendrecv( &
-       bufsnd,mmx,mpi_double_precision,mright,1, &
-       bufrcv,mmx,mpi_double_precision,mleft ,1, &
+       bufsnd,mmx,mpi_real8,mright,1, &
+       bufrcv,mmx,mpi_real8,mleft ,1, &
        mpi_comm_world,mstatus,merr)
-
-  VL(1,:,:)=bufrcv(:,:)
+  VL(1,:,:) = bufrcv(:,:)
 !  call mpi_barrier(mpi_comm_world,merr)
 
   return

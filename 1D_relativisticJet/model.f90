@@ -44,7 +44,7 @@ subroutine model(U,x,y,dx,ix,jx)
   y(j) = 0.d0
   do i=1,ix
 !    left
-     if ( x(i) .lt. 0.d0 ) then
+     if ( x(i) < 0.d0 ) then
         V(ro) = roL
         V(pr) = prL
         V(ux) = uxL
