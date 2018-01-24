@@ -2,7 +2,7 @@ subroutine bc(U,ix,jx)
   implicit none
   include 'param.h'
   integer, intent(in) :: ix, jx
-  real(8) :: U(ix,jx,var1)
+  real(8), intent(inout) :: U(ix,jx,var1)
 !----------------------------------------------------------------------
 
 ! left/right

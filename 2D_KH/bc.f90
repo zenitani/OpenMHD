@@ -2,14 +2,14 @@ subroutine bc(U,ix,jx)
   implicit none
   include 'param.h'
   integer, intent(in) :: ix, jx
-  real(8) :: U(ix,jx,var1)
+  real(8), intent(inout) :: U(ix,jx,var1)
 !----------------------------------------------------------------------
 
 ! periodic BC
   U(ix,:,:) = U(   2,:,:)
   U( 1,:,:) = U(ix-1,:,:)
 
-! top/bottom walls
+! top/bottom boundaries
   U(:,1, ro) = U(:,2, ro)
   U(:,1, mx) = U(:,2, mx)
   U(:,1, my) =-U(:,2, my)
