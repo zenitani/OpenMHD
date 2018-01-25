@@ -34,16 +34,10 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V,myrank,npe)
   endif
   disp = disp + 8 + 4 + 4
 
-  if( myrank==0 ) then
-     is = 1
-     ie = ix-1
-  elseif( myrank == (npe-1) ) then
-     is = 2
-     ie = ix
-  else
-     is = 2
-     ie = ix-1
-  endif
+  is = 2
+  ie = ix-1
+  if( myrank == 0     )  is = 1
+  if( myrank == npe-1 )  ie = ix
 
 ! --------- 1D matrix of iix -------------------------------------------------
   call mpi_type_create_subarray(1,iix,(ie-is+1),myrank*(ix-2)+(is-1),mpi_order_fortran,mpi_real8,ftype1,ierr)

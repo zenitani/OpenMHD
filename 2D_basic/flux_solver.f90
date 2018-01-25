@@ -7,7 +7,6 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !-----------------------------------------------------------------------
 !     2010/05/11  S. Zenitani  HLLC-G solver
 !     2010/05/12  S. Zenitani  HLLD solver
-!     2010/09/18  S. Zenitani  HLLD solver: fixed some bugs
 !     2015/07/29  S. Zenitani  HLL solver: if-statements ==> max/min functions
 !     2015/08/15  S. Zenitani  HLLC-G solver: optimization
 !     2016/09/06  S. Zenitani  X/Y/Z directions
@@ -216,9 +215,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
   !  HLLC solver
   !-----------------------------------------------------------------------
   case(2)
-!$omp parallel do &
-!$omp private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aR,aM,at1,at2) &
-!$omp private(ptL,ptR,pt,roL,roR,enL,enR,U_hll)
+!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll)
      do j=js,je
      do i=is,ie
 
@@ -351,10 +348,8 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
   !   HLLD solver
   !-----------------------------------------------------------------------
   case(3)
-!$omp parallel do &
-!$omp private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aL1,aM,aR1,aR,aVL,aVR) &
-!$omp private(ptL,ptR,UL1,UR1,U2,U_hll,pt) &
-!$omp private(roL,roR,vt1L,vt1R,vt2L,vt2R,at1,at2,roLs,roRs)
+!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll, &
+!$omp&                    aL1,aR1,aVL,aVR,UL1,UR1,U2,vt1L,vt1R,vt2L,vt2R,roLs,roRs)
   do j=js,je
   do i=is,ie
 
