@@ -1,5 +1,5 @@
 !-*- mode: f90 -*-
-  integer, parameter :: version = 20180128
+  integer, parameter :: version = 20180214
   real(8), parameter :: gamma = 5.d0 / 3.d0
 !  real(8), parameter :: gamma = 2.d0
 ! do not edit
@@ -8,7 +8,7 @@
   integer, parameter :: my = 2, vy = 2
   integer, parameter :: mz = 3, vz = 3
   integer, parameter :: en = 4, pr = 4
-  integer, parameter :: ro = 5
+  integer, parameter :: ro = 5 ! rho
   integer, parameter :: bx = 6
   integer, parameter :: by = 7
   integer, parameter :: bz = 8

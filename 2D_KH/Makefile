@@ -7,7 +7,7 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = /opt/openmpi64i/bin/mpif90 -g -m64
 # F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -openmp
-### XC
+### CfCA/XC, KDK-A system
 # F90 = ftn -hnoomp # OpenMP OFF
 # F90 = ftn -homp   # OpenMP ON
 ### JAXA/FX100
