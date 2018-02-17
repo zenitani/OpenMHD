@@ -15,7 +15,7 @@ subroutine rk22(wk,wk1,wF,wG,dt,dx,ix,jx)
   real(8) :: dtx
 
   dtx = dt/dx
-!$omp parallel do private(i,j,k)
+!$omp parallel do private(i,j,k) collapse(2)
   do k=1,var1
      do j=2,jx-1
         do i=2,ix-1

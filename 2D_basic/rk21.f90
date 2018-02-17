@@ -17,7 +17,8 @@ subroutine rk21(wk,wk1,wF,wG,dt,dx,ix,jx)
   dtx = dt/dx
 !  dtx = dt
 !  write(6,*) dt, dx, dtx
-!$omp parallel do private(i,j,k)
+! Here, we employ collapse(2) in order to parallelize the outermost loop +1
+!$omp parallel do private(i,j,k) collapse(2)
   do k=1,var1
      do j=2,jx-1
         do i=2,ix-1
