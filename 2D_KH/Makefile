@@ -6,10 +6,12 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -g -m64
 # F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
-# F90 = /opt/openmpi64i/bin/mpif90 -openmp
+# F90 = /opt/openmpi64i/bin/mpif90 -qopenmp
 ### CfCA/XC, KDK-A system
-# F90 = ftn -hnoomp # OpenMP OFF
-# F90 = ftn -homp   # OpenMP ON
+# F90 = ftn -hnoomp   # OpenMP OFF (Cray compiler)
+# F90 = ftn -homp     # OpenMP ON  (Cray compiler)
+# F90 = ftn -ipo          # OpenMP OFF (Intel compiler)
+# F90 = ftn -ipo -qopenmp # OpenMP ON  (Intel compiler)
 ### JAXA/FX100
 # F90 = f90sjx -Umpi -Uflat
 
