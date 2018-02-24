@@ -45,8 +45,8 @@ program main
 !-----------------------------------------------------------------------
   integer :: k
   integer :: n_output
-  real(8) :: t, dt, t_output
-  real(8) :: ch
+  real(8) :: t, dt, t_output, dtg
+  real(8) :: ch, chg
   character*256 :: filename
   integer :: merr, myrank, npe          ! for MPI
 !-----------------------------------------------------------------------
@@ -75,8 +75,11 @@ program main
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
   call set_dt2(Rm1,dt,dx,cfl)
 
-  call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
-  call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
+!  call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
+!  call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
+  call mpi_allreduce(dt,dtg,1,mpi_real8,mpi_min,mpi_comm_world,merr)
+  call mpi_allreduce(ch,chg,1,mpi_real8,mpi_max,mpi_comm_world,merr)
+  dt = dtg; ch = chg
   call mpi_barrier(mpi_comm_world,merr)
 
   if ( dt > dtout ) then
@@ -146,8 +149,11 @@ program main
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
      call set_dt2(Rm1,dt,dx,cfl)
-     call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
-     call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
+!     call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
+!     call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
+     call mpi_allreduce(dt,dtg,1,mpi_real8,mpi_min,mpi_comm_world,merr)
+     call mpi_allreduce(ch,chg,1,mpi_real8,mpi_max,mpi_comm_world,merr)
+     dt = dtg; ch = chg
 
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
