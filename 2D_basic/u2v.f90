@@ -9,7 +9,8 @@ subroutine u2v(U,V,ix,jx)
   integer :: i, j
   real(8) :: B2, rv2
   real(8), parameter :: f1 = gamma - 1
-  integer :: pos1(2), pos2(2)
+  real(8) :: prmin, rhomin
+  integer :: mypos(2)
 
 ! V = 0.d0
 
@@ -27,21 +28,24 @@ subroutine u2v(U,V,ix,jx)
   enddo
 !$omp end do
 
-!$omp sections
-!$omp section
-  if( minval( V(:,:,pr) ) <= 0 ) then
-     pos1 = minloc(V(:,:,pr))
-     write(6,*) 'negative pressure at ',pos1,' P: ',V(pos1(1),pos1(2),pr)
-     stop
-  endif
-!$omp section
-  if( minval( U(:,:,ro) ) <= 0 ) then
-     pos2 = minloc(U(:,:,ro))
-     write(6,*) 'negative density at ',pos2,' rho: ',U(pos2(1),pos2(2),ro)
-     stop
-  endif
-!$omp end sections
+!$omp workshare
+  prmin = minval( V(:,:,pr) )
+!$omp end workshare
+!$omp workshare
+  rhomin = minval( U(:,:,ro) )
+!$omp end workshare
 !$omp end parallel
+
+  if( prmin <= 0 ) then
+     mypos = minloc(V(:,:,pr))
+     write(6,*) 'negative pressure at ',mypos,' P: ',V(mypos(1),mypos(2),pr)
+     stop
+  endif
+  if( rhomin <= 0 ) then
+     mypos = minloc(U(:,:,ro))
+     write(6,*) 'negative density at ',mypos,' rho: ',U(mypos(1),mypos(2),ro)
+     stop
+  endif
 
   return
 end subroutine u2v

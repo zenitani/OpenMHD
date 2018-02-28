@@ -21,7 +21,9 @@ subroutine glm_ss(U,ch,dt,ix,jx)
   real(8) :: f1 = 1.d0
 
   f1 = exp( -dt*ch/cr )
+!$omp parallel workshare
   U(:,:,ps) = f1 * U(:,:,ps)
+!$omp end parallel workshare
 
   return
 end subroutine glm_ss

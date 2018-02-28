@@ -46,6 +46,7 @@ subroutine flux_resistive(F,U,VL,VR,EtS,dx,ix,jx,dir)
 !-----------------------------------------------------------------------
   case(1)
 
+!$omp parallel do private(i,j,JxS,JyS,JzS)
      do j=js,je
      do i=is,ie
 ! electric current at the X-surface (Toth+ 2008, JCP)
@@ -62,10 +63,12 @@ subroutine flux_resistive(F,U,VL,VR,EtS,dx,ix,jx,dir)
         F(i,j,bz) = F(i,j,bz) + EtS(i,j) * JyS
      enddo
      enddo
+!$omp end parallel do
 
 !-----------------------------------------------------------------------
   case(2)
 
+!$omp parallel do private(i,j,JxS,JyS,JzS)
      do j=js,je
      do i=is,ie
 ! electric current at the Y-surface (Toth+ 2008, JCP)
@@ -82,6 +85,7 @@ subroutine flux_resistive(F,U,VL,VR,EtS,dx,ix,jx,dir)
         F(i,j,bz) = F(i,j,bz) - EtS(i,j) * JxS
      enddo
      enddo
+!$omp end parallel do
 
   endselect
 

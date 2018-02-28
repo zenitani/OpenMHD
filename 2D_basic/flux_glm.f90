@@ -36,6 +36,7 @@ subroutine flux_glm(F,VL,VR,ch,ix,jx,dir)
 
   ch2 = ch**2
 
+!$omp parallel do private(i,j)
   do j=js,je
   do i=is,ie
 
@@ -46,6 +47,7 @@ subroutine flux_glm(F,VL,VR,ch,ix,jx,dir)
 
   enddo
   enddo
+!$omp end parallel do
 
   return
 end subroutine flux_glm

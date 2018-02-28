@@ -13,11 +13,15 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
   real(8), intent(out) :: vmax, dt
 !-----------------------------------------------------------------------
   integer :: i, j
-  integer :: imax, jmax
-  real(8) :: B2, f1, f2, vfx, vfy, vtmp
+  integer :: imax, jmax, mymax(2)
+  real(8) :: vtmp(ix,jx)
+  real(8) :: B2, f1, f2, vfx, vfy
 
   vmax = 0.d0
+  vtmp = 0.d0
 
+!$omp parallel
+!$omp do private(i,j,B2,f1,f2,vfx,vfy)
   do j=1,jx
   do i=1,ix
 
@@ -35,22 +39,23 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
      vfy = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*U(i,j,ro) ))
 
 !    max speed of MHD waves
-     vtmp = max( abs( V(i,j,vx) ) + vfx, abs( V(i,j,vy) ) + vfy )
+     vtmp(i,j) = max( abs( V(i,j,vx) ) + vfx, abs( V(i,j,vy) ) + vfy )
 
-     if( vtmp > vmax ) then
-        vmax = vtmp
-        imax = i
-        jmax = j
-     endif
-     
   enddo
   enddo
+!$omp end do
+!$omp workshare
+  vmax = maxval(vtmp)
+!$omp end workshare
+!$omp end parallel
 
 ! dt
   dt = cfl * dx / vmax
 
 ! error check
   if( dt < dtmin ) then
+     mymax = maxloc(vtmp,2)
+     imax = mymax(1); jmax = mymax(2)
      write(6,*) ' dt is too small : ', dt, ' < ', dtmin
      write(6,*) '     velocity is : ', vmax
      write(6,*) imax, jmax, U(imax,jmax,ro), V(imax,jmax,pr)
