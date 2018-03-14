@@ -18,10 +18,9 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
   real(8) :: B2, f1, f2, vfx, vfy
 
   vmax = 0.d0
-  vtmp = 0.d0
+! vtmp = 0.d0
 
-!$omp parallel
-!$omp do private(i,j,B2,f1,f2,vfx,vfy)
+!$omp parallel do private(i,j,B2,f1,f2,vfx,vfy) reduction(max:vmax)
   do j=1,jx
   do i=1,ix
 
@@ -40,14 +39,11 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
 
 !    max speed of MHD waves
      vtmp(i,j) = max( abs( V(i,j,vx) ) + vfx, abs( V(i,j,vy) ) + vfy )
+     vmax = max( vtmp(i,j), vmax )
 
   enddo
   enddo
-!$omp end do
-!$omp workshare
-  vmax = maxval(vtmp)
-!$omp end workshare
-!$omp end parallel
+!$omp end parallel do
 
 ! dt
   dt = cfl * dx / vmax

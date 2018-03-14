@@ -13,9 +13,10 @@ subroutine u2v(U,V,ix,jx)
   integer :: mypos(2)
 
 ! V = 0.d0
+  prmin  = U(1,1,en)
+  rhomin = U(1,1,ro)
 
-!$omp parallel
-!$omp do private(i,j,rv2,B2)
+!$omp parallel do private(i,j,rv2,B2) reduction(min: prmin,rhomin)
   do j=1,jx
   do i=1,ix
 
@@ -23,18 +24,11 @@ subroutine u2v(U,V,ix,jx)
      rv2 = dot_product( V(i,j,vx:vz), U(i,j,mx:mz) )  ! rho v**2
      B2  = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )  ! B**2
      V(i,j,pr)    = f1 * ( U(i,j,en) - 0.5d0*(rv2+B2) )
-
+     prmin  = min( V(i,j,pr), prmin )
+     rhomin = min( U(i,j,ro), rhomin )
   enddo
   enddo
-!$omp end do
-
-!$omp workshare
-  prmin = minval( V(:,:,pr) )
-!$omp end workshare
-!$omp workshare
-  rhomin = minval( U(:,:,ro) )
-!$omp end workshare
-!$omp end parallel
+!$omp end parallel do
 
   if( prmin <= 0 ) then
      mypos = minloc(V(:,:,pr))
