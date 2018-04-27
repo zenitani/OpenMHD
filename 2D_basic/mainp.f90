@@ -33,6 +33,7 @@ program main
   real(8) :: ch, chg
   character*256 :: filename
   integer :: merr, myrank, npe          ! for MPI
+  integer :: mreq(2)
 !-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), dx
   real(8) :: U(ix,jx,var1)  ! conserved variables (U)
@@ -56,10 +57,11 @@ program main
   call mpibc(U,ix,jx,myrank,npe)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
 
+  call mpi_iallreduce(ch,chg,1,mpi_real8,mpi_max,mpi_comm_world,mreq(1),merr)
+  call mpi_iallreduce(dt,dtg,1,mpi_real8,mpi_min,mpi_comm_world,mreq(2),merr)
+  call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
 !  call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
 !  call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
-  call mpi_allreduce(dt,dtg,1,mpi_real8,mpi_min,mpi_comm_world,merr)
-  call mpi_allreduce(ch,chg,1,mpi_real8,mpi_max,mpi_comm_world,merr)
   dt = dtg; ch = chg
   call mpi_barrier(mpi_comm_world,merr)
 
@@ -128,10 +130,11 @@ program main
 !   -----------------  
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
+     call mpi_iallreduce(ch,chg,1,mpi_real8,mpi_max,mpi_comm_world,mreq(1),merr)
+     call mpi_iallreduce(dt,dtg,1,mpi_real8,mpi_min,mpi_comm_world,mreq(2),merr)
+     call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
 !     call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,mpi_comm_world,merr)
 !     call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,mpi_comm_world,merr)
-     call mpi_allreduce(dt,dtg,1,mpi_real8,mpi_min,mpi_comm_world,merr)
-     call mpi_allreduce(ch,chg,1,mpi_real8,mpi_max,mpi_comm_world,merr)
      dt = dtg; ch = chg
 
 !    GLM solver for the first half timestep
