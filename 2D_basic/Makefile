@@ -3,10 +3,11 @@
 F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### intel fortran ("-heap-arrays" option is useful, but use 'ulimit -s unlimited' for OpenMP)
 # F90 = ifort -heap-arrays
-# F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays -ipo
 # F90 = /opt/openmpi64i/bin/mpif90 -g -m64
-# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays
+# F90 = /opt/openmpi64i/bin/mpif90 -heap-arrays -ipo
 # F90 = /opt/openmpi64i/bin/mpif90 -qopenmp
+# F90 = /opt/mpich3i/bin/mpif90 -heap-arrays -ipo
 ### CfCA/XC, KDK-A system
 # F90 = ftn -hnoomp   # OpenMP OFF (Cray compiler)
 # F90 = ftn -homp     # OpenMP ON  (Cray compiler)
@@ -37,4 +38,4 @@ runp : mainp.o $(OBJS) $(OBJP)
 	$(F90) $(FFLAGS) -c $<
 
 clean :
-	rm -f *.out *.o data/*.dat
+	rm -f *.out *.o *.mod data/*.dat

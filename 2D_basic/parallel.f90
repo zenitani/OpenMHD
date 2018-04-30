@@ -27,18 +27,32 @@ module parallel
 
   ! MPI-3 shared-memory communication
   logical, parameter, private :: use_shm = .false.
+  integer, private, save :: mwin
+
+  ! not used for a moment
+  integer, parameter, private :: north = 1, east = 2, south = 3, west = 4
+  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fptr1 => null()
+  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fwest => null()
+  real(8), private, save, dimension(:,:,:), pointer, contiguous :: feast => null()
+  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fptr2  => null()
+  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fsouth => null()
+  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fnorth => null()
 
 
 contains
 
-  subroutine parallel_init(my_sizes,my_periods)
+  subroutine parallel_init(my_sizes,my_periods,ix,jx)
     use, intrinsic :: iso_c_binding, only : c_f_pointer, c_ptr
     include 'param.h'
     integer, intent(in) :: my_sizes(2)
     logical, intent(in) :: my_periods(2)
+    integer, intent(in) :: ix, jx
     integer :: merr
     integer :: group_world, group_local
     integer :: tmpA(4), tmpB(4)
+    integer :: mdisp = 0
+    integer(kind=mpi_address_kind) :: msize
+    type(c_ptr) :: baseptr
 
     call mpi_init(merr)
 !   call mpi_comm_size(mpi_comm_world, ranks%size, merr)
@@ -61,6 +75,7 @@ contains
        stop
     endif
 
+    ! local mapping
     tmpA = (/ranks%north, ranks%east, ranks%south, ranks%west/)
     call mpi_comm_split_type(cart2d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local, merr)
     call mpi_comm_group(cart2d%comm, group_world, merr)
@@ -70,6 +85,36 @@ contains
     call mpi_comm_size(comm_local, ranks_local%size, merr)
     ranks_local%north = tmpB(1) ;   ranks_local%east = tmpB(2)
     ranks_local%south = tmpB(3) ;   ranks_local%west = tmpB(4)
+
+    if( use_shm .and. ranks_local%size > 1 ) then
+       if( ranks_local%west /= mpi_undefined .or. ranks_local%east /= mpi_undefined ) then
+          msize = 2*8*jx*var1
+          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr,mwin,merr)
+          call c_f_pointer(baseptr,fptr1,(/jx,var1,2/))
+          if( ranks_local%west /= mpi_undefined ) then
+             call mpi_win_shared_query(mwin,ranks_local%west,msize,mdisp,baseptr,merr)
+             call c_f_pointer(baseptr,fwest,(/jx,var1,2/))
+          endif
+          if( ranks_local%east /= mpi_undefined ) then
+             call mpi_win_shared_query(mwin,ranks_local%east,msize,mdisp,baseptr,merr)
+             call c_f_pointer(baseptr,feast,(/jx,var1,2/))
+          endif
+       endif
+       call mpi_barrier(comm_local,merr)
+       if( ranks_local%north /= mpi_undefined .or. ranks_local%south /= mpi_undefined ) then
+          msize = 2*8*ix*var1
+          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr,mwin,merr)
+          call c_f_pointer(baseptr,fptr2,(/ix,var1,2/))
+          if( ranks_local%south /= mpi_undefined ) then
+             call mpi_win_shared_query(mwin,ranks_local%south,msize,mdisp,baseptr,merr)
+             call c_f_pointer(baseptr,fsouth,(/ix,var1,2/))
+          endif
+          if( ranks_local%north /= mpi_undefined ) then
+             call mpi_win_shared_query(mwin,ranks_local%north,msize,mdisp,baseptr,merr)
+             call c_f_pointer(baseptr,fnorth,(/ix,var1,2/))
+          endif
+       endif
+    endif
 
 !    write(6,*) 'I am ', ranks%myrank, cart2d%coords(1), cart2d%coords(2)
 !    write(6,*) 'My (', ranks%myrank, ') neighbours are ', ranks_local%north, ranks_local%east, ranks_local%south, ranks_local%west
@@ -82,7 +127,10 @@ contains
 
     call mpi_finalize(merr)
 
-    return
+    if( use_shm ) then
+       call mpi_win_free(mwin,merr)
+    endif
+  
   end subroutine parallel_finilize
 
 
@@ -119,12 +167,59 @@ contains
 
        else
 
-          if( .not. use_shm ) then
+          ! MPI-3 shared memory communication
+          if( use_shm ) then
+
+             call mpi_win_lock_all(0,mwin,merr)
+             if( ranks_local%west /= mpi_undefined ) then
+!               call mpi_win_lock(mpi_lock_shared,ranks_local%west,0,mwin,merr)
+                fwest(:,:,2) = U(2,:,:)
+!               call mpi_win_unlock(ranks_local%west,mwin,merr)
+             else
+                call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq1(1),merr)
+                bufsnd1(:,:) = U(2,:,:)
+                call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+             endif
+             if( ranks_local%east /= mpi_undefined ) then
+!               call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwin,merr)
+                feast(:,:,1) = U(ix-1,:,:)
+!               call mpi_win_unlock(ranks_local%east,mwin,merr)
+             else
+                call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq2(1),merr)
+                bufsnd2(:,:) = U(ix-1,:,:)
+                call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+             endif
+
+             call mpi_win_unlock_all(mwin,merr)
+             call mpi_barrier(comm_local,merr)
+!            call mpi_win_sync(mwin,merr)
+!            call mpi_win_fence(mpi_mode_noput,mwin,merr)
+
+             if( ranks_local%west /= mpi_undefined ) then
+                U(1,:,:) = fptr1(:,:,1)
+             else
+                call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+                if( mleft /= mpi_proc_null ) then
+                   U(1,:,:) = bufrcv2(:,:)
+                endif
+             endif
+             if( ranks_local%east /= mpi_undefined ) then
+                U(ix,:,:) = fptr1(:,:,2)
+             else
+                call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+                if( mright /= mpi_proc_null ) then
+                   U(ix,:,:) = bufrcv1(:,:)
+                endif
+             endif
+!            call mpi_win_fence(0,mwin,merr)
+
+          else
 
              ! nonblocking communication (mreq1)
              call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
              bufsnd1(:,:) = U(2,:,:)
              call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+
              ! nonblocking communication (mreq2)
              call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
              bufsnd2(:,:) = U(ix-1,:,:)
@@ -138,8 +233,6 @@ contains
              if( mleft /= mpi_proc_null ) then
                 U(1,:,:) = bufrcv2(:,:)
              endif
-
-          else
           
           endif
 
@@ -166,7 +259,46 @@ contains
 
        else
 
-          if( .not. use_shm ) then
+          ! MPI-3 shared memory communication
+          if( use_shm ) then
+
+             call mpi_win_lock_all(0,mwin,merr)
+             if( ranks_local%south /= mpi_undefined ) then
+                fsouth(:,:,2) = U(:,2,:)
+             else
+                call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq1(1),merr)
+                bufsnd1(:,:) = U(:,2,:)
+                call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+             endif
+             if( ranks_local%north /= mpi_undefined ) then
+                fnorth(:,:,1) = U(:,jx-1,:)
+             else
+                call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq2(1),merr)
+                bufsnd2(:,:) = U(:,jx-1,:)
+                call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+             endif
+
+             call mpi_win_unlock_all(mwin,merr)
+             call mpi_barrier(comm_local,merr)
+
+             if( ranks_local%south /= mpi_undefined ) then
+                U(:,1,:) = fptr2(:,:,1)
+             else
+                call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+                if( mleft /= mpi_proc_null ) then
+                   U(:,1,:) = bufrcv2(:,:)
+                endif
+             endif
+             if( ranks_local%north /= mpi_undefined ) then
+                U(:,jx,:) = fptr2(:,:,2)
+             else
+                call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+                if( mright /= mpi_proc_null ) then
+                   U(:,jx,:) = bufrcv1(:,:)
+                endif
+             endif
+
+          else
 
              ! nonblocking communication (mreq1)
              call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
@@ -186,8 +318,6 @@ contains
                 U(:,1,:) = bufrcv2(:,:)
              endif
 
-          else
-
           endif
 
        endif
@@ -202,10 +332,8 @@ contains
   subroutine parallel_exchange2(VL,VR,ix,jx,dir)
     include 'param.h'
     integer, intent(in) :: ix, jx
-    ! left flux (VL) [input]
-    real(8), intent(inout) :: VL(ix,jx,var1)
-    ! right flux (VR) [input]
-    real(8), intent(inout) :: VR(ix,jx,var1)
+    real(8), intent(inout) :: VL(ix,jx,var1)  ! left values (VL)
+    real(8), intent(inout) :: VR(ix,jx,var1)  ! right values (VR)
     ! direction [input]: 1 (X), 2 (Y), 3 (Z)
     integer, intent(in)  :: dir
 !----------------------------------------------------------------------
@@ -214,7 +342,6 @@ contains
     integer :: mreq1(2), mreq2(2)
     integer :: msize, merr
     integer :: mleft, mright
-    integer, parameter :: use_mpi3_shm = 0
 !----------------------------------------------------------------------
 
     select case(dir)
@@ -236,7 +363,46 @@ contains
 
        else
 
-          if( .not. use_shm ) then
+          ! MPI-3 shared memory communication
+          if( use_shm ) then
+
+             call mpi_win_lock_all(0,mwin,merr)
+             if( ranks_local%west /= mpi_undefined ) then
+                fwest(:,:,2) = VR(1,:,:)
+             else
+                call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq1(1),merr)
+                bufsnd1(:,:) = VR(1,:,:)
+                call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+             endif
+             if( ranks_local%east /= mpi_undefined ) then
+                feast(:,:,1) = VL(ix-1,:,:)
+             else
+                call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq2(1),merr)
+                bufsnd2(:,:) = VL(ix-1,:,:)
+                call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+             endif
+
+             call mpi_win_unlock_all(mwin,merr)
+             call mpi_barrier(comm_local,merr)
+
+             if( ranks_local%west /= mpi_undefined ) then
+                VL(1,:,:) = fptr1(:,:,1)
+             else
+                call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+                if( mleft /= mpi_proc_null ) then
+                   VL(1,:,:) = bufrcv2(:,:)
+                endif
+             endif
+             if( ranks_local%east /= mpi_undefined ) then
+                VR(ix-1,:,:) = fptr1(:,:,2)
+             else
+                call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+                if( mright /= mpi_proc_null ) then
+                   VR(ix-1,:,:) = bufrcv1(:,:)
+                endif
+             endif
+
+          else
 
              ! nonblocking communication (mreq1)
              call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
@@ -256,13 +422,12 @@ contains
                 VL(1,:,:) = bufrcv2(:,:)
              endif
 
-          else
-          
           endif
 
        endif
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
+
 
     case(2)
 
@@ -274,7 +439,7 @@ contains
 
        if( cart2d%sizes(2) == 1 ) then
 
-          ! top/bottom boundaries
+          ! top/bottom boundaries (if periodic)
           if( mleft /= mpi_proc_null ) then
              VR(:,jx-1,:) = VR(:,1,:)
              VL(:,   1,:) = VL(:,jx-1,:)
@@ -282,7 +447,46 @@ contains
 
        else
 
-          if( .not. use_shm ) then
+          ! MPI-3 shared memory communication
+          if( use_shm ) then
+
+             call mpi_win_lock_all(0,mwin,merr)
+             if( ranks_local%south /= mpi_undefined ) then
+                fsouth(:,:,2) = VR(:,1,:)
+             else
+                call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq1(1),merr)
+                bufsnd1(:,:) = VR(:,1,:)
+                call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+             endif
+             if( ranks_local%north /= mpi_undefined ) then
+                fnorth(:,:,1) = VL(:,jx-1,:)
+             else
+                call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq2(1),merr)
+                bufsnd2(:,:) = VL(:,jx-1,:)
+                call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+             endif
+
+             call mpi_win_unlock_all(mwin,merr)
+             call mpi_barrier(comm_local,merr)
+
+             if( ranks_local%south /= mpi_undefined ) then
+                VL(:,1,:) = fptr2(:,:,1)
+             else
+                call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+                if( mleft /= mpi_proc_null ) then
+                   VL(:,1,:) = bufrcv2(:,:)
+                endif
+             endif
+             if( ranks_local%north /= mpi_undefined ) then
+                VR(:,jx-1,:) = fptr2(:,:,2)
+             else
+                call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+                if( mright /= mpi_proc_null ) then
+                   VR(:,jx-1,:) = bufrcv1(:,:)
+                endif
+             endif
+
+          else
 
              ! nonblocking communication (mreq1)
              call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
@@ -301,8 +505,6 @@ contains
              if( mleft /= mpi_proc_null ) then
                 VL(:,1,:) = bufrcv2(:,:)
              endif
-
-          else
 
           endif
 

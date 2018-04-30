@@ -49,7 +49,7 @@ program main
 !  call mpi_init(merr)
 !  call mpi_comm_size(mpi_comm_world,npe   ,merr)
 !  call mpi_comm_rank(mpi_comm_world,myrank,merr)
-  call parallel_init(mpi_nums,bc_periodicity)
+  call parallel_init(mpi_nums,bc_periodicity,ix,jx)
   myrank = ranks%myrank
 !-----------------------------------------------------------------------
 
@@ -61,11 +61,11 @@ program main
   call parallel_exchange(U,ix,jx,2)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
 
+!  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
+!  call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
   call mpi_iallreduce(ch,chg,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
   call mpi_iallreduce(dt,dtg,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
   call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
-!  call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,merr)
-!  call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,merr)
   dt = dtg; ch = chg
   call mpi_barrier(cart2d%comm,merr)
 
@@ -135,11 +135,11 @@ program main
 !   -----------------  
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
+!     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
+!     call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
      call mpi_iallreduce(ch,chg,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
      call mpi_iallreduce(dt,dtg,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
      call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
-!     call mpi_allreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,merr)
-!     call mpi_allreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,merr)
      dt = dtg; ch = chg
 
 !    GLM solver for the first half timestep
