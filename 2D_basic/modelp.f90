@@ -20,7 +20,7 @@ subroutine modelp(U,V,x,y,dx,ix,jx)
   real(8) :: tmpy(cart2d%sizes(2)*(jx-2) + 2)
 ! ---------------------------------------------------
 
-! grid in the X direction : L_x = 2 pi
+! grid in the X direction
   iix = cart2d%sizes(1)*(ix-2) + 2
   dx = ( domain_x(2) - domain_x(1) ) / dble( iix-2 )
   tmpx(1)   = domain_x(1) - dx/2

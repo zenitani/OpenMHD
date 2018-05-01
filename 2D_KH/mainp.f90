@@ -130,7 +130,7 @@ program main
 !    [ end? ]
      if ( t >= tend )  exit
      if ( k >= loop_max ) then
-        write(6,*) 'max loop'
+        if( myrank == 0 )  write(6,*) 'max loop'
         exit
      endif
 !   -----------------  

@@ -42,7 +42,7 @@ program main
   dt   =  0.d0
   call model(U,V,x,y,dx,ix,jx)
   call set_eta(E,EF,EG,x,y,dx,Rm1,Rm0,ix,jx)
-  call bc(U,ix,jx)
+  call bc_for_U(U,ix,jx)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
   call set_dt2(Rm1,dt,dx,cfl)
   t_output = -dt/3.d0
@@ -119,7 +119,7 @@ program main
      call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
      call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
 !    fix flux bc (G)
-     call bc_vlvr_g(VL,VR,ix,jx)
+     call bc_for_G(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
@@ -128,13 +128,13 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
-        call rk21(U,U1,F,G,dt,dx,ix,jx)
+        call rk_tvd21(U,U1,F,G,dt,dx,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
-        call step1(U,U1,F,G,dt,dx,ix,jx)
+        call rk_std21(U,U1,F,G,dt,dx,ix,jx)
      endif
 !    boundary condition
-     call bc(U1,ix,jx)
+     call bc_for_U(U1,ix,jx)
 !     write(6,*) 'U* --> V'
      call u2v(U1,V,ix,jx)
 !    Slope limiters on primitive variables
@@ -166,7 +166,7 @@ program main
      call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
 !    fix flux bc (G)
-     call bc_vlvr_g(VL,VR,ix,jx)
+     call bc_for_G(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
@@ -175,17 +175,17 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
-        call rk22(U,U1,F,G,dt,dx,ix,jx)
+        call rk_tvd22(U,U1,F,G,dt,dx,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
-        call step2(U,F,G,dt,dx,ix,jx)
+        call rk_std22(U,F,G,dt,dx,ix,jx)
      endif
 
 !    GLM solver for the second half timestep
      call glm_ss(U,ch,0.5d0*dt,ix,jx)
 
 !    boundary condition
-     call bc(U,ix,jx)
+     call bc_for_U(U,ix,jx)
      t=t+dt
   enddo
 

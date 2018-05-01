@@ -1,47 +1,49 @@
-subroutine modelp(U,V,x,y,dx,ix,jx,myrank,npe)
+subroutine modelp(U,V,x,y,dx,ix,jx)
 !-----------------------------------------------------------------------
 !     Initial configuration for the parallel code (mainp)
 !-----------------------------------------------------------------------
+  use parallel
   implicit none
   include 'param.h'
-  real(8) :: U(ix,jx,var1)
-  real(8) :: V(ix,jx,var2)
-  real(8) :: x(ix), y(jx), dx
+  real(8), intent(out) :: U(ix,jx,var1)
+  real(8), intent(out) :: V(ix,jx,var2)
+  real(8), intent(out) :: x(ix), y(jx), dx
   integer :: ix, jx
-  integer :: myrank, npe    ! for MPI
-  real(8) :: tmpx(npe*(ix-2)+2)  ! for MPI
 ! ---------------------------------------------------
-! system size in the X direction (L_x): L_y is automatically calculated
-  real(8), parameter :: Lx   = 160.d0
+! x locations
+  real(8), parameter :: domain_x(2) = (/-80.d0, 80.d0/)
+! y location (domain_y(2) is automatically calculated)
+  real(8), parameter :: domain_y(1) = (/-40.d0/)
 ! plasma beta in the upstream region
   real(8), parameter :: beta =   0.2d0
 ! ---------------------------------------------------
-  integer :: i, j, izero, jzero
+  integer :: i, j
+  integer :: iix, jjx
   real(8) :: B2, v2, f1, r2, b1
-
+  real(8) :: tmpx(cart2d%sizes(1)*(ix-2) + 2)
+  real(8) :: tmpy(cart2d%sizes(2)*(jx-2) + 2)
 ! ---------------------------------------------------
-! grid
-  dx = Lx / dble( npe*(ix-2) )
-!  izero = 1
-  izero = (npe*(ix-2))/2+1
-  tmpx(izero) = -dx/2
-  do i=izero+1,npe*(ix-2)+2
+
+! grid in the X direction
+  iix = cart2d%sizes(1)*(ix-2) + 2
+  dx = ( domain_x(2) - domain_x(1) ) / dble( iix-2 )
+  tmpx(1)   = domain_x(1) - dx/2
+! tmpx(iix) = domain_x(2) + dx/2
+  do i=2,iix
      tmpx(i) = tmpx(i-1) + dx
   enddo
-  do i=izero-1,1,-1
-     tmpx(i) = tmpx(i+1) - dx
-  enddo
   do i=1,ix
-     x(i) = tmpx(myrank*(ix-2) + i)
+     x(i) = tmpx(cart2d%coords(1)*(ix-2) + i)
   enddo
 
-  jzero = jx/2
-  y(jzero) = -dx/2
-  do j=jzero+1,jx
-     y(j) = y(j-1)+dx
+! grid in the Y direction
+  jjx = cart2d%sizes(2)*(jx-2) + 2
+  tmpy(1) = domain_y(1) - dx/2
+  do j=2,jjx
+     tmpy(j) = tmpy(j-1) + dx
   enddo
-  do j=jzero-1,1,-1
-     y(j) = y(j+1)-dx
+  do j=1,jx
+     y(j) = tmpy(cart2d%coords(2)*(jx-2) + j)
   enddo
 ! ---------------------------------------------------
 

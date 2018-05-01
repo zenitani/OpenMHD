@@ -4,38 +4,33 @@ subroutine model(U,V,x,y,dx,ix,jx)
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  real(8) :: U(ix,jx,var1)
-  real(8) :: V(ix,jx,var2)
-  real(8) :: x(ix), y(jx), dx
-  integer :: ix, jx
+  real(8), intent(out) :: U(ix,jx,var1)
+  real(8), intent(out) :: V(ix,jx,var2)
+  real(8), intent(out) :: x(ix), y(jx), dx
+  integer, intent(in)  :: ix, jx
 ! ---------------------------------------------------
-! system size in the X direction (L_x): L_y is automatically calculated
-  real(8), parameter :: Lx   =  40.d0
+! x locations
+  real(8), parameter :: domain_x(2) = (/-20.d0, 20.d0/)
+! y location (domain_y(2) is automatically calculated)
+  real(8), parameter :: domain_y(1) = (/-5.d0/)
 ! plasma beta in the upstream region
   real(8), parameter :: beta =   0.2d0
 ! ---------------------------------------------------
-  integer :: i, j, izero, jzero
+  integer :: i, j
   real(8) :: B2, v2, f1, r2, b1
+! ---------------------------------------------------
 
-! grid
-  dx = Lx / dble(ix-2)
-  izero=ix/2
-  x(izero)=-dx/2
-  do i=izero+1,ix
-     x(i) = x(i-1)+dx
+  dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
+  x(1)   = domain_x(1) - dx/2
+! x(iix) = domain_x(2) + dx/2
+  do i=2,ix
+     x(i) = x(i-1) + dx
   enddo
-  do i=izero-1,1,-1
-     x(i) = x(i+1)-dx
+  y(1) = domain_y(1) - dx/2
+  do j=2,jx
+     y(j) = y(j-1) + dx
   enddo
-
-  jzero = jx/2
-  y(jzero) = -dx/2
-  do j=jzero+1,jx
-     y(j) = y(j-1)+dx
-  enddo
-  do j=jzero-1,1,-1
-     y(j) = y(j+1)-dx
-  enddo
+! ---------------------------------------------------
 
   do j=1,jx
   do i=1,ix

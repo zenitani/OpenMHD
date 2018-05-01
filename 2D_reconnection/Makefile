@@ -18,10 +18,10 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = mpifrtpx
 
 OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
-	rk21.o rk22.o step1.o step2.o bc.o bc_vlvr_g.o \
+	rk.o bc.o \
 	flux_solver.o limiter.o flux_resistive.o flux_glm.o glm_ss.o
-OBJP = modelp.o  mpibc.o  mpibc_vlvr_f.o  mpiinput.o  mpioutput.o
-OBJP2= modelp2.o mpibc2.o mpibc_vlvr_f2.o bc_vlvr_g2.o  mpiinput.o mpioutput.o
+OBJP = modelp.o  mpibc.o  mpiinput.o mpioutput.o parallel.o
+OBJP2= modelp2.o mpibc2.o mpiinput.o mpioutput.o parallel.o
 
 all: run runp runp2
 
@@ -37,7 +37,10 @@ runp : mainp.o $(OBJS) $(OBJP)
 runp2 : mainp2.o $(OBJS) $(OBJP2)
 	$(F90) -o ap2.out mainp2.o $(OBJS) $(OBJP2)
 
-%.o: %.f90 param.h
+%.o: %.f90 param.h parallel.mod
+	$(F90) $(FFLAGS) -c $<
+
+%.mod: %.f90 param.h
 	$(F90) $(FFLAGS) -c $<
 
 clean :
