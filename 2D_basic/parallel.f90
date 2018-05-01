@@ -5,17 +5,6 @@ module parallel
   ! 2-D domain
   integer, parameter :: ndims = 2
 
-  ! rank
-  type myranks
-     integer :: size = 0
-     integer :: myrank
-     integer :: north, east, south, west
-  end type myranks
-
-  type(myranks), save :: ranks         ! inter-node communication
-  type(myranks), save :: ranks_local   ! local communication
-  integer, save, private :: comm_local ! local communication
-
   ! topology
   type mycoords
      integer :: comm
@@ -25,12 +14,22 @@ module parallel
   end type mycoords
   type(mycoords), save :: cart2d
 
-  ! MPI-3 shared-memory communication
-  logical, parameter, private :: use_shm = .false.
-  integer, private, save :: mwin
+  ! rank info
+  type myranks
+     integer :: size = 0
+     integer :: myrank
+     integer :: north, east, south, west
+  end type myranks
 
-  ! not used for a moment
-  integer, parameter, private :: north = 1, east = 2, south = 3, west = 4
+  type(myranks), save :: ranks         ! global communication
+  type(myranks), save :: ranks_local   ! inside-node communication
+  integer, save, private :: comm_local ! inside-node communication
+
+  ! MPI-3 shared-memory communication
+  logical, parameter, private :: use_shm = .true.
+  integer, private, save :: mwin1, mwin2
+
+  ! pointers
   real(8), private, save, dimension(:,:,:), pointer, contiguous :: fptr1 => null()
   real(8), private, save, dimension(:,:,:), pointer, contiguous :: fwest => null()
   real(8), private, save, dimension(:,:,:), pointer, contiguous :: feast => null()
@@ -47,12 +46,12 @@ contains
     integer, intent(in) :: my_sizes(2)
     logical, intent(in) :: my_periods(2)
     integer, intent(in) :: ix, jx
-    integer :: merr
-    integer :: group_world, group_local
+    integer :: i
     integer :: tmpA(4), tmpB(4)
-    integer :: mdisp = 0
+    integer :: group_world, group_local
+    integer :: mdisp = 0, merr
     integer(kind=mpi_address_kind) :: msize
-    type(c_ptr) :: baseptr
+    type(c_ptr) :: baseptr1, baseptr2
 
     call mpi_init(merr)
 !   call mpi_comm_size(mpi_comm_world, ranks%size, merr)
@@ -61,6 +60,8 @@ contains
     cart2d%sizes(:) = my_sizes(:)
     cart2d%coords(:)  = 0
     cart2d%periods(:) = my_periods(:)
+
+    ! After this, one should use cart2d%comm instead of mpi_comm_world
     call mpi_cart_create(mpi_comm_world, ndims, cart2d%sizes, cart2d%periods, .true., cart2d%comm, merr)
     call mpi_comm_size (cart2d%comm, ranks%size, merr)
     call mpi_comm_rank (cart2d%comm, ranks%myrank, merr)
@@ -75,49 +76,55 @@ contains
        stop
     endif
 
-    ! local mapping
+    ! node-local mapping
     tmpA = (/ranks%north, ranks%east, ranks%south, ranks%west/)
     call mpi_comm_split_type(cart2d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local, merr)
     call mpi_comm_group(cart2d%comm, group_world, merr)
-    call mpi_comm_group(comm_local, group_local, merr)
-
+    call mpi_comm_group(comm_local,  group_local, merr)
     call mpi_group_translate_ranks(group_world, 4, tmpA, group_local, tmpB, merr)
     call mpi_comm_size(comm_local, ranks_local%size, merr)
+    do i=1,4
+       if( tmpB(i) == mpi_proc_null )  tmpB(i) = mpi_undefined
+    enddo
     ranks_local%north = tmpB(1) ;   ranks_local%east = tmpB(2)
     ranks_local%south = tmpB(3) ;   ranks_local%west = tmpB(4)
 
+    ! preparing shared memories
     if( use_shm .and. ranks_local%size > 1 ) then
+
+       ! fptr1: west <--> east
        if( ranks_local%west /= mpi_undefined .or. ranks_local%east /= mpi_undefined ) then
           msize = 2*8*jx*var1
-          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr,mwin,merr)
-          call c_f_pointer(baseptr,fptr1,(/jx,var1,2/))
+          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
+          call c_f_pointer(baseptr1,fptr1,(/jx,var1,2/))
           if( ranks_local%west /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin,ranks_local%west,msize,mdisp,baseptr,merr)
-             call c_f_pointer(baseptr,fwest,(/jx,var1,2/))
+             call mpi_win_shared_query(mwin1,ranks_local%west,msize,mdisp,baseptr1,merr)
+             call c_f_pointer(baseptr1,fwest,(/jx,var1,2/))
           endif
           if( ranks_local%east /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin,ranks_local%east,msize,mdisp,baseptr,merr)
-             call c_f_pointer(baseptr,feast,(/jx,var1,2/))
+             call mpi_win_shared_query(mwin1,ranks_local%east,msize,mdisp,baseptr1,merr)
+             call c_f_pointer(baseptr1,feast,(/jx,var1,2/))
           endif
        endif
+
+       ! fptr2: south <--> north
        call mpi_barrier(comm_local,merr)
        if( ranks_local%north /= mpi_undefined .or. ranks_local%south /= mpi_undefined ) then
           msize = 2*8*ix*var1
-          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr,mwin,merr)
-          call c_f_pointer(baseptr,fptr2,(/ix,var1,2/))
+          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
+          call c_f_pointer(baseptr2,fptr2,(/ix,var1,2/))
           if( ranks_local%south /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin,ranks_local%south,msize,mdisp,baseptr,merr)
-             call c_f_pointer(baseptr,fsouth,(/ix,var1,2/))
+             call mpi_win_shared_query(mwin2,ranks_local%south,msize,mdisp,baseptr2,merr)
+             call c_f_pointer(baseptr2,fsouth,(/ix,var1,2/))
           endif
           if( ranks_local%north /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin,ranks_local%north,msize,mdisp,baseptr,merr)
-             call c_f_pointer(baseptr,fnorth,(/ix,var1,2/))
+             call mpi_win_shared_query(mwin2,ranks_local%north,msize,mdisp,baseptr2,merr)
+             call c_f_pointer(baseptr2,fnorth,(/ix,var1,2/))
           endif
        endif
+
     endif
 
-!    write(6,*) 'I am ', ranks%myrank, cart2d%coords(1), cart2d%coords(2)
-!    write(6,*) 'My (', ranks%myrank, ') neighbours are ', ranks_local%north, ranks_local%east, ranks_local%south, ranks_local%west
     return
   end subroutine parallel_init
 
@@ -127,8 +134,9 @@ contains
 
     call mpi_finalize(merr)
 
-    if( use_shm ) then
-       call mpi_win_free(mwin,merr)
+    if( use_shm .and. ranks_local%size > 1 ) then
+       call mpi_win_free(mwin1,merr)
+       call mpi_win_free(mwin2,merr)
     endif
   
   end subroutine parallel_finilize
@@ -149,7 +157,7 @@ contains
 !----------------------------------------------------------------------
 
     select case(dir)
-    case(1)
+    case(1)  ! west <--> east
 
        allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
        allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
@@ -159,7 +167,7 @@ contains
 
        if( cart2d%sizes(1) == 1 ) then
 
-          ! left/right
+          ! periodic
           if( mleft /= mpi_proc_null ) then
              U(1,:,:)  = U(ix-1,:,:)
              U(ix,:,:) = U(2,:,:)
@@ -170,30 +178,30 @@ contains
           ! MPI-3 shared memory communication
           if( use_shm ) then
 
-             call mpi_win_lock_all(0,mwin,merr)
+             call mpi_win_lock_all(0,mwin1,merr)
              if( ranks_local%west /= mpi_undefined ) then
-!               call mpi_win_lock(mpi_lock_shared,ranks_local%west,0,mwin,merr)
+!               call mpi_win_lock(mpi_lock_shared,ranks_local%west,0,mwin1,merr)
                 fwest(:,:,2) = U(2,:,:)
-!               call mpi_win_unlock(ranks_local%west,mwin,merr)
+!               call mpi_win_unlock(ranks_local%west,mwin1,merr)
              else
                 call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq1(1),merr)
                 bufsnd1(:,:) = U(2,:,:)
                 call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
              endif
              if( ranks_local%east /= mpi_undefined ) then
-!               call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwin,merr)
+!               call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwi1n,merr)
                 feast(:,:,1) = U(ix-1,:,:)
-!               call mpi_win_unlock(ranks_local%east,mwin,merr)
+!               call mpi_win_unlock(ranks_local%east,mwin1,merr)
              else
                 call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq2(1),merr)
                 bufsnd2(:,:) = U(ix-1,:,:)
                 call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
              endif
 
-             call mpi_win_unlock_all(mwin,merr)
-             call mpi_barrier(comm_local,merr)
-!            call mpi_win_sync(mwin,merr)
-!            call mpi_win_fence(mpi_mode_noput,mwin,merr)
+             call mpi_win_unlock_all(mwin1,merr)
+             call mpi_barrier(comm_local,merr)  ! local barrier
+!            call mpi_win_sync(mwin1,merr)
+!            call mpi_win_fence(mpi_mode_noput,mwin1,merr)
 
              if( ranks_local%west /= mpi_undefined ) then
                 U(1,:,:) = fptr1(:,:,1)
@@ -211,7 +219,7 @@ contains
                    U(ix,:,:) = bufrcv1(:,:)
                 endif
              endif
-!            call mpi_win_fence(0,mwin,merr)
+!            call mpi_win_fence(0,mwin1,merr)
 
           else
 
@@ -219,7 +227,6 @@ contains
              call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
              bufsnd1(:,:) = U(2,:,:)
              call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
-
              ! nonblocking communication (mreq2)
              call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
              bufsnd2(:,:) = U(ix-1,:,:)
@@ -241,7 +248,7 @@ contains
        deallocate( bufsnd2, bufrcv2 )
 
 
-    case(2)
+    case(2)  ! south <--> north
 
        allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
        allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
@@ -251,7 +258,7 @@ contains
 
        if( cart2d%sizes(2) == 1 ) then
 
-          ! top/bottom boundaries
+          ! periodic
           if( mleft /= mpi_proc_null ) then
              U(:,jx,:) = U(:,2,:)
              U(:,1,:)  = U(:,jx-1,:)
@@ -262,7 +269,7 @@ contains
           ! MPI-3 shared memory communication
           if( use_shm ) then
 
-             call mpi_win_lock_all(0,mwin,merr)
+             call mpi_win_lock_all(0,mwin2,merr)
              if( ranks_local%south /= mpi_undefined ) then
                 fsouth(:,:,2) = U(:,2,:)
              else
@@ -278,8 +285,8 @@ contains
                 call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
              endif
 
-             call mpi_win_unlock_all(mwin,merr)
-             call mpi_barrier(comm_local,merr)
+             call mpi_win_unlock_all(mwin2,merr)
+             call mpi_barrier(comm_local,merr)  ! local barrier
 
              if( ranks_local%south /= mpi_undefined ) then
                 U(:,1,:) = fptr2(:,:,1)
@@ -345,7 +352,7 @@ contains
 !----------------------------------------------------------------------
 
     select case(dir)
-    case(1)
+    case(1)  ! west <--> east
 
        allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
        allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
@@ -355,7 +362,7 @@ contains
 
        if( cart2d%sizes(1) == 1 ) then
 
-          ! left/right
+          ! periodic
           if( mleft /= mpi_proc_null ) then
              VR(ix-1,:,:) = VR(1,:,:)
              VL(1,:,:)    = VL(ix-1,:,:)
@@ -366,7 +373,7 @@ contains
           ! MPI-3 shared memory communication
           if( use_shm ) then
 
-             call mpi_win_lock_all(0,mwin,merr)
+             call mpi_win_lock_all(0,mwin1,merr)
              if( ranks_local%west /= mpi_undefined ) then
                 fwest(:,:,2) = VR(1,:,:)
              else
@@ -382,8 +389,8 @@ contains
                 call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
              endif
 
-             call mpi_win_unlock_all(mwin,merr)
-             call mpi_barrier(comm_local,merr)
+             call mpi_win_unlock_all(mwin1,merr)
+             call mpi_barrier(comm_local,merr)  ! local barrier
 
              if( ranks_local%west /= mpi_undefined ) then
                 VL(1,:,:) = fptr1(:,:,1)
@@ -429,7 +436,7 @@ contains
        deallocate( bufsnd2, bufrcv2 )
 
 
-    case(2)
+    case(2)  ! south <--> north
 
        allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
        allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
@@ -439,7 +446,7 @@ contains
 
        if( cart2d%sizes(2) == 1 ) then
 
-          ! top/bottom boundaries (if periodic)
+          ! periodic
           if( mleft /= mpi_proc_null ) then
              VR(:,jx-1,:) = VR(:,1,:)
              VL(:,   1,:) = VL(:,jx-1,:)
@@ -450,7 +457,7 @@ contains
           ! MPI-3 shared memory communication
           if( use_shm ) then
 
-             call mpi_win_lock_all(0,mwin,merr)
+             call mpi_win_lock_all(0,mwin2,merr)
              if( ranks_local%south /= mpi_undefined ) then
                 fsouth(:,:,2) = VR(:,1,:)
              else
@@ -466,8 +473,8 @@ contains
                 call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
              endif
 
-             call mpi_win_unlock_all(mwin,merr)
-             call mpi_barrier(comm_local,merr)
+             call mpi_win_unlock_all(mwin2,merr)
+             call mpi_barrier(comm_local,merr)  ! local barrier
 
              if( ranks_local%south /= mpi_undefined ) then
                 VL(:,1,:) = fptr2(:,:,1)

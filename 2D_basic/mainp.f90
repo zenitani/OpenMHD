@@ -75,10 +75,10 @@ program main
   endif
   if( myrank == 0 ) then
      write(6,*) '[Params]'
-     write(6,997) version, cart2d%sizes, ranks%size
+     write(6,997) version, ranks%size, cart2d%sizes
      write(6,998) dt, dtout, cart2d%sizes(1)*(ix-2)+2, ix, cart2d%sizes(2)*(jx-2)+2, jx
      write(6,999) lm_type, flux_type, time_type
-997  format ('Code version: ', i8, '  MPI node # : ', i4,' x ',i4,' = ', i5 )
+997  format ('Code version: ', i8, '  MPI node # : ', i5,' (',i4,' x ',i4,')' )
 998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i6,' (',i5,') x ',i6,' (',i5,') ')
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
@@ -187,10 +187,10 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
-        call rk21(U,U1,F,G,dt,dx,ix,jx)
+        call rk_tvd21(U,U1,F,G,dt,dx,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
-        call step1(U,U1,F,G,dt,dx,ix,jx)
+        call rk_std21(U,U1,F,G,dt,dx,ix,jx)
      endif
 !    boundary conditions
      call parallel_exchange(U1,ix,jx,1)
@@ -238,10 +238,10 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
-        call rk22(U,U1,F,G,dt,dx,ix,jx)
+        call rk_tvd22(U,U1,F,G,dt,dx,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
-        call step2(U,F,G,dt,dx,ix,jx)
+        call rk_std22(U,F,G,dt,dx,ix,jx)
      endif
 
 !    GLM solver for the second half timestep

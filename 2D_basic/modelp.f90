@@ -7,22 +7,21 @@ subroutine modelp(U,V,x,y,dx,ix,jx)
   real(8), intent(out) :: x(ix), y(jx), dx
   integer, intent(in)  :: ix, jx
 ! ---------------------------------------------------
-  integer :: i, j
-  real(8) :: B2, v2, f1
-! ---------------------------------------------------
-  integer :: iix, jjx
-  real(8) :: tmpx(cart2d%sizes(1)*(ix-2) + 2)
-  real(8) :: tmpy(cart2d%sizes(2)*(jx-2) + 2)
-! ---------------------------------------------------
   real(8), parameter :: pi = 4.d0*atan(1.d0)
 ! x locations
   real(8), parameter :: domain_x(2) = (/0.d0, 2*pi/)
-! y location (domain_y(2) is automatically adjusted)
+! y location (domain_y(2) is automatically calculated)
   real(8), parameter :: domain_y(1) = (/0.d0/)
 ! ---------------------------------------------------
+  integer :: i, j
+  integer :: iix, jjx
+  real(8) :: B2, v2, f1
+  real(8) :: tmpx(cart2d%sizes(1)*(ix-2) + 2)
+  real(8) :: tmpy(cart2d%sizes(2)*(jx-2) + 2)
+! ---------------------------------------------------
 
-  iix = cart2d%sizes(1)*(ix-2) + 2
 ! grid in the X direction : L_x = 2 pi
+  iix = cart2d%sizes(1)*(ix-2) + 2
   dx = ( domain_x(2) - domain_x(1) ) / dble( iix-2 )
   tmpx(1)   = domain_x(1) - dx/2
 ! tmpx(iix) = domain_x(2) + dx/2
@@ -33,8 +32,9 @@ subroutine modelp(U,V,x,y,dx,ix,jx)
      x(i) = tmpx(cart2d%coords(1)*(ix-2) + i)
   enddo
 
+! grid in the Y direction
   jjx = cart2d%sizes(2)*(jx-2) + 2
-  tmpy(1) = -dx/2
+  tmpy(1) = domain_y(1) - dx/2
   do j=2,jjx
      tmpy(j) = tmpy(j-1) + dx
   enddo

@@ -15,9 +15,9 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### JAXA/FX100
 # F90 = f90sjx -Umpi -Uflat
 
-OBJS = model.o set_dt.o u2v.o input.o output.o rk21.o rk22.o step1.o step2.o bc.o \
-	flux_solver.o limiter.o bc_vlvr_g.o flux_glm.o glm_ss.o
-OBJP = modelp.o mpibc.o mpibc_vlvr_f.o mpiinput.o mpioutput.o
+OBJS = model.o set_dt.o u2v.o input.o output.o rk.o bc.o \
+	flux_solver.o limiter.o flux_glm.o glm_ss.o
+OBJP = modelp.o mpibc.o mpiinput.o mpioutput.o parallel.o
 
 all: run runp
 
@@ -29,8 +29,11 @@ run : main.o $(OBJS)
 runp : mainp.o $(OBJS) $(OBJP)
 	$(F90) -o ap.out mainp.o $(OBJS) $(OBJP)
 
-%.o: %.f90 param.h
+%.o: %.f90 param.h parallel.mod
+	$(F90) $(FFLAGS) -c $<
+
+%.mod: %.f90 param.h
 	$(F90) $(FFLAGS) -c $<
 
 clean :
-	rm -f *.out *.o data/*.dat
+	rm -f *.out *.o *.mod data/*.dat

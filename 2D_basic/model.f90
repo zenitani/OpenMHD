@@ -1,35 +1,32 @@
 subroutine model(U,V,x,y,dx,ix,jx)
   implicit none
   include 'param.h'
-  integer, intent(in) :: ix, jx
-  real(8) :: U(ix,jx,var1)
-  real(8) :: V(ix,jx,var2)
-  real(8) :: x(ix), y(jx), dx
-  integer :: i, j, izero, jzero
+  real(8), intent(out) :: U(ix,jx,var1)
+  real(8), intent(out) :: V(ix,jx,var2)
+  real(8), intent(out) :: x(ix), y(jx), dx
+  integer, intent(in)  :: ix, jx
+! ---------------------------------------------------
+  real(8), parameter :: pi = 4.d0*atan(1.d0)
+! x locations
+  real(8), parameter :: domain_x(2) = (/0.d0, 2*pi/)
+! y location (domain_y(2) is automatically calculated)
+  real(8), parameter :: domain_y(1) = (/0.d0/)
+! ---------------------------------------------------
+  integer :: i, j
   real(8) :: B2, v2, f1
+! ---------------------------------------------------
 
-! grid in the X direction : L_x = 2 pi
-!  dx = 1.d0/dble(ix-2)
-  dx = ( 8.d0*atan(1.d0) ) / dble(ix-2)
-!  izero=ix/2
-  izero=1
-  x(izero)=-dx/2
-  do i=izero+1,ix
-     x(i) = x(i-1)+dx
+  dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
+  x(1)   = domain_x(1) - dx/2
+! x(iix) = domain_x(2) + dx/2
+  do i=2,ix
+     x(i) = x(i-1) + dx
   enddo
-  do i=izero-1,1,-1
-     x(i) = x(i+1)-dx
+  y(1) = domain_y(1) - dx/2
+  do j=2,jx
+     y(j) = y(j-1) + dx
   enddo
-
-!  jzero = jx/2
-  jzero = 1
-  y(jzero) = -dx/2
-  do j=jzero+1,jx
-     y(j) = y(j-1)+dx
-  enddo
-  do j=jzero-1,1,-1
-     y(j) = y(j+1)-dx
-  enddo
+! ---------------------------------------------------
 
   do j=1,jx
   do i=1,ix

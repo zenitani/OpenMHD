@@ -123,10 +123,10 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
-        call rk21(U,U1,F,G,dt,dx,ix,jx)
+        call rk_tvd21(U,U1,F,G,dt,dx,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
-        call step1(U,U1,F,G,dt,dx,ix,jx)
+        call rk_std21(U,U1,F,G,dt,dx,ix,jx)
      endif
 !    boundary condition
      call bc(U1,ix,jx)
@@ -173,10 +173,10 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
-        call rk22(U,U1,F,G,dt,dx,ix,jx)
+        call rk_tvd22(U,U1,F,G,dt,dx,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
-        call step2(U,F,G,dt,dx,ix,jx)
+        call rk_std22(U,F,G,dt,dx,ix,jx)
      endif
 
 !    GLM solver for the second half timestep
