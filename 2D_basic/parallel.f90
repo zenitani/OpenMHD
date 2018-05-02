@@ -49,7 +49,7 @@ contains
     integer :: i
     integer :: tmpA(4), tmpB(4)
     integer :: group_world, group_local
-    integer :: mdisp = 0, merr
+    integer :: mdisp = 0, merr, merrcode
     integer(kind=mpi_address_kind) :: msize
     type(c_ptr) :: baseptr1, baseptr2
 
@@ -73,7 +73,7 @@ contains
        if( ranks%myrank == 0 ) then
           write(6,*) 'MPI process numbers mismatch.'
        endif
-       stop
+       call mpi_abort(cart2d%comm, merrcode, merr)
     endif
 
     ! node-local mapping
@@ -90,7 +90,7 @@ contains
     ranks_local%south = tmpB(3) ;   ranks_local%west = tmpB(4)
 
     ! preparing shared memories
-    if( use_shm .and. ranks_local%size > 1 ) then
+    if( use_shm .and. ( ranks_local%size > 1 )) then
 
        ! fptr1: west <--> east
        if( ranks_local%west /= mpi_undefined .or. ranks_local%east /= mpi_undefined ) then
@@ -132,12 +132,11 @@ contains
   subroutine parallel_finalize
     integer :: merr
 
-    call mpi_finalize(merr)
-
-    if( use_shm .and. ranks_local%size > 1 ) then
+    if( use_shm .and. ( ranks_local%size > 1 )) then
        call mpi_win_free(mwin1,merr)
        call mpi_win_free(mwin2,merr)
     endif
+    call mpi_finalize(merr)
   
   end subroutine parallel_finalize
 
