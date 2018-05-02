@@ -5,6 +5,7 @@ program main
 !     2010/09/25  S. Zenitani  HLL reconnection code
 !     2010/09/29  S. Zenitani  MPI version
 !     2015/04/05  S. Zenitani  MPI-IO
+!     2018/05/02  S. Zenitani  parallel module (MPI-3 version)
 !-----------------------------------------------------------------------
   use parallel
   implicit none
@@ -163,8 +164,8 @@ program main
      call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
      call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
      call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
-!    fix VL/VR for periodic bc (F)
-!     write(6,*) 'fix VL/VR at MPI boundary'
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (F)'
      call parallel_exchange2(VL,VR,ix,jx,1)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
@@ -183,8 +184,8 @@ program main
      call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,2,lm_type)
      call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
      call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
-!    fix VL/VR for periodic bc (G)
-!     write(6,*) 'fix VL/VR at MPI boundary'
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (G)'
      call parallel_exchange2(VL,VR,ix,jx,2)
      call mpibc_for_G(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
@@ -218,8 +219,8 @@ program main
      call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
      call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
-!    fix VL/VR for periodic bc (F)
-!     write(6,*) 'fix VL/VR at MPI boundary'
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (F)'
      call parallel_exchange2(VL,VR,ix,jx,1)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
@@ -238,8 +239,8 @@ program main
      call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,2,lm_type)
      call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
-!    fix VL/VR for periodic bc (G)
-!     write(6,*) 'fix VL/VR at MPI boundary'
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (G)'
      call parallel_exchange2(VL,VR,ix,jx,2)
      call mpibc_for_G(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
@@ -268,7 +269,7 @@ program main
   enddo
 !-----------------------------------------------------------------------
 
-  call mpi_finalize(merr)
+  call parallel_finalize()
   if( myrank == 0 )  write(6,*) '== end =='
 
 980 format ('data/field-',i5.5,'.dat')

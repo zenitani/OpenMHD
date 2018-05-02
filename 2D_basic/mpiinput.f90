@@ -4,6 +4,7 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U)
 !-----------------------------------------------------------------------
 !     2015/04/06  S. Zenitani  MPI-IO
 !     2017/04/14  S. Zenitani  no longer use record markers
+!     2018/05/02  S. Zenitani  2-D decomposition
 !-----------------------------------------------------------------------
   use parallel
   implicit none
@@ -55,7 +56,7 @@ subroutine mpiinput(filename,ix,jx,t,x,y,U)
   call mpi_file_set_view(fh, disp+8*cart2d%coords(2)*(jx-2), mpi_real8, mpi_real8, "native", mpi_info_null, ierr)
   call mpi_file_read_all( fh, y, jx,   mpi_real8, mpi_status_ignore, ierr); disp = disp+8*jjx
 
-! --------- 2D matrix of iix * jx -------------------------------------------------
+! --------- 2D matrix of iix * jjx -------------------------------------------------
   gsizes = (/iix,jjx/);  subsizes = (/ix,jx/);
   starts = (/0+cart2d%coords(1)*(ix-2), 0+cart2d%coords(2)*(jx-2)/)
   call mpi_type_create_subarray(2,gsizes,subsizes,starts,mpi_order_fortran,mpi_real8,ftype,ierr)

@@ -4,7 +4,7 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V)
 !-----------------------------------------------------------------------
 !     2015/04/06  S. Zenitani  MPI-IO
 !     2017/04/14  S. Zenitani  no longer use record markers
-!     2018/01/17  S. Zenitani  subarray for mpi_file_write_all
+!     2018/05/02  S. Zenitani  2-D decomposition
 !-----------------------------------------------------------------------
 !  use mpi
   use parallel
@@ -48,10 +48,8 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V)
   if( cart2d%coords(2) == 0                 )  js = 1
   if( cart2d%coords(2) == cart2d%sizes(2)-1 )  je = jx
 
-! --------- 1D matrix of iix -------------------------------------------------
+! --------- 1D array of iix -------------------------------------------------
 !  if( cart2d%coords(1) == 0 ) then
-!     write(6,*) 'Hello?'
-!  endif
      gsize(1)   = iix
      subsize(1) = ie-is+1
      start(1)   = cart2d%coords(1)*(ix-2)+(is-1)
@@ -70,10 +68,8 @@ subroutine mpioutput(filename,ix,jx,t,x,y,U,V)
 !  endif
   disp = disp+8*iix
 
-! --------- 1D matrix of jjx -------------------------------------------------
+! --------- 1D array of jjx -------------------------------------------------
 !  if( cart2d%coords(2) == 0 ) then
-!     write(6,*) 'Hello?'
-!  endif
      gsize(1)   = jjx
      subsize(1) = je-js+1
      start(1)   = cart2d%coords(2)*(jx-2)+(js-1)
