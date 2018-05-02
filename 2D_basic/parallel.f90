@@ -129,7 +129,7 @@ contains
   end subroutine parallel_init
 
 
-  subroutine parallel_finilize
+  subroutine parallel_finalize
     integer :: merr
 
     call mpi_finalize(merr)
@@ -139,7 +139,7 @@ contains
        call mpi_win_free(mwin2,merr)
     endif
   
-  end subroutine parallel_finilize
+  end subroutine parallel_finalize
 
 
   subroutine parallel_exchange(U,ix,jx,dir)

@@ -17,11 +17,10 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 ### Nagoya U/FX100
 # F90 = mpifrtpx
 
-OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o input.o output.o \
-	rk.o bc.o \
+OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o bc.o fileio.o rk.o \
 	flux_solver.o limiter.o flux_resistive.o flux_glm.o glm_ss.o
-OBJP = modelp.o  mpibc.o  mpiinput.o mpioutput.o parallel.o
-OBJP2= modelp2.o mpibc2.o mpiinput.o mpioutput.o parallel.o
+OBJP = modelp.o  mpibc.o  mpiio.o
+OBJP2= modelp2.o mpibc2.o mpiio.o
 
 all: run runp runp2
 
@@ -30,18 +29,15 @@ run : main.o $(OBJS)
 	$(F90) -o a.out main.o $(OBJS)
 
 # parallel version
-runp : mainp.o $(OBJS) $(OBJP)
-	$(F90) -o ap.out mainp.o $(OBJS) $(OBJP)
+runp : parallel.o mainp.o $(OBJS) $(OBJP)
+	$(F90) -o ap.out parallel.o mainp.o $(OBJS) $(OBJP)
 
 # parallel version (1/4 BC for reconnection papers)
-runp2 : mainp2.o $(OBJS) $(OBJP2)
-	$(F90) -o ap2.out mainp2.o $(OBJS) $(OBJP2)
+runp2 : parallel.o mainp2.o $(OBJS) $(OBJP2)
+	$(F90) -o ap2.out parallel.o mainp2.o $(OBJS) $(OBJP2)
 
-%.o: %.f90 param.h parallel.mod
-	$(F90) $(FFLAGS) -c $<
-
-%.mod: %.f90 param.h
+%.o: %.f90 param.h
 	$(F90) $(FFLAGS) -c $<
 
 clean :
-	rm -f *.out *.o data/*.dat data/*.dat.restart
+	rm -f *.out *.o *.mod data/*.dat data/*.dat.restart

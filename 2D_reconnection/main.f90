@@ -72,7 +72,7 @@ program main
         write(6,*) 'data output   t = ', t
         write(filename,990) n_output
 990     format ('data/field-',i5.5,'.dat')
-        call output(filename,ix,jx,t,x,y,U,V)
+        call fileio_output(filename,ix,jx,t,x,y,U,V)
         n_output = n_output + 1
         t_output = t_output + dtout
      endif

@@ -1,5 +1,4 @@
 subroutine model(U,V,x,y,dx,ix,jx)
-  use parallel
   implicit none
   include 'param.h'
   real(8), intent(out) :: U(ix,jx,var1)

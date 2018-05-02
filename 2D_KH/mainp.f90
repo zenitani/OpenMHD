@@ -91,11 +91,11 @@ program main
      if ( io_type == 0 ) then
         write(6,*) 'reading data ...   rank = ', myrank
         write(filename,990) myrank, n_start
-        call input(filename,ix,jx,t,x,y,U)
+        call fileio_input(filename,ix,jx,t,x,y,U)
      else
         if( myrank == 0 )  write(6,*) 'reading data ...'
         write(filename,980) n_start
-        call mpiinput(filename,ix,jx,t,x,y,U)
+        call mpiio_input(filename,ix,jx,t,x,y,U)
      endif
   endif
   t_output = t - dt/3.d0
@@ -117,11 +117,11 @@ program main
            if ( io_type == 0 ) then
               write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
               write(filename,990) myrank, n_output
-              call output(filename,ix,jx,t,x,y,U,V)
+              call fileio_output(filename,ix,jx,t,x,y,U,V)
            else
               if( myrank == 0 )  write(6,*) 'writing data ...   t = ', t
               write(filename,980) n_output
-              call mpioutput(filename,ix,jx,t,x,y,U,V)
+              call mpiio_output(filename,ix,jx,t,x,y,U,V)
            endif
         endif
         n_output = n_output + 1
