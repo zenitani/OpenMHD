@@ -32,8 +32,8 @@ program main
 !-----------------------------------------------------------------------
   integer :: k
   integer :: n_output
-  real(8) :: t, dt, t_output, dtg
-  real(8) :: ch, chg
+  real(8) :: t, dt, t_output
+  real(8) :: ch
   character*256 :: filename
   integer :: merr, myrank, mreq(2)   ! for MPI
 !-----------------------------------------------------------------------
@@ -62,12 +62,9 @@ program main
   call parallel_exchange(U,ix,jx,2)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
 
-!  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-!  call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
-  call mpi_iallreduce(ch,chg,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-  call mpi_iallreduce(dt,dtg,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
+  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
+  call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
   call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
-  dt = dtg; ch = chg
   call mpi_barrier(cart2d%comm,merr)
 
   if ( dt > dtout ) then
@@ -136,12 +133,9 @@ program main
 !   -----------------  
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-!     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-!     call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
-     call mpi_iallreduce(ch,chg,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-     call mpi_iallreduce(dt,dtg,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
+     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
+     call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
      call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
-     dt = dtg; ch = chg
 
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
