@@ -5,11 +5,14 @@ subroutine model(U,V,x,y,dx,ix,jx)
   real(8) :: V(ix,jx,var2)
   real(8) :: x(ix), y(jx), dx
   integer :: ix, jx
-  integer :: i, j, izero
+  integer :: i, j
   real(8) :: ro0, vx0, vx1, pr0, bn0, bt0
   real(8) :: B2, v2, f1, fluxm, b2m, bm, phix, ptot
 ! ---------------------------------------------------
+! model parameters
   real(8), parameter :: pi  = acos(-1.d0)
+! x locations
+  real(8), parameter :: domain_x(2) = (/0.d0, 10000.d0/)
 ! velocity transition layer (width and position)
   real(8), parameter :: xtr =  400.d0
   real(8), parameter :: xc  = 1500.d0
@@ -19,21 +22,17 @@ subroutine model(U,V,x,y,dx,ix,jx)
 ! ---------------------------------------------------
 ! HSS parameters
   real(8), parameter :: am    = 10.d0  ! Alfven Mach number
-  real(8), parameter :: alpha = 0.5d0  ! ratio of to LSS velocity
-  real(8), parameter :: beta =  0.8d0  ! plasma beta
+  real(8), parameter :: alpha = 0.5d0  ! ratio of LSS velocity to HSS velocity
+  real(8), parameter :: beta  = 0.8d0  ! plasma beta
   real(8), parameter :: theta = 60.d0 * pi /180.d0  ! magnetic angle
 ! ---------------------------------------------------
 
-!  dx=1.d0/dble(ix-2)
-  dx=1.d0
-!  izero=ix/2
-  izero=1
-  x(izero)=-dx/2
-  do i=izero+1,ix
-     x(i) = x(i-1)+dx
-  enddo
-  do i=izero-1,1,-1
-     x(i) = x(i+1)-dx
+! grid in the X direction
+  dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
+  x(1)  = domain_x(1) - dx/2
+! x(ix) = domain_x(2) + dx/2
+  do i=2,ix
+     x(i) = x(i-1) + dx
   enddo
   y(1) = 0.d0
 

@@ -5,19 +5,20 @@ subroutine model(U,V,x,y,dx,ix,jx)
   real(8) :: V(ix,jx,var2)
   real(8) :: x(ix), y(jx), dx
   integer :: ix, jx
-  integer :: i, j, izero
+  integer :: i, j
   real(8) :: ro0, vx0, vy0, vz0, pr0, bx0, by0, bz0
   real(8) :: B2, v2, f1
+! ---------------------------------------------------
+! x locations
+  real(8), parameter :: domain_x(2) = (/-0.5d0, 0.5d0/)
+! ---------------------------------------------------
 
 ! 1D in the x direction
-  dx=1.d0/dble(ix-2)
-  izero=ix/2
-  x(izero)=-dx/2
-  do i=izero+1,ix
-     x(i) = x(i-1)+dx
-  enddo
-  do i=izero-1,1,-1
-     x(i) = x(i+1)-dx
+  dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
+  x(1)  = domain_x(1) - dx/2
+! x(ix) = domain_x(2) + dx/2
+  do i=2,ix
+     x(i) = x(i-1) + dx
   enddo
   y(1) = 0.d0
 

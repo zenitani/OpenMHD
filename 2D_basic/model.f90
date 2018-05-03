@@ -6,10 +6,10 @@ subroutine model(U,V,x,y,dx,ix,jx)
   real(8), intent(out) :: x(ix), y(jx), dx
   integer, intent(in)  :: ix, jx
 ! ---------------------------------------------------
+! model parameters
   real(8), parameter :: pi = 4.d0*atan(1.d0)
-! x locations
+! x & y positions (Note: domain_y(2) is automatically calculated)
   real(8), parameter :: domain_x(2) = (/0.d0, 2*pi/)
-! y location (domain_y(2) is automatically calculated)
   real(8), parameter :: domain_y(1) = (/0.d0/)
 ! ---------------------------------------------------
   integer :: i, j
@@ -17,8 +17,8 @@ subroutine model(U,V,x,y,dx,ix,jx)
 ! ---------------------------------------------------
 
   dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
-  x(1)   = domain_x(1) - dx/2
-! x(iix) = domain_x(2) + dx/2
+  x(1)  = domain_x(1) - dx/2
+! x(ix) = domain_x(2) + dx/2
   do i=2,ix
      x(i) = x(i-1) + dx
   enddo

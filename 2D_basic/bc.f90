@@ -13,5 +13,4 @@ subroutine bc(U,ix,jx)
   U(:,jx,:) = U(:,2,:)
   U(:,1,:)  = U(:,jx-1,:)
 
-  return
 end subroutine bc

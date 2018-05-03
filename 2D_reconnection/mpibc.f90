@@ -24,19 +24,18 @@ subroutine mpibc_for_U(U,ix,jx)
 
   ! bottom boundary
   if( ranks%south == mpi_proc_null ) then
-     U(:, 1,:)  =  U(:,   2,:)
-     U(:, 1,my) = -U(:,   2,my)
-     U(:, 1,by) = -U(:,   2,by) 
+     U(:,1,:)  =  U(:,2,:)
+     U(:,1,my) = -U(:,2,my)
+     U(:,1,by) = -U(:,2,by)
   endif
 
   ! top boundary
   if( ranks%north == mpi_proc_null ) then
      U(:,jx,:)  =  U(:,jx-1,:)
      U(:,jx,my) = -U(:,jx-1,my)
-     U(:,jx,by) = -U(:,jx-1,by) 
+     U(:,jx,by) = -U(:,jx-1,by)
   endif
 
-  return
 end subroutine mpibc_for_U
 
 
@@ -50,15 +49,15 @@ subroutine mpibc_for_G( VL,VR,ix,jx )
 
 ! bottom boundary
   if( ranks%south == mpi_proc_null ) then
-     VL(:, 1,ro) =  VR(:,1,ro)
-     VL(:, 1,vx) =  VR(:,1,vx)
-     VL(:, 1,vy) = -VR(:,1,vy)
-     VL(:, 1,vz) =  VR(:,1,vz)
-     VL(:, 1,pr) =  VR(:,1,pr)
-     VL(:, 1,bx) =  VR(:,1,bx)
-     VL(:, 1,by) = -VR(:,1,by)
-     VL(:, 1,bz) =  VR(:,1,bz)
-     VL(:, 1,ps) =  VR(:,1,ps)
+     VL(:,1,ro) =  VR(:,1,ro)
+     VL(:,1,vx) =  VR(:,1,vx)
+     VL(:,1,vy) = -VR(:,1,vy)
+     VL(:,1,vz) =  VR(:,1,vz)
+     VL(:,1,pr) =  VR(:,1,pr)
+     VL(:,1,bx) =  VR(:,1,bx)
+     VL(:,1,by) = -VR(:,1,by)
+     VL(:,1,bz) =  VR(:,1,bz)
+     VL(:,1,ps) =  VR(:,1,ps)
   endif
 
 ! top boundary
@@ -74,5 +73,4 @@ subroutine mpibc_for_G( VL,VR,ix,jx )
      VR(:,jx-1,ps) =  VL(:,jx-1,ps)
   endif
 
-  return
 end subroutine mpibc_for_G

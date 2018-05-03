@@ -12,7 +12,7 @@ module parallel
      integer :: coords(ndims)
      logical :: periods(ndims)
   end type mycoords
-  type(mycoords), save :: cart2d
+  type(mycoords) :: cart2d
 
   ! rank info
   type myranks
@@ -21,23 +21,24 @@ module parallel
      integer :: north, east, south, west
   end type myranks
 
-  type(myranks), save :: ranks         ! global communication
-  type(myranks), save :: ranks_local   ! inside-node communication
-  integer, private, save :: comm_local ! inside-node communication
+  type(myranks) :: ranks         ! global communication
+  type(myranks) :: ranks_local   ! inside-node communication
+  integer, private :: comm_local ! inside-node communication
 
-  ! MPI-3 shared-memory communication
-  logical, parameter, private :: use_shm = .true.
-  integer, private, save :: mpi_mode(ndims) = (/1, 1/)  ! 0: no MPI, 1: MPI-1, 3: MPI-3
-  integer, private, save :: mwin1, mwin2
+  ! ----- MPI-3 shared memory communication ------------------------
+  logical, parameter, private :: use_shm = .false.  ! MPI communication
+! logical, parameter, private :: use_shm = .true.   ! MPI-3 SHM model (experimental)
 
-  ! pointers
-  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fptr1 => null()
-  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fwest => null()
-  real(8), private, save, dimension(:,:,:), pointer, contiguous :: feast => null()
-  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fptr2  => null()
-  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fsouth => null()
-  real(8), private, save, dimension(:,:,:), pointer, contiguous :: fnorth => null()
-
+  ! Please do not edit here
+  integer, private :: mpi_mode(ndims) = (/1, 1/)  ! 0: no MPI, 1: MPI-1, 3: MPI-3
+  integer, private :: mwin1, mwin2
+  real(8), private, dimension(:,:,:), pointer, contiguous :: fptr1 => null()
+  real(8), private, dimension(:,:,:), pointer, contiguous :: fwest => null()
+  real(8), private, dimension(:,:,:), pointer, contiguous :: feast => null()
+  real(8), private, dimension(:,:,:), pointer, contiguous :: fptr2  => null()
+  real(8), private, dimension(:,:,:), pointer, contiguous :: fsouth => null()
+  real(8), private, dimension(:,:,:), pointer, contiguous :: fnorth => null()
+  ! ----- MPI-3 shared memory communication ------------------------
 
 contains
 
@@ -50,7 +51,7 @@ contains
     integer :: i
     integer :: tmpA(4), tmpB(4)
     integer :: group_world, group_local
-    integer :: mdisp = 0, merr, merrcode
+    integer :: mdisp, merr, merrcode
     integer(kind=mpi_address_kind) :: msize
     type(c_ptr) :: baseptr1, baseptr2
 
@@ -74,79 +75,87 @@ contains
        if( ranks%myrank == 0 ) then
           write(6,*) 'MPI process numbers mismatch.'
        endif
+       merrcode = -1
        call mpi_abort(cart2d%comm, merrcode, merr)
     endif
 
     ! MPI mode
+    ! No MPI transport in the case of 1
     if( cart2d%sizes(1) == 1 )  mpi_mode(1) = 0
     if( cart2d%sizes(2) == 1 )  mpi_mode(2) = 0
 
-    ! node-local mapping
-    tmpA = (/ranks%north, ranks%east, ranks%south, ranks%west/)
-    call mpi_comm_split_type(cart2d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local, merr)
-    call mpi_comm_group(cart2d%comm, group_world, merr)
-    call mpi_comm_group(comm_local,  group_local, merr)
-    call mpi_group_translate_ranks(group_world, 4, tmpA, group_local, tmpB, merr)
-    call mpi_comm_size(comm_local, ranks_local%size, merr)
-    do i=1,4
-       if( tmpB(i) == mpi_proc_null )  tmpB(i) = mpi_undefined
-    enddo
-    ranks_local%north = tmpB(1) ;   ranks_local%east = tmpB(2)
-    ranks_local%south = tmpB(3) ;   ranks_local%west = tmpB(4)
+    ! ----- MPI-3 shared memory communication ------------------------
+    if( use_shm ) then
+       ! node-local mapping
+       tmpA = (/ranks%north, ranks%east, ranks%south, ranks%west/)
+       call mpi_comm_split_type(cart2d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local, merr)
+       call mpi_comm_group(cart2d%comm, group_world, merr)
+       call mpi_comm_group(comm_local,  group_local, merr)
+       call mpi_group_translate_ranks(group_world, 4, tmpA, group_local, tmpB, merr)
+       call mpi_comm_size(comm_local, ranks_local%size, merr)
+       do i=1,4
+          if( tmpB(i) == mpi_proc_null )  tmpB(i) = mpi_undefined
+       enddo
+       ranks_local%north = tmpB(1) ;   ranks_local%east = tmpB(2)
+       ranks_local%south = tmpB(3) ;   ranks_local%west = tmpB(4)
 
-    ! preparing shared memories
-    if( use_shm .and.( ranks_local%size > 1 ).and.( mpi_mode(1) == 1 )) then
+       ! preparing shared memories for west <--> east communication
+       if(( ranks_local%size > 1 ).and.( mpi_mode(1) == 1 )) then
 
-       ! NOTE: This value should be shared in the local node, because
-       ! the local mpi_barrier is critical in the communication part.
-       mpi_mode(1) = 3
+          ! NOTE: This value should be shared in the local node, because
+          ! the local mpi_barrier is critical in the communication part.
+          mpi_mode(1) = 3
 
-       ! fptr1: west <--> east
-       if(( ranks_local%west /= mpi_undefined ).or.( ranks_local%east /= mpi_undefined )) then
-          msize = 2*8*jx*var1
-          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
-          call c_f_pointer(baseptr1,fptr1,(/jx,var1,2/))
-          if( ranks_local%west /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin1,ranks_local%west,msize,mdisp,baseptr1,merr)
-             call c_f_pointer(baseptr1,fwest,(/jx,var1,2/))
+          if(( ranks_local%west /= mpi_undefined ).or.( ranks_local%east /= mpi_undefined )) then
+             msize = 2*8*jx*var1
+             mdisp = 0
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
+             call c_f_pointer(baseptr1,fptr1,(/jx,var1,2/))
+             if( ranks_local%west /= mpi_undefined ) then
+                call mpi_win_shared_query(mwin1,ranks_local%west,msize,mdisp,baseptr1,merr)
+                call c_f_pointer(baseptr1,fwest,(/jx,var1,2/))
+             endif
+             if( ranks_local%east /= mpi_undefined ) then
+                call mpi_win_shared_query(mwin1,ranks_local%east,msize,mdisp,baseptr1,merr)
+                call c_f_pointer(baseptr1,feast,(/jx,var1,2/))
+             endif
+          else
+             ! dummy pointer
+             msize = 0
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
           endif
-          if( ranks_local%east /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin1,ranks_local%east,msize,mdisp,baseptr1,merr)
-             call c_f_pointer(baseptr1,feast,(/jx,var1,2/))
-          endif
-       else
-          msize = 0
-          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
+
        endif
 
-    endif
+       ! preparing shared memories for south <--> north communication
+       if(( ranks_local%size > 1 ).and.( mpi_mode(2) == 1 )) then
 
-    ! preparing shared memories
-    if( use_shm .and.( ranks_local%size > 1 ).and.( mpi_mode(2) == 1 )) then
+          ! NOTE: This value should be shared in the local node, because
+          ! the local mpi_barrier is critical in the communication part.
+          mpi_mode(2) = 3
 
-       ! NOTE: This value should be shared in the local node, because
-       ! the local mpi_barrier is critical in the communication part.
-       mpi_mode(2) = 3
-
-       ! fptr2: south <--> north
-       if(( ranks_local%north /= mpi_undefined ).or.( ranks_local%south /= mpi_undefined )) then
-          msize = 2*8*ix*var1
-          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
-          call c_f_pointer(baseptr2,fptr2,(/ix,var1,2/))
-          if( ranks_local%south /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin2,ranks_local%south,msize,mdisp,baseptr2,merr)
-             call c_f_pointer(baseptr2,fsouth,(/ix,var1,2/))
+          if(( ranks_local%north /= mpi_undefined ).or.( ranks_local%south /= mpi_undefined )) then
+             msize = 2*8*ix*var1
+             mdisp = 0
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
+             call c_f_pointer(baseptr2,fptr2,(/ix,var1,2/))
+             if( ranks_local%south /= mpi_undefined ) then
+                call mpi_win_shared_query(mwin2,ranks_local%south,msize,mdisp,baseptr2,merr)
+                call c_f_pointer(baseptr2,fsouth,(/ix,var1,2/))
+             endif
+             if( ranks_local%north /= mpi_undefined ) then
+                call mpi_win_shared_query(mwin2,ranks_local%north,msize,mdisp,baseptr2,merr)
+                call c_f_pointer(baseptr2,fnorth,(/ix,var1,2/))
+             endif
+          else
+             ! dummy pointer
+             msize = 0
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
           endif
-          if( ranks_local%north /= mpi_undefined ) then
-             call mpi_win_shared_query(mwin2,ranks_local%north,msize,mdisp,baseptr2,merr)
-             call c_f_pointer(baseptr2,fnorth,(/ix,var1,2/))
-          endif
-       else
-          msize = 0
-          call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
+
        endif
-
     endif
+    ! ----- MPI-3 shared memory communication ------------------------
 
     return
   end subroutine parallel_init

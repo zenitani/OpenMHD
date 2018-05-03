@@ -20,11 +20,10 @@ subroutine u2v(U,V,ix,jx)
   real(8) :: Ub(3)  ! magnetic field
   real(8) :: Vv(3)  ! 3-velocity (tmp)
 !-----------------------------------------------------------------------
-  integer :: i, j, k, izero
+  integer :: i, j, k
   real(8) :: B2, M2, S, S2, W, W2, W3, S2_W2
   real(8) :: f1, f2, v2, u0, u02
   real(8) :: dv2_dW, chi, dchi_dW, dfW, dW, fW
-!  real(8) :: rro
   real(8) :: pre
 
   do j=1,jx

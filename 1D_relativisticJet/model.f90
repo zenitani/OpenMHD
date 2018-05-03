@@ -1,35 +1,36 @@
 subroutine model(U,x,y,dx,ix,jx)
+!-----------------------------------------------------------------------
+! Initial configurations for a relativistic jet problem
+!        Ref: S. Zenitani, M. Hesse, A. Klimas, ApJ, 712, 951 (2010)
+!-----------------------------------------------------------------------
   implicit none
   include 'param_rela.h'
   real(8) :: U(ix,jx,var1)
   real(8) :: V(var1)
   real(8) :: x(ix), y(jx), dx
   integer :: ix, jx
-  integer :: i, j, izero
+  integer :: i, j
   real(8) :: u0, B2, bu
 !-----------------------------------------------------------------------
-! Initial configurations for a relativistic jet problem
-!        Ref: S. Zenitani, M. Hesse, A. Klimas, ApJ, 712, 951 (2010)
+! x locations
+  real(8), parameter :: domain_x(2) = (/-0.2d0, 0.2d0/)
 !-----------------------------------------------------------------------
   real(8), parameter :: roL = 0.1d0
   real(8), parameter :: uxL = 0.d0, uyL = 0.d0, uzL = sqrt(48.d0)
   real(8), parameter :: prL = 10.d0, byL = 0.d0, bzL = 0.d0 ! model H1
-!  real(8), parameter :: prL = 2.d0, byL = 28.d0, bzL = 0.d0 ! model M1
-!  real(8), parameter :: prL = 2.d0, byL = 0.d0, bzL = 4.d0 ! model M2
+! real(8), parameter :: prL = 2.d0, byL = 28.d0, bzL = 0.d0 ! model M1
+! real(8), parameter :: prL = 2.d0, byL =  0.d0, bzL = 4.d0 ! model M2
   real(8), parameter :: roR = 1.d0
   real(8), parameter :: uxR = 0.d0, uyR = 0.d0, uzR = 0.d0
   real(8), parameter :: prR = 1.d0, byR = 0.d0, bzR = 0.d0
 !-----------------------------------------------------------------------
 
-! grid
-  dx=0.4d0/real(ix-2)
-  izero=ix/2
-  x(izero)=-dx/2
-  do i=izero+1,ix
-     x(i) = x(i-1)+dx
-  enddo
-  do i=izero-1,1,-1
-     x(i) = x(i+1)-dx
+! 1D in the x direction
+  dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
+  x(1)  = domain_x(1) - dx/2
+! x(ix) = domain_x(2) + dx/2
+  do i=2,ix
+     x(i) = x(i-1) + dx
   enddo
 
 ! initial condition

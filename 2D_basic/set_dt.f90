@@ -12,17 +12,20 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
   real(8), intent(in) :: dx, cfl
   real(8), intent(out) :: vmax, dt
 !-----------------------------------------------------------------------
-  integer :: i, j
+  integer :: i, j, is, ie, js, je
   integer :: imax, jmax, mymax(2)
   real(8) :: vtmp(ix,jx)
   real(8) :: B2, f1, f2, vfx, vfy
 
+
+  is = min(2,ix); ie = max(1,ix-1)
+  js = min(2,jx); je = max(1,jx-1)
   vmax = 0.d0
 ! vtmp = 0.d0
 
 !$omp parallel do private(i,j,B2,f1,f2,vfx,vfy) reduction(max:vmax)
-  do j=1,jx
-  do i=1,ix
+  do j=js,je
+  do i=is,ie
 
      B2 = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )
      f1 = gamma * V(i,j,pr)

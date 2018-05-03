@@ -237,7 +237,7 @@ subroutine mpiio_input(filename,ix,jx,t,x,y,U)
 !  call mpi_file_read_all( fh, V(1,1,vz), ix*jx, mpi_real8, mpi_status_ignore, ierr); disp = disp+mk
 !  call mpi_file_set_view(fh, disp, mpi_real8, ftype, "native", mpi_info_null, ierr)
 !  call mpi_file_read_all( fh, V(1,1,pr), ix*jx, mpi_real8, mpi_status_ignore, ierr); disp = disp+mk
-! --------- 2D matrix of iix * jx -------------------------------------------------
+! --------- 2D matrix of iix * jjx -------------------------------------------------
 
   call mpi_file_close( fh, ierr )
 

@@ -14,15 +14,15 @@ subroutine bc_for_U(U,ix,jx)
   U( 1,:,:) = U(ix-1,:,:)
 
 ! bottom boundary
-  U(:,1, ro) =  U(:,2, ro)
-  U(:,1, mx) =  U(:,2, mx)
-  U(:,1, my) = -U(:,2, my)
-  U(:,1, mz) =  U(:,2, mz)
-  U(:,1, en) =  U(:,2, en)
-  U(:,1, bx) =  U(:,2, bx)
-  U(:,1, by) = -U(:,2, by)
-  U(:,1, bz) =  U(:,2, bz)
-  U(:,1, ps) =  U(:,2, ps)
+  U(:,1,ro) =  U(:,2,ro)
+  U(:,1,mx) =  U(:,2,mx)
+  U(:,1,my) = -U(:,2,my)
+  U(:,1,mz) =  U(:,2,mz)
+  U(:,1,en) =  U(:,2,en)
+  U(:,1,bx) =  U(:,2,bx)
+  U(:,1,by) = -U(:,2,by)
+  U(:,1,bz) =  U(:,2,bz)
+  U(:,1,ps) =  U(:,2,ps)
 
 ! top boundary
   U(:,jx,ro) =  U(:,jx-1,ro)
@@ -35,8 +35,8 @@ subroutine bc_for_U(U,ix,jx)
   U(:,jx,bz) =  U(:,jx-1,bz)
   U(:,jx,ps) =  U(:,jx-1,ps)
 
-  return
 end subroutine bc_for_U
+
 
 ! BC for F -- VL/VR in the X direction
 subroutine bc_for_F( VL,VR,ix,jx )
@@ -48,8 +48,8 @@ subroutine bc_for_F( VL,VR,ix,jx )
   VR(ix-1,:,:) = VR(1,:,:)
   VL(1,:,:)    = VL(ix-1,:,:)
 
-  return
 end subroutine bc_for_F
+
 
 ! BC for G -- VL/VR in the Y direction
 subroutine bc_for_G( VL,VR,ix,jx )
@@ -59,15 +59,15 @@ subroutine bc_for_G( VL,VR,ix,jx )
   real(8), intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
 
 ! bottom boundary
-  VL(:, 1,ro) =  VR(:,1,ro)
-  VL(:, 1,vx) =  VR(:,1,vx)
-  VL(:, 1,vy) = -VR(:,1,vy)
-  VL(:, 1,vz) =  VR(:,1,vz)
-  VL(:, 1,en) =  VR(:,1,en)
-  VL(:, 1,bx) =  VR(:,1,bx)
-  VL(:, 1,by) = -VR(:,1,by)
-  VL(:, 1,bz) =  VR(:,1,bz)
-  VL(:, 1,ps) =  VR(:,1,ps)
+  VL(:,1,ro) =  VR(:,1,ro)
+  VL(:,1,vx) =  VR(:,1,vx)
+  VL(:,1,vy) = -VR(:,1,vy)
+  VL(:,1,vz) =  VR(:,1,vz)
+  VL(:,1,en) =  VR(:,1,en)
+  VL(:,1,bx) =  VR(:,1,bx)
+  VL(:,1,by) = -VR(:,1,by)
+  VL(:,1,bz) =  VR(:,1,bz)
+  VL(:,1,ps) =  VR(:,1,ps)
 
 ! top boundary
   VR(:,jx-1,ro) =  VL(:,jx-1,ro)
@@ -80,5 +80,4 @@ subroutine bc_for_G( VL,VR,ix,jx )
   VR(:,jx-1,bz) =  VL(:,jx-1,bz)
   VR(:,jx-1,ps) =  VL(:,jx-1,ps)
 
-  return
 end subroutine bc_for_G

@@ -9,20 +9,19 @@ subroutine model(U,V,x,y,dx,ix,jx)
   real(8), intent(out) :: x(ix), y(jx), dx
   integer, intent(in)  :: ix, jx
 ! ---------------------------------------------------
-! x locations
+! x & y positions (Note: domain_y(2) is automatically calculated)
   real(8), parameter :: domain_x(2) = (/-20.d0, 20.d0/)
-! y location (domain_y(2) is automatically calculated)
   real(8), parameter :: domain_y(1) = (/-5.d0/)
 ! plasma beta in the upstream region
-  real(8), parameter :: beta =   0.2d0
+  real(8), parameter :: beta = 0.2d0
 ! ---------------------------------------------------
   integer :: i, j
   real(8) :: B2, v2, f1, r2, b1
 ! ---------------------------------------------------
 
   dx = ( domain_x(2) - domain_x(1) ) / dble( ix-2 )
-  x(1)   = domain_x(1) - dx/2
-! x(iix) = domain_x(2) + dx/2
+  x(1)  = domain_x(1) - dx/2
+! x(ix) = domain_x(2) + dx/2
   do i=2,ix
      x(i) = x(i-1) + dx
   enddo
