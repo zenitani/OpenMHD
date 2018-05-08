@@ -11,8 +11,8 @@ subroutine modelp(U,V,x,y,dx,ix,jx)
   integer :: ix, jx
 ! ---------------------------------------------------
 ! x & y positions (Note: domain_y(2) is automatically calculated)
-  real(8), parameter :: domain_x(2) = (/-80.d0, 80.d0/)
-  real(8), parameter :: domain_y(1) = (/-40.d0/)
+  real(8), parameter :: domain_x(2) = (/-40.d0, 40.d0/)
+  real(8), parameter :: domain_y(1) = (/-20.d0/)
 ! plasma beta in the upstream region
   real(8), parameter :: beta = 0.2d0
 ! ---------------------------------------------------

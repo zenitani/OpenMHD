@@ -19,11 +19,7 @@ program main
   integer, parameter :: jx =  500 + 2  !                 500 cells =  50 x 10
   integer, parameter :: mpi_nums(2)       = (/4, 1/)  ! MPI numbers
   logical, parameter :: bc_periodicity(2) = (/.false., .false./)
-!--- Zenitani (2015): 600 nodes, Zenitani & Miyoshi (2011): 80 nodes ---
-! integer, parameter :: ix =   22   !  20 x 600 --> 12000 cells = 200 x 60
-! integer, parameter :: jx = 9002   !                9000 cells = 150 x 60
-! integer, parameter :: ix =   77   !  75 x  80 -->  6000 cells = 200 x 30
-! integer, parameter :: jx = 4502   !                4500 cells = 150 x 30
+! Zenitani (2015): 12000 x 9000, Zenitani & Miyoshi (2011): 6000 x 4500 cells
 !-----------------------------------------------------------------------
   integer, parameter :: loop_max = 1000000
   real(8), parameter :: tend  = 251.0d0

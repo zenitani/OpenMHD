@@ -10,8 +10,8 @@ program main
   use parallel
   implicit none
   include 'param.h'
-  integer, parameter :: ix =  80 + 2  ! 120 (cells per core) x 4 (cores) = 480
-  integer, parameter :: jx = 100 + 2
+  integer, parameter :: ix = 160 + 2  !  160 (cells per core) x 2 (cores) = 320
+  integer, parameter :: jx = 200 + 2  !  200 (cells per core) x 2 (cores) = 400
   integer, parameter :: mpi_nums(2)       = (/2, 2/)  ! MPI numbers
   logical, parameter :: bc_periodicity(2) = (/.true., .false./)
   integer, parameter :: loop_max = 200000

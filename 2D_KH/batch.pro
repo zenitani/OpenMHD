@@ -12,8 +12,10 @@ data_read,data,x,y,t,15
 myimg = image(data[*,*,ro],x,y, $
               axis_style=2,xtitle='$X$',ytitle='$Y$', $
               xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01, $
-              font_size=16,rgb_table=13,dimensions=[600,600])
+              min_value=0,font_size=16,rgb_table=13,dimensions=[600,600])
 ;; ,renderer=1) ;; use software rendering over a remote connection.
+;myimg.max_value = 1.5
+;myimg.min_value = 0.0
 
 ;; flow vectors
 myvec = vector(data[*,*,vx],data[*,*,vy],x,y, $

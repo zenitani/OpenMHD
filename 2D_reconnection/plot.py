@@ -5,18 +5,26 @@ import openmhd
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-x,y,t,data = openmhd.data_read(8)
-#x,y,t,data = openmhd.data_read(10,ix1=0,ix2=1301,jx1=0,jx2=151)
+x,y,t,data = openmhd.data_read(15)
+# x,y,t,data = openmhd.data_read(15,ix1=300,ix2=901,jx1=150,jx2=451)
 
 # preparing the canvas
-fig = plt.figure(figsize=(12, 6), dpi=80)
+fig = plt.figure(figsize=(10, 5), dpi=80)
 # fig.clear()
 plt.clf()
 
-# 2D image
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-plt.imshow(data[:,:,vx].T,origin='lower',cmap='seismic',extent=extent,aspect='auto')
+# 2D plot
+myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='jet',extent=extent,aspect='auto')
+
+# image operations (e.g. colormaps)
+# myimg.set_cmap('jet')
+# myimg.set_cmap('RdBu_r')  # colortable(70,/reverse) in IDL
+# myimg.set_cmap('seismic')
+# myimg.set_cmap('bwr')
+# myimg.set_cmap('gist_ncar_r')
+# myimg.set_cmap('Pastel1')
 
 # useful options
 # plt.grid()
@@ -40,6 +48,9 @@ plt.contour(az.T,extent=extent,colors='w',linestyles='solid')
 
 # plot
 plt.show()
+
+# adjusting the margins...
+plt.tight_layout()
 
 # image file
 #plt.savefig('output.png', dpi=80)

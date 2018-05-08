@@ -82,6 +82,8 @@ subroutine mpiio_output(filename,ix,jx,t,x,y,U,V)
   call mpi_type_free( ftype2,ierr )
   disp = disp+8*iix
 
+  call mpi_barrier( cart2d%comm,ierr )
+
 ! --------- 1D array of jjx -------------------------------------------------
   gsize(1)   = jjx
   subsize(1) = je-js+1
@@ -105,6 +107,8 @@ subroutine mpiio_output(filename,ix,jx,t,x,y,U,V)
   call mpi_type_free( ftype1,ierr )
   call mpi_type_free( ftype2,ierr )
   disp = disp+8*jjx
+
+  call mpi_barrier( cart2d%comm,ierr )
 
 ! --------- 2D matrix of iix * jjx -------------------------------------------------
   gsizes = (/iix,jjx/);  subsizes = (/(ie-is+1),(je-js+1)/);

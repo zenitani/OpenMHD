@@ -5,7 +5,7 @@ resolve_routine, "data_read"
 
 ;; ---------------------------------------------------------------------
 ;; reading the data ...
-;data_read,data,x,y,t,8
+;; data_read,data,x,y,t,10
 ;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
 data_read,data,x,y,t,10,ix1=0,ix2=1301,jx1=0,jx2=151
 ;; Zenitani & Miyoshi 2011 [6000 x 4500]
@@ -36,6 +36,7 @@ myimg = image(data[*,*,vx],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1
 ;myimg.font_name = 'Times'
 ;myimg.font_name = 'Helivetica'
 ;myimg.rgb_table = 4 ;; color table
+;myimg.rgb_table = colortable(70,/reverse) ;; RdBu_r in Python
 myimg.title = 'Outflow speed (t=' + string(format='(f6.1)',t) + ')'
 ;myimg.title.font_name = 'Times'
 myimg.title.font_size = 16

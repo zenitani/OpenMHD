@@ -27,18 +27,26 @@ y[jxh:]  =  tmp[1:]
 y[0:jxh] = -tmp[-1:-jxh-1:-1]
 
 # preparing the canvas
-fig = plt.figure(figsize=(12, 6), dpi=80)
+fig = plt.figure(figsize=(10, 5), dpi=80)
 # fig.clear()
 plt.clf()
 
-# 2D image
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='seismic',extent=extent,aspect='auto')
+# 2D plot
+myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='jet',extent=extent,aspect='auto')
+# vmax = max(np.max(data[:,:,vx]),-np.min(data[:,:,vx]))
+# vmin = min(0,-vmax)
+# myimg = plt.imshow(data[:,:,vx].T,vmin=vmin,vmax=vmax,
+#                    origin='lower',cmap='gist_ncar_r',extent=extent,aspect='auto')
 
-# image operations (e.g. color map)
-#myimg.set_cmap('jet')
-#myimg.set_cmap('seismic')
+# image operations (e.g. colormaps)
+# myimg.set_cmap('jet')
+# myimg.set_cmap('RdBu_r')  # colortable(70,/reverse) in IDL
+# myimg.set_cmap('seismic')
+# myimg.set_cmap('bwr')
+# myimg.set_cmap('gist_ncar_r')
+# myimg.set_cmap('Pastel1')
 
 # useful options
 # plt.grid()
@@ -63,7 +71,10 @@ plt.contour(az.T,extent=extent,colors='w',linestyles='solid')
 # plot
 plt.show()
 
+# adjusting the margins...
+plt.tight_layout()
+
 # image file
-#plt.savefig('output.png', dpi=80)
+# plt.savefig('output.png', dpi=80)
 
 # end

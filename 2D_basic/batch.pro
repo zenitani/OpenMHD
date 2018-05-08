@@ -9,17 +9,21 @@ data_read,data,x,y,t,20
 ;data_read,data,x,y,t,8,ix1=0,ix2=1501,jx1=0,jx2=201
 
 ;; 2D image
-myimg = image(data[*,*,pr],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01,font_size=16,rgb_table=13,dimensions=[600,600])
+myimg = image(data[*,*,pr],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$', $
+              xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01, $
+              min_value=0,font_size=16,rgb_table=13,dimensions=[600,600])
 ;; ,renderer=1) ;; use software rendering over a remote connection.
+;myimg.max_value = 6.0
+;myimg.min_value = 0.0
 
 ;; useful options
 ;myimg.font_name = 'Times'
 ;myimg.font_name = 'Helivetica'
 ;myimg.rgb_table = 4 ;; color table
+;myimg.rgb_table = colortable(70,/reverse) ;; RdBu_r in Python
 myimg.title = 'Pressure (t=' + string(format='(f6.1)',t) + ')'
 ;myimg.title.font_name = 'Times'
 myimg.title.font_size = 16
-;myimg.max_value = 6
 ;myimg.scale,1.0,2.0 ;; ARRANGE ASPECT RATIO
 ;myimg.yrange = [0,20]
 myimg.position = [0.15,0.15,0.85,0.85]

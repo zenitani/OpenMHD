@@ -9,15 +9,19 @@ x,y,t,data = openmhd.data_read(20)
 # reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
 #x,y,t,data = openmhd.data_read(20,ix1=0,ix2=100,jx1=11)
 
-# 2D image
+# clearing the current figure, if any
 plt.clf()
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-myimg = plt.imshow(data[:,:,pr].T,origin='lower',cmap='seismic',extent=extent)
+# 2D plot (vmin: minimum value, vmax: max value)
+# Note: ().T is necessary, because the imshow routine uses the image coordinates
+myimg = plt.imshow(data[:,:,pr].T,vmin=0,origin='lower',cmap='jet',extent=extent)
 
-# image operations (e.g. color map)
-#myimg.set_cmap('jet')
-#myimg.set_cmap('seismic')
+# image operations (e.g. colormaps)
+# myimg.set_cmap('jet')
+# myimg.set_cmap('RdBu_r')  # colortable(70,/reverse) in IDL
+# myimg.set_cmap('seismic')
+# myimg.set_cmap('gnuplot2')
 
 # useful options
 # plt.grid()
@@ -43,6 +47,6 @@ plt.contour(az.T,extent=extent,colors='w',linestyles='solid')
 plt.show()
 
 # image file
-#plt.savefig('output.png', dpi=144)
+# plt.savefig('output.png', dpi=144)
 
 # end

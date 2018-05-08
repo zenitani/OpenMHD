@@ -7,13 +7,20 @@ vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 # reading the data ...
 x,y,t,data = openmhd.data_read(15)
 
+# clearing the current figure, if any
 plt.clf()
-
-# 2D image
 # extent: [left, right, bottom, top]
-# Note: ().T is necessary, because the imshow routine uses the image coordinates
 extent=[x[0],x[-1],y[0],y[-1]]
-myimg = plt.imshow((data[:,:,ro]).T,origin='lower',cmap='seismic',extent=extent)
+# Note: ().T is necessary, because the imshow routine uses the image coordinates
+# 2D plot (vmin: minimum value, vmax: max value)
+myimg = plt.imshow(data[:,:,ro].T,vmin=0,origin='lower',cmap='bwr',extent=extent)
+
+# image operations (e.g. colormaps)
+# myimg.set_cmap('jet')
+# myimg.set_cmap('RdBu_r')  # colortable(70,/reverse) in IDL
+# myimg.set_cmap('seismic')
+# myimg.set_cmap('bwr')
+# myimg.set_cmap('gnuplot2')
 
 # useful options
 # plt.grid()
@@ -37,6 +44,6 @@ myvec = plt.quiver( x[myxsub0::myxsub],
 plt.show()
 
 # image file
-#plt.savefig('output.png', dpi=144)
+# plt.savefig('output.png', dpi=144)
 
 # end
