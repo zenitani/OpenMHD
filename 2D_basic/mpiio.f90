@@ -61,45 +61,49 @@ subroutine mpiio_output(filename,ix,jx,t,x,y,U,V)
   if( cart2d%coords(2) == cart2d%sizes(2)-1 )  je = jx
 
 ! --------- 1D array of iix -------------------------------------------------
-!  if( cart2d%coords(1) == 0 ) then
-     gsize(1)   = iix
-     subsize(1) = ie-is+1
-     start(1)   = cart2d%coords(1)*(ix-2)+(is-1)
-     call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype1,ierr)
-     call mpi_type_commit( ftype1,ierr )
+  gsize(1)   = iix
+  subsize(1) = ie-is+1
+  start(1)   = cart2d%coords(1)*(ix-2)+(is-1)
+  call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype1,ierr)
+  call mpi_type_commit( ftype1,ierr )
 
-     gsize(1)   = ix
-     subsize(1) = ie-is+1
-     start(1)   = is-1
-     call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype2,ierr)
-     call mpi_type_commit( ftype2,ierr )
+  gsize(1)   = ix
+  subsize(1) = ie-is+1
+  start(1)   = is-1
+  call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype2,ierr)
+  call mpi_type_commit( ftype2,ierr )
 
-     call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
+  call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
+  if( cart2d%coords(2) == 0 ) then
      call mpi_file_write( fh, x, 1, ftype2, mpi_status_ignore, ierr)
-!     call mpi_file_write_all( fh, x, 1, ftype2, mpi_status_ignore, ierr)
-!  endif
+  endif
+! call mpi_file_write_all( fh, x, 1, ftype2, mpi_status_ignore, ierr)
+  call mpi_type_free( ftype1,ierr )
+  call mpi_type_free( ftype2,ierr )
   disp = disp+8*iix
 
 ! --------- 1D array of jjx -------------------------------------------------
-!  if( cart2d%coords(2) == 0 ) then
-     gsize(1)   = jjx
-     subsize(1) = je-js+1
-     start(1)   = cart2d%coords(2)*(jx-2)+(js-1)
-     call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype1,ierr)
-     call mpi_type_commit( ftype1,ierr )
+  gsize(1)   = jjx
+  subsize(1) = je-js+1
+  start(1)   = cart2d%coords(2)*(jx-2)+(js-1)
+  call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype1,ierr)
+  call mpi_type_commit( ftype1,ierr )
 
-     gsize(1)   = jx
-     subsize(1) = je-js+1
-     start(1)   = js-1
-     call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype2,ierr)
-     call mpi_type_commit( ftype2,ierr )
+  gsize(1)   = jx
+  subsize(1) = je-js+1
+  start(1)   = js-1
+  call mpi_type_create_subarray(1,gsize,subsize,start,mpi_order_fortran,mpi_real8,ftype2,ierr)
+  call mpi_type_commit( ftype2,ierr )
 
-     call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
+  call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
+  if( cart2d%coords(1) == 0 ) then
      call mpi_file_write( fh, y, 1, ftype2, mpi_status_ignore, ierr)
-!     call mpi_file_write_all( fh, y, 1, ftype2, mpi_status_ignore, ierr)
-!     call mpi_file_set_view(fh, disp, mpi_byte, mpi_byte, "native", mpi_info_null, ierr)
-!     call mpi_file_write( fh, y, jx, mpi_real8, mpi_status_ignore, ierr)
-!  endif
+  endif
+! call mpi_file_write_all( fh, y, 1, ftype2, mpi_status_ignore, ierr)
+! call mpi_file_set_view(fh, disp, mpi_byte, mpi_byte, "native", mpi_info_null, ierr)
+! call mpi_file_write( fh, y, jx, mpi_real8, mpi_status_ignore, ierr)
+  call mpi_type_free( ftype1,ierr )
+  call mpi_type_free( ftype2,ierr )
   disp = disp+8*jjx
 
 ! --------- 2D matrix of iix * jjx -------------------------------------------------
@@ -141,6 +145,9 @@ subroutine mpiio_output(filename,ix,jx,t,x,y,U,V)
   call mpi_file_write_all( fh, V(1,1,vz), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null, ierr)
   call mpi_file_write_all( fh, V(1,1,pr), 1, ftype2, mpi_status_ignore, ierr); disp = disp+mk
+! -------------------------------------
+  call mpi_type_free( ftype1,ierr )
+  call mpi_type_free( ftype2,ierr )
 ! --------- 2D matrix of iix * jjx -------------------------------------------------
 
   call mpi_file_close( fh, ierr )
@@ -237,6 +244,8 @@ subroutine mpiio_input(filename,ix,jx,t,x,y,U)
 !  call mpi_file_read_all( fh, V(1,1,vz), ix*jx, mpi_real8, mpi_status_ignore, ierr); disp = disp+mk
 !  call mpi_file_set_view(fh, disp, mpi_real8, ftype, "native", mpi_info_null, ierr)
 !  call mpi_file_read_all( fh, V(1,1,pr), ix*jx, mpi_real8, mpi_status_ignore, ierr); disp = disp+mk
+
+  call mpi_type_free( ftype,ierr )
 ! --------- 2D matrix of iix * jjx -------------------------------------------------
 
   call mpi_file_close( fh, ierr )
