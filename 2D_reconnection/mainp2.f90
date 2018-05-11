@@ -228,7 +228,7 @@ program main
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
      call parallel_exchange2(VL,VR,ix,jx,1)
-     call mpibc2_for_U(VL,VR,ix,jx)
+     call mpibc2_for_F(VL,VR,ix,jx)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)

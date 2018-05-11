@@ -10,9 +10,9 @@ The latest version is available at the following URLs.
 Usage
 -------
 
-1. Edit Makefile in a subdirectory.
-2. Configure parameters in the main file (usually main.f90) and
-   the initial configuration file (model.f90).
+1. Edit the Makefile in a subdirectory.
+2. Configure the main file (usually main.f90), the initial configuration file
+   (model.f90), and the boundary condition file (bc.f90) appropriately.
 3. Make and run the program.
 4. The program will output the data in the "data/" directory.
 5. Analyze the data. Sample Python and IDL scripts are provided.
@@ -21,7 +21,7 @@ Usage
 Python 3 (matplotlib):
 
     $ ipython3 --pylab
-    In [1]: %run plot.py
+    In [1]: %run -i plot.py
 
 IDL:
 

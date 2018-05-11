@@ -8,9 +8,8 @@ subroutine modelp(U,V,x,y,dx,ix,jx)
   integer, intent(in)  :: ix, jx
 ! ---------------------------------------------------
   real(8), parameter :: pi = 4.d0*atan(1.d0)
-! x locations
+! x & y positions (Note: domain_y(2) is automatically calculated)
   real(8), parameter :: domain_x(2) = (/0.d0, 2*pi/)
-! y location (domain_y(2) is automatically calculated)
   real(8), parameter :: domain_y(1) = (/0.d0/)
 ! ---------------------------------------------------
   integer :: i, j
