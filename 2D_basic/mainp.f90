@@ -18,7 +18,8 @@ program main
   real(8), parameter :: tend  = 4.0d0
   real(8), parameter :: dtout = 0.1d0 ! output interval
   real(8), parameter :: cfl   = 0.4d0 ! time step
-  integer, parameter :: n_start = 0   ! If non-zero, load previous data file
+! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
+  integer :: n_start = 0
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
@@ -47,9 +48,6 @@ program main
 
 !-----------------------------------------------------------------------
 ! for MPI
-!  call mpi_init(merr)
-!  call mpi_comm_size(mpi_comm_world,npe   ,merr)
-!  call mpi_comm_rank(mpi_comm_world,myrank,merr)
   call parallel_init(mpi_nums,bc_periodicity,ix,jx)
   myrank = ranks%myrank
 !-----------------------------------------------------------------------
@@ -58,8 +56,8 @@ program main
   dt   =  0.d0
   call modelp(U,V,x,y,dx,ix,jx)
 ! boundary conditions
-  call parallel_exchange(U,ix,jx,1)
-  call parallel_exchange(U,ix,jx,2)
+  call parallel_exchange(U,ix,jx,1) ! in the x direction
+  call parallel_exchange(U,ix,jx,2) ! in the y direction
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
 
   call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
@@ -81,8 +79,25 @@ program main
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif
+
+  ! If n_start is negative, look for a latest restart file.
+  if ( n_start < 0 ) then
+     if ( myrank == 0 ) then
+        do k = floor(tend/dtout),0,-1
+           n_start = k
+           if ( io_type == 0 )  write(filename,990) myrank, n_start
+           if ( io_type /= 0 )  write(filename,980) n_start
+           open(15,file=filename,form='unformatted',access='stream',status='old',err=100)
+           close(15)
+           exit
+100        continue
+        enddo
+     endif
+     call mpi_bcast(n_start,1,mpi_integer,0,cart2d%comm,merr)
+  endif
   call mpi_barrier(cart2d%comm,merr)
 
+  ! If n_start is non-zero, restart from a previous file.
   if ( n_start /= 0 ) then
      if ( io_type == 0 ) then
         write(6,*) 'reading data ...   rank = ', myrank
@@ -155,7 +170,7 @@ program main
      call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
-     call parallel_exchange2(VL,VR,ix,jx,1)
+     call parallel_exchange2(VL,VR,ix,jx,1) ! in the x direction
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)
@@ -174,7 +189,7 @@ program main
      call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (G)'
-     call parallel_exchange2(VL,VR,ix,jx,2)
+     call parallel_exchange2(VL,VR,ix,jx,2) ! in the y direction
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
@@ -188,8 +203,8 @@ program main
         call rk_std21(U,U1,F,G,dt,dx,ix,jx)
      endif
 !    boundary conditions
-     call parallel_exchange(U1,ix,jx,1)
-     call parallel_exchange(U1,ix,jx,2)
+     call parallel_exchange(U1,ix,jx,1) ! in the x direction
+     call parallel_exchange(U1,ix,jx,2) ! in the y direction
 !     write(6,*) 'U* --> V'
      call u2v(U1,V,ix,jx)
 
@@ -206,7 +221,7 @@ program main
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
-     call parallel_exchange2(VL,VR,ix,jx,1)
+     call parallel_exchange2(VL,VR,ix,jx,1) ! in the x direction
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)
@@ -225,7 +240,7 @@ program main
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (G)'
-     call parallel_exchange2(VL,VR,ix,jx,2)
+     call parallel_exchange2(VL,VR,ix,jx,2) ! in the y direction
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
@@ -243,8 +258,8 @@ program main
      call glm_ss(U,ch,0.5d0*dt,ix,jx)
 
 !    boundary conditions
-     call parallel_exchange(U,ix,jx,1)
-     call parallel_exchange(U,ix,jx,2)
+     call parallel_exchange(U,ix,jx,1) ! in the x direction
+     call parallel_exchange(U,ix,jx,2) ! in the y direction
      t=t+dt
   enddo
 !-----------------------------------------------------------------------

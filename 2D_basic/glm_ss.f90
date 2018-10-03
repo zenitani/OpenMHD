@@ -3,7 +3,7 @@ subroutine glm_ss(U,ch,dt,ix,jx)
 !     GLM source term solver
 !-----------------------------------------------------------------------
 ! *** caution ***
-! The 1/2 timestep may be used for the 2nd order time-marching: i.e.,
+! A half timestep may be used for the 2nd order time-marching:
 !   call glm_ss(U,ch,0.5d0*dt,ix,jx)
 !-----------------------------------------------------------------------
   implicit none

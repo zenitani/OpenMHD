@@ -25,7 +25,8 @@ program main
   real(8), parameter :: tend  = 251.0d0
   real(8), parameter :: dtout =  25.0d0  ! output interval
   real(8), parameter :: cfl   =   0.35d0 ! time step
-  integer, parameter :: n_start = 0     ! If non-zero, load previous data file
+! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
+  integer :: n_start = 0
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1   ! Zenitani (2015)
 ! integer, parameter :: lm_type   = 2   ! Zenitani & Miyoshi (2011)
@@ -59,9 +60,6 @@ program main
 
 !-----------------------------------------------------------------------
 ! for MPI
-!  call mpi_init(merr)
-!  call mpi_comm_size(mpi_comm_world,npe   ,merr)
-!  call mpi_comm_rank(mpi_comm_world,myrank,merr)
   call parallel_init(mpi_nums,bc_periodicity,ix,jx)
   myrank = ranks%myrank
 !-----------------------------------------------------------------------
@@ -97,8 +95,25 @@ program main
      write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
      write(6,*) '== start =='
   endif
+
+  ! If n_start is negative, look for a latest restart file.
+  if ( n_start < 0 ) then
+     if ( myrank == 0 ) then
+        do k = floor(tend/dtout),0,-1
+           n_start = k
+           if ( io_type == 0 )  write(filename,990) myrank, n_start
+           if ( io_type /= 0 )  write(filename,980) n_start
+           open(15,file=filename,form='unformatted',access='stream',status='old',err=100)
+           close(15)
+           exit
+100        continue
+        enddo
+     endif
+     call mpi_bcast(n_start,1,mpi_integer,0,cart2d%comm,merr)
+  endif
   call mpi_barrier(cart2d%comm,merr)
 
+  ! If n_start is non-zero, restart from a previous file.
   if ( n_start /= 0 ) then
      if ( io_type == 0 ) then
         write(6,*) 'reading data ...   rank = ', myrank

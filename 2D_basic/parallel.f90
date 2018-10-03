@@ -22,8 +22,8 @@ module parallel
   end type myranks
 
   type(myranks) :: ranks         ! global communication
-  type(myranks) :: ranks_local   ! inside-node communication
-  integer, private :: comm_local ! inside-node communication
+  type(myranks) :: ranks_local   ! intra-node communication
+  integer, private :: comm_local ! intra-node communication
 
   ! ----- MPI-3 shared memory communication ------------------------
   logical, parameter, private :: use_shm = .false.  ! MPI communication
@@ -56,8 +56,6 @@ contains
     type(c_ptr) :: baseptr1, baseptr2
 
     call mpi_init(merr)
-!   call mpi_comm_size(mpi_comm_world, ranks%size, merr)
-!   call mpi_comm_rank(mpi_comm_world, ranks%myrank, merr)
 
     cart2d%sizes(:) = my_sizes(:)
     cart2d%coords(:)  = 0
@@ -93,6 +91,7 @@ contains
        call mpi_comm_group(comm_local,  group_local, merr)
        call mpi_group_translate_ranks(group_world, 4, tmpA, group_local, tmpB, merr)
        call mpi_comm_size(comm_local, ranks_local%size, merr)
+       call mpi_comm_rank(comm_local, ranks_local%myrank, merr)
        do i=1,4
           if( tmpB(i) == mpi_proc_null )  tmpB(i) = mpi_undefined
        enddo
@@ -237,7 +236,7 @@ contains
              call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
           endif
           if( ranks_local%east /= mpi_undefined ) then
-!            call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwi1n,merr)
+!            call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwin1,merr)
              feast(:,:,1) = U(ix-1,:,:)
 !            call mpi_win_unlock(ranks_local%east,mwin1,merr)
           else

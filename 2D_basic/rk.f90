@@ -2,6 +2,7 @@
 !    Runge-Kutta routines
 !-----------------------------------------------------------------------
 ! This file contains TVD-RK2 routines and standard RK2 routines
+! Note that these routines assume dx == dy.
 
 
 ! 1/2 step of TVD Runge=Kutta method
