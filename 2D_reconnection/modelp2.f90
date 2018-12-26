@@ -49,7 +49,10 @@ subroutine modelp2(U,V,x,y,dx,ix,jx)
   do j=1,jx
   do i=1,ix
 
-     U(i,j,ro) = 1.d0 + cosh(y(j))**(-2) / beta
+! Here we use min(..., 25) to avoid NaN on some systems.
+! Note that (cosh(25))**(-2) = 7.7E-22 is extremely small.
+     U(i,j,ro) = 1.d0 + cosh(min( y(j), 25.d0 ))**(-2) / beta
+!     U(i,j,ro) = 1.d0 + cosh(y(j))**(-2) / beta
      V(i,j,pr) = 0.5d0 * beta * U(i,j,ro)
      V(i,j,vx) = 0.d0
      V(i,j,vy) = 0.d0

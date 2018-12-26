@@ -37,7 +37,10 @@ subroutine model(U,V,x,y,dx,ix,jx)
      U(i,j,ro) = 0.5d0 * ( (1.d0+alpha) + (1.d0-alpha)*tanh(y(j)) )
      V(i,j,pr) = 0.15d0
      V(i,j,vx) = -0.5d0 * tanh(y(j))
-     V(i,j,vy) = 0.1d0 * sin( pi2*x(i) / Lx ) / cosh(y(j))**2
+! Here we use min(..., 25) to avoid NaN on some systems.
+! Note that (cosh(25))**(-2) = 7.7E-22 is extremely small.
+     V(i,j,vy) = 0.1d0 * sin( pi2*x(i) / Lx ) / cosh(min( y(j), 25.d0 ))**2
+!     V(i,j,vy) = 0.1d0 * sin( pi2*x(i) / Lx ) / cosh(y(j))**2
      V(i,j,vz) = 0.d0
 
      U(i,j,bx) = 0.d0
