@@ -8,8 +8,7 @@ t0=0.d0
 ix0=0L
 jx0=0L
 
-spawn, 'printf "data/field-%05d.dat" ' + string(it), retvars
-filename = retvars(0)
+filename = "data/field-" + string(it,format='(i05)') + ".dat"
 
 ; no record marker
 openr,/get_lun,unit,filename ;,/swap_endian
