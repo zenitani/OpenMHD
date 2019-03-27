@@ -42,6 +42,7 @@ for ii=0,40,1 do begin
    ;; image file
    filename = "movie/output-" + string(ii,format='(i05)') + ".png"
    myimg.save,filename,resolution=96
+   myimg.close
 
 endfor
 ;; ---- loop for movies ---------------

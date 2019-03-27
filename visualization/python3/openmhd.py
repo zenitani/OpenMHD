@@ -4,7 +4,7 @@
 #     2016/09/17  S. Zenitani  First version
 #     2018/05/04  S. Zenitani  Big-endian variant
 #-----------------------------------------------------------------------
-# This file contains the following two subroutines to load the data.
+# This file contains the following subroutines to load the data.
 #
 #  * data_read(it,ix1=None,ix2=None,jx1=None,jx2=None)
 #  * data_read_from_bigendian(it,ix1=None,ix2=None,jx1=None,jx2=None)
