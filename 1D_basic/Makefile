@@ -1,5 +1,5 @@
 ### gfortran
-F90 = gfortran -O2 -m64 -Wall
+F90 = gfortran -O2 -Wall
 ### intel fortran ("-heap-arrays" option is useful)
 #F90 = ifort -heap-arrays
 

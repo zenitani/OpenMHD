@@ -1,5 +1,5 @@
 #F90 = /opt/intel/Compiler/11.1/067/bin/intel64/ifort
-F90 = gfortran -O2 -m64
+F90 = gfortran -O2 -Wall
 
 OBJS = model.o u2v.o output.o limiter.o flux_solver.o
 
