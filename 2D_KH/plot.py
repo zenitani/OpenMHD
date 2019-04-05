@@ -11,9 +11,13 @@ x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 15)
 plt.clf()
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
+# 2D plot (vmin/mymin: minimum value, vmax/mymax: max value)
 # Note: ().T is necessary, because the imshow routine uses the image coordinates
-# 2D plot (vmin: minimum value, vmax: max value)
-myimg = plt.imshow(data[:,:,ro].T,vmin=0,origin='lower',cmap='bwr',extent=extent)
+tmp = np.ndarray((x.size,y.size),np.double)
+tmp[:,:] = data[:,:,ro]
+mymax = max(tmp.max(), -tmp.min()) if( tmp.max() > 0.0 ) else 0.0
+mymin = min(tmp.min(), -tmp.max()) if( tmp.min() < 0.0 ) else 0.0
+myimg = plt.imshow(tmp.T,origin='lower',vmin=mymin,vmax=mymax,cmap='bwr',extent=extent)
 
 # image operations (e.g. colormaps)
 # myimg.set_cmap('jet')

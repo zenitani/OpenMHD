@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import openmhd
+import gc
 # dummy index
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 8)
+# x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 8)
 # reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-# x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 10,ix1=0,ix2=1301,jx1=0,jx2=151)
-
+x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 10,ix1=0,ix2=1301,jx1=0,jx2=151)
 
 # 2D mirroring (This depends on the BC)
 ix = x.size
@@ -22,6 +22,10 @@ data[:,0:jxh,vy] = -tmp[:,-1:-jxh-1:-1,vy]
 data[:,0:jxh,vz] = -tmp[:,-1:-jxh-1:-1,vz]
 data[:,0:jxh,bx] = -tmp[:,-1:-jxh-1:-1,bx]
 data[:,0:jxh,ps] = -tmp[:,-1:-jxh-1:-1,ps]
+# releasing the memory, because this tmp could be large
+del tmp
+gc.collect()
+
 tmp = y
 y = np.ndarray((jx),np.double)
 y[jxh:]  =  tmp[1:]
@@ -34,12 +38,13 @@ plt.clf()
 
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-# 2D plot
-myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='jet',extent=extent,aspect='auto')
-# vmax = max(np.max(data[:,:,vx]),-np.min(data[:,:,vx]))
-# vmin = min(0,-vmax)
-# myimg = plt.imshow(data[:,:,vx].T,vmin=vmin,vmax=vmax,
-#                    origin='lower',cmap='gist_ncar_r',extent=extent,aspect='auto')
+# 2D plot (vmin/mymin: minimum value, vmax/mymax: max value)
+# Note: ().T is necessary, because the imshow routine uses the image coordinates
+tmp = np.ndarray((x.size,y.size),np.double)
+tmp[:,:] = data[:,:,vx]
+mymax = max(tmp.max(), -tmp.min()) if( tmp.max() > 0.0 ) else 0.0
+mymin = min(tmp.min(), -tmp.max()) if( tmp.min() < 0.0 ) else 0.0
+myimg = plt.imshow(tmp.T,origin='lower',vmin=mymin,vmax=mymax,cmap='jet',extent=extent,aspect='auto')
 
 # image operations (e.g. colormaps)
 # myimg.set_cmap('jet')

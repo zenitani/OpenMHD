@@ -16,8 +16,13 @@ plt.clf()
 
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
-# 2D plot
-myimg = plt.imshow(data[:,:,vx].T,origin='lower',cmap='jet',extent=extent,aspect='auto')
+# 2D plot (vmin/mymin: minimum value, vmax/mymax: max value)
+# Note: ().T is necessary, because the imshow routine uses the image coordinates
+tmp = np.ndarray((x.size,y.size),np.double)
+tmp[:,:] = data[:,:,vx]
+mymax = max(tmp.max(), -tmp.min()) if( tmp.max() > 0.0 ) else 0.0
+mymin = min(tmp.min(), -tmp.max()) if( tmp.min() < 0.0 ) else 0.0
+myimg = plt.imshow(tmp.T,origin='lower',vmin=mymin,vmax=mymax,cmap='jet',extent=extent,aspect='auto')
 
 # image operations (e.g. colormaps)
 # myimg.set_cmap('jet')

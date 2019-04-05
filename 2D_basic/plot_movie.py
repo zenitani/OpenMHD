@@ -22,9 +22,13 @@ for ii in range(0,41):
     plt.clf()
     # extent: [left, right, bottom, top]
     extent=[x[0],x[-1],y[0],y[-1]]
-    # 2D plot (vmin: minimum value, vmax: max value)
+    # 2D plot (vmin/mymin: minimum value, vmax/mymax: max value)
     # Note: ().T is necessary, because the imshow routine uses the image coordinates
-    myimg = plt.imshow(data[:,:,pr].T,vmin=0,origin='lower',cmap='jet',extent=extent)
+    tmp = np.ndarray((x.size,y.size),np.double)
+    tmp[:,:] = data[:,:,pr]
+    mymax = max(tmp.max(), -tmp.min()) if( tmp.max() > 0.0 ) else 0.0
+    mymin = min(tmp.min(), -tmp.max()) if( tmp.min() < 0.0 ) else 0.0
+    myimg = plt.imshow(tmp.T,origin='lower',vmin=mymin,vmax=mymax,cmap='jet',extent=extent)
 
     plt.xlabel("X",size=16)
     plt.ylabel("Y",size=16)

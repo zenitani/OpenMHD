@@ -18,10 +18,14 @@ Usage
 5. Analyze the data. Sample Python and IDL scripts are provided.
    One can use them in the following way.
 
-Python 3 (matplotlib):
+Python (matplotlib):
 
     $ ipython3 --pylab
     In [1]: %run -i plot.py
+
+Python (Jupyter):
+
+    $ jupyter-notebook plot.ipynb
 
 IDL:
 
