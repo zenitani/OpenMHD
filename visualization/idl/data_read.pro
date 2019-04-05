@@ -1,4 +1,4 @@
-pro data_read,data,x,y,t,it,ix1=ix1,ix2=ix2,jx1=jx1,jx2=jx2
+pro data_read,data,x,y,t,arg1,ix1=ix1,ix2=ix2,jx1=jx1,jx2=jx2
 
 ix=0
 jx=0
@@ -8,7 +8,11 @@ t0=0.d0
 ix0=0L
 jx0=0L
 
-filename = "data/field-" + string(it,format='(i05)') + ".dat"
+if isa(arg1, 'int') then begin
+   filename = 'data/field-'+string(arg1,format='(i05)')+'.dat'
+endif else if isa(arg1, 'string') then begin
+   filename = arg1
+endif
 
 ; no record marker
 openr,/get_lun,unit,filename ;,/swap_endian

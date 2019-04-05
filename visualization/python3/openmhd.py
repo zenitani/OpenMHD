@@ -16,10 +16,14 @@
 #-----------------------------------------------------------------------
 #     data_read routine
 #-----------------------------------------------------------------------
-def data_read(it,ix1=None,ix2=None,jx1=None,jx2=None):
+def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None):
     import numpy as np
 
-    filename = "data/field-%05d.dat" % it
+    if type(arg1) is str:
+        filename = arg1
+    elif type(arg1) is int:
+        filename = "data/field-%05d.dat" % arg1
+
     f = open(filename, 'rb')
     buf = np.fromfile(file=f,dtype=np.double,count=1)
     t0 = buf[0]
@@ -87,10 +91,13 @@ def data_read(it,ix1=None,ix2=None,jx1=None,jx2=None):
 #-----------------------------------------------------------------------
 #     the same data_read code to read big-endian data
 #-----------------------------------------------------------------------
-def data_read_from_bigendian(it,ix1=None,ix2=None,jx1=None,jx2=None):
-    import numpy as np
+def data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None):
 
-    filename = "data/field-%05d.dat" % it
+    if type(arg1) is str:
+        filename = arg1
+    elif type(arg1) is int:
+        filename = "data/field-%05d.dat" % arg1
+
     f = open(filename, 'rb')
     buf = np.fromfile(file=f,dtype='>d',count=1)
     t0 = buf[0]

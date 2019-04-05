@@ -5,7 +5,7 @@ import openmhd
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-x,y,t,data = openmhd.data_read(15)
+x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 15)
 
 # clearing the current figure, if any
 plt.clf()

@@ -5,9 +5,9 @@ import openmhd
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-x,y,t,data = openmhd.data_read(20)
+x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 20)
 # reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-#x,y,t,data = openmhd.data_read(20,ix1=0,ix2=100,jx1=11)
+# x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 20,ix1=0,ix2=100,jx1=11)
 
 # clearing the current figure, if any
 plt.clf()

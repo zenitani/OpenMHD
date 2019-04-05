@@ -5,8 +5,9 @@ import openmhd
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-x,y,t,data = openmhd.data_read(15)
-# x,y,t,data = openmhd.data_read(15,ix1=300,ix2=901,jx1=150,jx2=451)
+x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 15)
+# reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
+# x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 15,ix1=300,ix2=901,jx1=150,jx2=451)
 
 # preparing the canvas
 fig = plt.figure(figsize=(10, 5), dpi=80)

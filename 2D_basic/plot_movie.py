@@ -16,7 +16,7 @@ if not os.path.exists('movie'):
 for ii in range(0,41):
 
     # reading the data ...
-    x,y,t,data = openmhd.data_read(ii)
+    x,y,t,data = openmhd.data_read("data/field-%05d.dat" % ii)
     
     # clearing the current figure, if any
     plt.clf()

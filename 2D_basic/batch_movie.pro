@@ -11,7 +11,7 @@ file_mkdir,'movie' ;; if 'movie' exists, just proceed
 for ii=0,40,1 do begin
 
    ;; reading the data ...
-   data_read,data,x,y,t,ii
+   data_read,data,x,y,t,'data/field-'+string(ii,format='(i05)')+'.dat'
 
    ;; 2D image
    myimg = image(data[*,*,pr],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$', $
