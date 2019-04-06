@@ -17,6 +17,28 @@
 #     data_read routine
 #-----------------------------------------------------------------------
 def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None):
+    """
+    data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None)
+
+    Reads data from a file.
+    The first argument arg1 can be a string or an integer.
+    In the string case, the filename can be specified by arg1.
+    In the integer case (arg1=N), it reads data from "data/field-0000N.dat".
+
+    Optional keywords
+    -----------------
+    One can use integer keywords. Note that the ix2(jx2)-th element is included.
+    ix1 : the first index for a subarray in X (default: 0)
+    ix2 : the last index  for a subarray in X (default: nx-1)
+    jx1 : the first index for a subarray in Y (default: 0)
+    jx2 : the last index  for a subarray in Y (default: ny-1)
+
+    See also
+    --------
+    In order to read data from a big-endian file on a little-endian computer,
+    please use the following routine instead.
+    data_read_from_bigendian : It reads data from a big-endian file.
+    """
     import numpy as np
 
     if type(arg1) is str:
@@ -89,9 +111,31 @@ def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None):
 
 
 #-----------------------------------------------------------------------
-#     the same data_read code to read big-endian data
+#     data_read code to read big-endian data
 #-----------------------------------------------------------------------
 def data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None):
+    """
+    data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None)
+
+    Reads data from a file.
+    The first argument arg1 can be a string or an integer.
+    In the string case, the filename can be specified by arg1.
+    In the integer case (arg1=N), it reads data from "data/field-0000N.dat".
+    This is similar to the data_read() routine, but
+    it converts big-endian to little-endian when reading data.
+
+    Optional keywords
+    -----------------
+    One can use integer keywords. Note that the ix2(jx2)-th element is included.
+    ix1 : the first index for a subarray in X (default: 0)
+    ix2 : the last index  for a subarray in X (default: nx-1)
+    jx1 : the first index for a subarray in Y (default: 0)
+    jx2 : the last index  for a subarray in Y (default: ny-1)
+
+    See also
+    --------
+    data_read : It reads data from a file without endian conversion.
+    """
 
     if type(arg1) is str:
         filename = arg1
