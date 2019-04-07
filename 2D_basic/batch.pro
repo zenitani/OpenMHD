@@ -6,7 +6,7 @@ resolve_routine, "data_read"
 ;; reading the data ...
 data_read,data,x,y,t,'data/field-'+string(20,format='(i05)')+'.dat'
 ;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-;; data_read,data,x,y,t,'data/field-'+string(8,format='(i05)')+'.dat',ix1=0,ix2=1501,jx1=0,jx2=201
+;; data_read,data,x,y,t,'data/field-'+string(20,format='(i05)')+'.dat',ix1=0,ix2=100,jx1=11
 
 ;; 2D image
 myimg = image(data[*,*,pr],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$', $
