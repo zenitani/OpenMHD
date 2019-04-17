@@ -80,11 +80,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      select case(dir)
      case(1)
-        do i=1,1
-           wL(i,js:je) = wk(i,js:je)
-        enddo
 !$omp parallel do private(i,j,gA,gB,grad)
         do j=js,je
+           wL(1,j) = wk(1,j)
            do i=2,ix-1
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
@@ -99,17 +97,17 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !             endif
 !             wR(i-1,j) = wk(i,j) - 0.5d0 * grad
 !             wL(i,j)   = wk(i,j) + 0.5d0 * grad
+!             grad = sign(0.5d0,gA) * max( 0.d0,min(abs(gA),sign(1.d0,gA)*gB) )
               grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
+!             grad = 0.5d0*((gA+gB)-min(0.d0,gA,gB)-max(0.d0,gA,gB))
               wR(i-1,j) = wk(i,j) - grad
               wL(i,j)   = wk(i,j) + grad
            enddo
+           wR(ix-1,j) = wk(ix,j)
         enddo
 !$omp end parallel do
-        do i=ix,ix
-           wR(i-1,js:je) = wk(i,js:je)
-        enddo
 
-     case(2)       
+     case(2)
         do j=1,1
            wL(is:ie,j) = wk(is:ie,j)
         enddo
@@ -137,11 +135,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
      
      select case(dir)
      case(1)
-        do i=1,1
-           wL(i,js:je)   = wk(i,js:je)
-        enddo
 !$omp parallel do private(i,j,gA,gB,gC,grad)
         do j=js,je
+           wL(1,j) = wk(1,j)
            do i=2,ix-1
               gA =        ( wk(i,j)  -wk(i-1,j))
               gB =        ( wk(i+1,j)-wk(i,j)  )
@@ -164,11 +160,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !             wR(i-1,j) = wk(i,j) - 0.5d0 * grad
 !             wL(i,j)   = wk(i,j) + 0.5d0 * grad
            enddo
+           wR(ix-1,j) = wk(ix,j)
         enddo
 !$omp end parallel do
-        do i=ix,ix
-           wR(i-1,js:je) = wk(i,js:je)
-        enddo
 
      case(2)
         do j=1,1
@@ -199,11 +193,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      select case(dir)
      case(1)
-        do i=1,1
-           wL(i,js:je)   = wk(i,js:je)
-        enddo
 !$omp parallel do private(i,j,gA,gB,grad)
         do j=js,je
+           wL(1,j) = wk(1,j)
            do i=2,ix-1
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
@@ -218,11 +210,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !             wR(i-1,j) = wk(i,j) - 0.5d0 * grad
 !             wL(i,j)   = wk(i,j) + 0.5d0 * grad
            enddo
+           wR(ix-1,j) = wk(ix,j)
         enddo
 !$omp end parallel do
-        do i=ix,ix
-           wR(i-1,js:je) = wk(i,js:je)
-        enddo
 
      case(2)
         do j=1,1
@@ -256,11 +246,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      select case(dir)
      case(1)
-        do i=1,1
-           wL(i,js:je)   = wk(i,js:je)
-        enddo
 !$omp parallel do private(i,j,gA,gB,gC,grad)
         do j=js,je
+           wL(1,j) = wk(1,j)
            do i=2,ix-1
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
@@ -287,11 +275,9 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !             wL(i,j)   = wk(i,j) + grad
 !             endif
            enddo
+           wR(ix-1,j) = wk(ix,j)
         enddo
 !$omp end parallel do
-        do i=ix,ix
-           wR(i-1,js:je) = wk(i,js:je)
-        enddo
          
      case(2)
         do j=1,1
