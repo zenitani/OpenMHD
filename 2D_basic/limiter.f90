@@ -20,8 +20,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
   integer, intent(in)  :: type
 !-----------------------------------------------------------------------
   integer :: i, j, is=0, ie=0, js=0, je=0
-  real(8) :: gA, gB, gC      ! average, left, and right gradients
-  real(8) :: grad
+  real(8) :: gA, gB, gC, grad                  ! gradients
   real(8), parameter :: f1 = 1.d0 / 6.d0
 !-----------------------------------------------------------------------
 
