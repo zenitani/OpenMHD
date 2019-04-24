@@ -20,7 +20,7 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
 
   is = min(2,ix); ie = max(1,ix-1)
   js = min(2,jx); je = max(1,jx-1)
-  vmax = 0.d0
+  vmax = -1.d0
 ! vtmp = 0.d0
 
 !$omp parallel do private(i,j,B2,f1,f2,vfx,vfy) reduction(max:vmax)
@@ -53,6 +53,9 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
 
 ! error check
   if( dt < dtmin ) then
+     if( vmax < 0.d0 ) then
+        write(6,*) 'Potential error in OpenMP/reduction ...'
+     endif
      mymax = maxloc(vtmp,2)
      imax = mymax(1); jmax = mymax(2)
      write(6,*) ' dt is too small : ', dt, ' < ', dtmin
