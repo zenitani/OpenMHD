@@ -10,11 +10,11 @@ The latest version is available at the following URLs.
 Usage
 -------
 
-1. Edit the Makefile in a subdirectory.
+1. Edit the Makefile in a project directory.
 2. Configure the main file (usually main.f90), the initial configuration file
    (model.f90), and the boundary condition file (bc.f90) appropriately.
 3. Make and run the program.
-4. The program will output the data in the "data/" directory.
+4. The program will output many files in the "data/" directory.
 5. Analyze the data. Sample Python and IDL scripts are provided.
    One can use them in the following way.
 

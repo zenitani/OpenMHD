@@ -14,7 +14,7 @@ plt.clf()
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
 # 2D plot (vmin/mymin: minimum value, vmax/mymax: max value)
-# Note: ().T is necessary, because the imshow routine uses the image coordinates
+# Note: ().T is necessary for 2-D plot routines (imshow/pcolormesh...)
 tmp = np.ndarray((x.size,y.size),np.double)
 tmp[:,:] = data[:,:,ro]
 mymax = max(tmp.max(), -tmp.min()) if( tmp.max() > 0.0 ) else 0.0
@@ -38,7 +38,7 @@ plt.title('Density (t = %6.1f)' % t, size=20)
 plt.colorbar()
 
 # flow vectors
-# Note: ().T is necessary (the image coordinates)
+# Note: ().T is necessary for a 2-D array
 myxsub = 40; myysub = 20; myxsub0 = int(myxsub/2); myysub0 = int(myysub/2)
 myvec = plt.quiver( x[myxsub0::myxsub],
                     y[myysub0::myysub],

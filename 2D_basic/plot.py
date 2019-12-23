@@ -14,7 +14,7 @@ plt.clf()
 # extent: [left, right, bottom, top]
 extent=[x[0],x[-1],y[0],y[-1]]
 # 2D plot (vmin/mymin: minimum value, vmax/mymax: max value)
-# Note: ().T is necessary, because the imshow routine uses the image coordinates
+# Note: ().T is necessary for 2-D plot routines (imshow/pcolormesh...)
 tmp = np.ndarray((x.size,y.size),np.double)
 tmp[:,:] = data[:,:,pr]
 mymax = max(tmp.max(), -tmp.min()) if( tmp.max() > 0.0 ) else 0.0
