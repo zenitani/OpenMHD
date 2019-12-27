@@ -9,8 +9,9 @@
 #  * data_read(it,ix1=None,ix2=None,jx1=None,jx2=None)
 #  * data_read_from_bigendian(it,ix1=None,ix2=None,jx1=None,jx2=None)
 #
-# Here we assume a python environment on little-endian computers.
-# A little-endian-to-big-endian routine will be straightforwardly obtained.
+# We assume a python environment on little-endian computers.
+# A little-endian-to-big-endian version is not provided here, but
+# it should be easy to write it.
 #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
@@ -35,8 +36,8 @@ def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None):
 
     See also
     --------
-    In order to read data from a big-endian file on a little-endian computer,
-    please use the following routine instead.
+    To read data from a big-endian file on a little-endian computer,
+    use the following routine instead.
     data_read_from_bigendian : It reads data from a big-endian file.
     """
     import numpy as np
