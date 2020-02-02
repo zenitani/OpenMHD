@@ -1,6 +1,6 @@
 ### gfortran
 F90 = gfortran -O2 -Wall
-### intel fortran ("-heap-arrays" option is useful)
+### Intel fortran ("-heap-arrays" option is useful)
 #F90 = ifort -heap-arrays
 
 OBJS = main.o model.o set_dt.o u2v.o output.o flux_solver.o limiter.o

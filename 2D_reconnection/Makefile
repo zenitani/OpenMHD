@@ -1,12 +1,15 @@
 ### gfortran
 # F90 = gfortran -O2 -Wall
 F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
-### intel fortran ("-heap-arrays" option is useful, but use 'ulimit -s unlimited' for OpenMP)
+### Intel fortran ("-heap-arrays" option is useful, but use 'ulimit -s unlimited' for OpenMP)
 # F90 = ifort -ipo -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -g
 # F90 = /opt/openmpi64i/bin/mpif90 -ipo -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -ipo -qopenmp
+### PGI fortran
+# F90 = /opt/pgi/linux86-64/19.10/bin/pgfortran -O2
+# F90 = /opt/pgi/linux86-64/2019/mpi/openmpi-3.1.3/bin/mpif90 -O2
 ### CfCA/XC, KDK-A system
 # F90 = ftn -hnoomp   # OpenMP OFF (Cray compiler)
 # F90 = ftn -homp     # OpenMP ON  (Cray compiler)
