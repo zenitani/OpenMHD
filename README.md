@@ -4,8 +4,8 @@ OpenMHD
 OpenMHD is a collection of one/two-dimensional magnetohydrodynamic (MHD) codes.
 The latest version is available at the following URLs.
 
- * <http://th.nao.ac.jp/MEMBER/zenitani/openmhd-e.html>
- * <http://th.nao.ac.jp/MEMBER/zenitani/openmhd-j.html>
+ * <https://sci.nao.ac.jp/MEMBER/zenitani/openmhd-e.html>
+ * <https://sci.nao.ac.jp/MEMBER/zenitani/openmhd-j.html>
 
 Usage
 -------
