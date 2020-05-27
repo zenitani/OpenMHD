@@ -57,6 +57,4 @@ for ii in range(0,41):
 # ---- for movies --------------------
 plt.show()
 print()
-print('The image files will be found in "./movie/".')
-
-# end
+print('The image files should be found in "./movie/".')
