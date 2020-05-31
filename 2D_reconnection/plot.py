@@ -42,12 +42,13 @@ plt.colorbar()
 
 # preparing Vector potential (Az)
 az = np.ndarray((x.size,y.size),np.double)
-# az[0,0] = 0.0
-az[0,-1] = 0.5*(data[0,-1,bx] - data[0,-1,by])
-for j in range(y.size-1,0,-1):
-    az[0,j-1] = az[0,j] - 0.5*(data[0,j-1,bx]+data[0,j,bx])
+fx = 0.5*(x[1]-x[0])
+fy = 0.5*(y[1]-y[0])
+az[0,0] = (fy*data[0,0,bx] - fx*data[0,0,by])
+for j in range(1,y.size):
+    az[0,j] = az[0,j-1] + fy*(data[0,j-1,bx]+data[0,j,bx])
 for i in range(1,x.size):
-    az[i,:] = az[i-1,:] - 0.5*(data[i-1,:,by]+data[i,:,by])
+    az[i,:] = az[i-1,:] - fx*(data[i-1,:,by]+data[i,:,by])
 
 # contour of Az = magnetic field lines
 plt.contour(az.T,extent=extent,colors='w',linestyles='solid')
