@@ -1,0 +1,65 @@
+attributes(host) &
+subroutine bc_for_U(U,ix,jx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx
+  real(8), device, intent(inout) :: U(ix,jx,var1)
+  integer :: i, j, k
+
+! left/right
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,var1
+     do j=1,jx
+        U(ix,j,k) = U(2,j,k)
+        U(1,j,k)  = U(ix-1,j,k)
+     enddo
+  enddo
+  
+! top/bottom
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,var1
+     do i=1,ix
+        U(i,jx,k) = U(i,2,k)
+        U(i,1,k)  = U(i,jx-1,k)
+     enddo
+  enddo
+  
+end subroutine bc_for_U
+
+
+attributes(host) &
+subroutine bc_for_F(VL,VR,ix,jx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx
+  real(8), device, intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
+  integer :: i, j, k
+
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,var1
+     do j=1,jx
+        VR(ix-1,j,k) = VR(1,j,k)
+        VL(1,j,k)    = VL(ix-1,j,k)
+     enddo
+  enddo
+
+end subroutine bc_for_F
+
+
+attributes(host) &
+subroutine bc_for_G(VL,VR,ix,jx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx
+  real(8), device, intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
+  integer :: i, j, k
+
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,var1
+     do i=1,ix
+        VL(i,   1,k) = VL(i,jx-1,k)
+        VR(i,jx-1,k) = VR(i,1,k)
+     enddo
+  enddo
+
+end subroutine bc_for_G

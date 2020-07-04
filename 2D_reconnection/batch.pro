@@ -3,10 +3,30 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 ;; find and compile data_read routine
 resolve_routine, "data_read"
 
+;; ---------------------------------------------------------------------
 ;; reading the data ...
-data_read,data,x,y,t,'data/field-'+string(15,format='(i05)')+'.dat'
+;; data_read,data,x,y,t,'data/field-'+string(10,format='(i05)')+'.dat'
 ;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-;data_read,data,x,y,t,'data/field-'+string(15,format='(i05)')+'.dat',ix1=300,ix2=901,jx1=150,jx2=451
+data_read,data,x,y,t,'data/field-'+string(15,format='(i05)')+'.dat',ix1=0,ix2=301,jx1=0,jx2=51
+;; Zenitani & Miyoshi 2011 [6000 x 4500]
+;data_read,data,x,y,t,'data/field-'+string(10,format='(i05)')+'.dat',ix1=0,ix2=3901,jx1=0,jx2=451
+;; ---------------------------------------------------------------------
+
+;; 2D mirroring (This depends on the BC)
+ix = (size(x))[1]
+jx = 2*(size(y))[1]-2
+tmp = data
+data = dblarr(ix,jx,9)
+data[*,jx/2:-1,*] = tmp[*,1:-1,*]
+data[*,0:jx/2-1, *] =  reverse(tmp[*,1:-1, *],2)
+data[*,0:jx/2-1,vy] = -reverse(tmp[*,1:-1,vy],2)
+data[*,0:jx/2-1,vz] = -reverse(tmp[*,1:-1,vz],2)
+data[*,0:jx/2-1,bx] = -reverse(tmp[*,1:-1,bx],2)
+data[*,0:jx/2-1,ps] = -reverse(tmp[*,1:-1,ps],2)
+tmp = y
+y = dblarr(jx)
+y[jx/2:-1]  = tmp[1:-1]
+y[0:jx/2-1] = -reverse(tmp[1:-1])
 
 ;; 2D image
 myimg = image(data[*,*,vx],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$',xtickdir=1,xticklen=0.02,ytickdir=1,yticklen=0.01,font_size=16,rgb_table=13,dimensions=[1000,500])

@@ -1,0 +1,407 @@
+module parallel
+  use mpi
+  implicit none
+
+  ! 2-D domain
+  integer, parameter :: ndims = 2
+
+  ! topology
+  type mycoords
+     integer :: comm
+     integer :: sizes(ndims)
+     integer :: coords(ndims)
+     logical :: periods(ndims)
+  end type mycoords
+  type(mycoords) :: cart2d
+
+  ! rank info
+  type myranks
+     integer :: size = 0
+     integer :: myrank
+     integer :: north, east, south, west
+  end type myranks
+
+  type(myranks) :: ranks         ! global communication
+  type(myranks) :: ranks_local   ! intra-node communication
+  integer, private :: comm_local ! intra-node communication
+
+  ! Please do not edit here
+  integer, private :: mpi_mode(ndims) = (/1, 1/)  ! 0: no MPI, 1: MPI-1, 3: MPI-3
+
+contains
+
+  subroutine parallel_init(my_sizes,my_periods,ix,jx)
+    use, intrinsic :: iso_c_binding, only : c_f_pointer, c_ptr
+    include 'param.h'
+    integer, intent(in) :: my_sizes(ndims)
+    logical, intent(in) :: my_periods(ndims)
+    integer, intent(in) :: ix, jx
+    integer :: i
+    integer :: tmpA(4), tmpB(4)
+    integer :: group_world, group_local
+    integer :: mdisp, merr, merrcode
+    integer(kind=mpi_address_kind) :: msize
+    type(c_ptr) :: baseptr1, baseptr2
+
+    call mpi_init(merr)
+
+    cart2d%sizes(:) = my_sizes(:)
+    cart2d%coords(:)  = 0
+    cart2d%periods(:) = my_periods(:)
+
+    ! After this, one should use cart2d%comm instead of mpi_comm_world
+    call mpi_cart_create(mpi_comm_world, ndims, cart2d%sizes, cart2d%periods, .true., cart2d%comm, merr)
+    call mpi_comm_size (cart2d%comm, ranks%size, merr)
+    call mpi_comm_rank (cart2d%comm, ranks%myrank, merr)
+    call mpi_cart_shift(cart2d%comm, 0, 1,ranks%west, ranks%east, merr)
+    call mpi_cart_shift(cart2d%comm, 1, 1,ranks%south,ranks%north,merr)
+    call mpi_cart_coords(cart2d%comm, ranks%myrank, 2, cart2d%coords, merr)
+
+    if( ranks%size /= my_sizes(1)*my_sizes(2) ) then
+       if( ranks%myrank == 0 ) then
+          write(6,*) 'MPI process numbers mismatch.'
+       endif
+       merrcode = -1
+       call mpi_abort(cart2d%comm, merrcode, merr)
+    endif
+
+    ! MPI mode
+    ! No MPI transport in the case of 1
+    if( cart2d%sizes(1) == 1 )  mpi_mode(1) = 0
+    if( cart2d%sizes(2) == 1 )  mpi_mode(2) = 0
+
+    return
+  end subroutine parallel_init
+
+
+  subroutine parallel_finalize
+    integer :: merr
+
+    call mpi_finalize(merr)
+  
+  end subroutine parallel_finalize
+
+
+  attributes(host) &
+  subroutine parallel_exchange(Ud,ix,jx,dir)
+    include 'param.h'
+    integer, intent(in) :: ix, jx
+    real(8), device, intent(inout) :: Ud(ix,jx,var1)
+    ! direction [input]: 1 (X), 2 (Y), 3 (Z)
+    integer, intent(in) :: dir
+!----------------------------------------------------------------------
+    real(8), device, allocatable :: bufsnd1(:,:), bufrcv1(:,:)
+    real(8), device, allocatable :: bufsnd2(:,:), bufrcv2(:,:)
+    integer :: mreq1(2), mreq2(2)
+    integer :: msize, merr
+    integer :: mleft, mright
+    integer :: i,j,k
+!----------------------------------------------------------------------
+
+    select case(dir)
+    case(1)  ! west <--> east
+
+       allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
+       allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
+       mleft  = ranks%west
+       mright = ranks%east
+       msize  = jx*var1
+
+       ! MPI mode switch
+       select case(mpi_mode(1))
+       case(0)  ! no MPI
+
+          ! periodic
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do j=1,jx
+                   Ud( 1,j,k) = Ud(ix-1,j,k)
+                   Ud(ix,j,k) = Ud(   2,j,k)
+                enddo
+             enddo
+          endif
+
+       case(1)  ! MPI-1
+
+          ! nonblocking communication (mreq1)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+          do k=1,var1
+             do j=1,jx
+                bufsnd1(j,k) = Ud(2,j,k)
+             enddo
+          enddo
+          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          ! nonblocking communication (mreq2)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+          do k=1,var1
+             do j=1,jx
+                bufsnd2(j,k) = Ud(ix-1,j,k)
+             enddo
+          enddo
+          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+          if( mright /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do j=1,jx
+                   Ud(ix,j,k) = bufrcv1(j,k)
+                enddo
+             enddo
+          endif
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do j=1,jx
+                   Ud(1,j,k) = bufrcv2(j,k)
+                enddo
+             enddo
+          endif
+
+       endselect
+       ! MPI mode switch
+
+       deallocate( bufsnd1, bufrcv1 )
+       deallocate( bufsnd2, bufrcv2 )
+
+    !----------------------------------------------------------
+    case(2)  ! south <--> north
+
+       allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
+       allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
+       mleft  = ranks%south
+       mright = ranks%north
+       msize  = ix*var1
+
+       ! MPI mode switch
+       select case(mpi_mode(2))
+       case(0)  ! no MPI
+
+          ! periodic
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   Ud(i,jx,k) = Ud(i,   2,k)
+                   Ud(i, 1,k) = Ud(i,jx-1,k)
+                enddo
+             enddo
+          endif
+
+       case(1)  ! MPI-1
+
+          ! nonblocking communication (mreq1)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+          do k=1,var1
+             do i=1,ix
+                bufsnd1(i,k) = Ud(i,2,k)
+             enddo
+          enddo
+          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          ! nonblocking communication (mreq2)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+          do k=1,var1
+             do i=1,ix
+                bufsnd2(i,k) = Ud(i,jx-1,k)
+             enddo
+          enddo
+          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+          if( mright /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   Ud(i,jx,k) = bufrcv1(i,k)
+                enddo
+             enddo
+          endif
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   Ud(i,1,k) = bufrcv2(i,k)
+                enddo
+             enddo
+          endif
+
+       endselect
+       ! MPI mode switch
+
+       deallocate( bufsnd1, bufrcv1 )
+       deallocate( bufsnd2, bufrcv2 )
+   
+    endselect
+
+  end subroutine parallel_exchange
+
+
+  attributes(host) &
+  subroutine parallel_exchange2(VLd,VRd,ix,jx,dir)
+    include 'param.h'
+    integer, intent(in) :: ix, jx
+    real(8), device, intent(inout) :: VLd(ix,jx,var1)  ! left values (VL)
+    real(8), device, intent(inout) :: VRd(ix,jx,var1)  ! right values (VR)
+    ! direction [input]: 1 (X), 2 (Y), 3 (Z)
+    integer, intent(in) :: dir
+!----------------------------------------------------------------------
+    real(8), device, allocatable :: bufsnd1(:,:), bufrcv1(:,:)
+    real(8), device, allocatable :: bufsnd2(:,:), bufrcv2(:,:)
+    integer :: mreq1(2), mreq2(2)
+    integer :: msize, merr
+    integer :: mleft, mright
+    integer :: i,j,k
+!----------------------------------------------------------------------
+
+    select case(dir)
+    case(1)  ! west <--> east
+
+       allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
+       allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
+       mleft  = ranks%west
+       mright = ranks%east
+       msize  = jx*var1
+
+       ! MPI mode switch
+       select case(mpi_mode(1))
+       case(0)  ! no MPI
+
+          ! periodic
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do j=1,jx
+                   VRd(ix-1,j,k) = VRd(   1,j,k)
+                   VLd(   1,j,k) = VLd(ix-1,j,k)
+                enddo
+             enddo
+          endif
+
+       case(1)  ! MPI-1
+
+          ! nonblocking communication (mreq1)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+          do k=1,var1
+             do j=1,jx
+                bufsnd1(j,k) = VRd(1,j,k)
+             enddo
+          enddo
+          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          ! nonblocking communication (mreq2)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+          do k=1,var1
+             do j=1,jx
+                bufsnd2(j,k) = VLd(ix-1,j,k)
+             enddo
+          enddo
+          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+          if( mright /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do j=1,jx
+                   VRd(ix-1,j,k) = bufrcv1(j,k)
+                enddo
+             enddo
+          endif
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do j=1,jx
+                   VLd(1,j,k) = bufrcv2(j,k)
+                enddo
+             enddo
+          endif
+
+       endselect
+       ! MPI mode switch
+
+       deallocate( bufsnd1, bufrcv1 )
+       deallocate( bufsnd2, bufrcv2 )
+
+    !----------------------------------------------------------
+    case(2)  ! south <--> north
+
+       allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
+       allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
+       mleft  = ranks%south
+       mright = ranks%north
+       msize  = ix*var1
+
+       ! MPI mode switch
+       select case(mpi_mode(2))
+       case(0)  ! no MPI
+
+          ! periodic
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   VRd(i,jx-1,k) = VRd(i,   1,k)
+                   VLd(i,   1,k) = VLd(i,jx-1,k)
+                enddo
+             enddo
+          endif
+
+       case(1)  ! MPI-1
+
+          ! nonblocking communication (mreq1)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   bufsnd1(i,k) = VRd(i,1,k)
+                enddo
+             enddo
+          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          ! nonblocking communication (mreq2)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   bufsnd2(i,k) = VLd(i,jx-1,k)
+                enddo
+             enddo
+          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+          if( mright /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   VRd(i,jx-1,k) = bufrcv1(i,k)
+                enddo
+             enddo
+          endif
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          if( mleft /= mpi_proc_null ) then
+!$cuf kernel do(2) <<<*, *>>>
+             do k=1,var1
+                do i=1,ix
+                   VLd(i,1,k) = bufrcv2(i,k)
+                enddo
+             enddo
+          endif
+
+       endselect
+       ! MPI mode switch
+
+       deallocate( bufsnd1, bufrcv1 )
+       deallocate( bufsnd2, bufrcv2 )
+   
+    endselect
+
+  end subroutine parallel_exchange2
+
+end module parallel

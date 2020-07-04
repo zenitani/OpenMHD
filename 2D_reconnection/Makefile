@@ -8,8 +8,7 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = /opt/openmpi64i/bin/mpif90 -ipo -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -ipo -qopenmp
 ### PGI fortran
-# F90 = /opt/pgi/linux86-64/19.10/bin/pgfortran -O2
-# F90 = /opt/pgi/linux86-64/2019/mpi/openmpi-3.1.3/bin/mpif90 -O2
+# F90 = pgfortran -O2
 ### CfCA/XC, KDK-A system
 # F90 = ftn -hnoomp   # OpenMP OFF (Cray compiler)
 # F90 = ftn -homp     # OpenMP ON  (Cray compiler)
@@ -21,11 +20,10 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = mpifrtpx
 
 OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o bc.o fileio.o rk.o \
-	flux_solver.o limiter.o flux_resistive.o flux_glm.o glm_ss.o
-OBJP = modelp.o  mpibc.o  mpiio.o
-OBJP2= modelp2.o mpibc2.o mpiio.o
+	flux_solver.o limiter.o flux_resistive.o flux_glm.o glm_ss2.o
+OBJP = modelp.o mpibc.o mpiio.o
 
-all: run runp runp2
+all: run runp
 
 # serial version
 run : main.o $(OBJS)
@@ -34,10 +32,6 @@ run : main.o $(OBJS)
 # parallel version
 runp : parallel.o mainp.o $(OBJS) $(OBJP)
 	$(F90) -o ap.out parallel.o mainp.o $(OBJS) $(OBJP)
-
-# parallel version (1/4 BC for reconnection papers)
-runp2 : parallel.o mainp2.o $(OBJS) $(OBJP2)
-	$(F90) -o ap2.out parallel.o mainp2.o $(OBJS) $(OBJP2)
 
 %.o: %.f90 param.h
 	$(F90) $(FFLAGS) -c $<

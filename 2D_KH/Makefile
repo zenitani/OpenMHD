@@ -8,8 +8,7 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = /opt/openmpi64i/bin/mpif90 -ipo -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -ipo -qopenmp
 ### PGI fortran
-# F90 = /opt/pgi/linux86-64/19.10/bin/pgfortran -O2
-# F90 = /opt/pgi/linux86-64/2019/mpi/openmpi-3.1.3/bin/mpif90 -O2
+# F90 = pgfortran -O2
 ### CfCA/XC, KDK-A system
 # F90 = ftn -hnoomp   # OpenMP OFF (Cray compiler)
 # F90 = ftn -homp     # OpenMP ON  (Cray compiler)
@@ -19,7 +18,7 @@ F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
 # F90 = f90sjx -Umpi -Uflat
 
 OBJS = model.o set_dt.o u2v.o bc.o fileio.o rk.o \
-	flux_solver.o limiter.o flux_glm.o glm_ss.o
+	flux_solver.o limiter.o flux_glm.o glm_ss2.o
 OBJP = modelp.o mpiio.o mpibc.o
 
 all: run runp

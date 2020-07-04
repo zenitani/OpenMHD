@@ -1,0 +1,279 @@
+program main
+!-----------------------------------------------------------------------
+!     OpenMHD  Riemann solver
+!-----------------------------------------------------------------------
+!     2010/09/18  S. Zenitani  2D LLF/HLL/HLLC-G/HLLD solver
+!     2010/09/25  S. Zenitani  Hyperbolic divergence cleaning
+!     2020/07/04  S. Zenitani  CUDA fortran version
+!-----------------------------------------------------------------------
+  use cudafor
+  implicit none
+  include 'param.h'
+  integer, parameter :: ix = 400 + 2
+  integer, parameter :: jx = 400 + 2
+  integer, parameter :: loop_max = 3000000
+  real(8), parameter :: dtmin = 1.0d-7
+  real(8), parameter :: tend  = 4.0d0
+  real(8), parameter :: dtout = 0.1d0 ! output interval
+  real(8), parameter :: cfl   = 0.4d0 ! time step
+! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
+  integer, parameter :: lm_type   = 1
+! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
+  integer, parameter :: flux_type = 3
+! Time marching  (0: TVD RK2, 1: RK2)
+  integer, parameter :: time_type = 0
+!-----------------------------------------------------------------------
+  real(8) :: x(ix), y(jx), dx
+  real(8) :: U(ix,jx,var1)  ! conserved variables (U)
+  real(8) :: U1(ix,jx,var1) ! conserved variables: medium state (U*)
+  real(8) :: V(ix,jx,var2)  ! primitive variables (V)
+!-----------------------------------------------------------------------
+  real(8), device, allocatable :: Ud(:,:,:)  ! conserved variables (U)
+  real(8), device, allocatable :: U1d(:,:,:) ! conserved variables: medium state (U*)
+  real(8), device, allocatable :: Vd(:,:,:)  ! primitive variables (V)
+  real(8), device, allocatable :: VLd(:,:,:), VRd(:,:,:) ! interpolated states
+  real(8), device, allocatable :: Fd(:,:,:), Gd(:,:,:)   ! numerical flux (F,G)
+  real(8), device, allocatable :: vmaxd(:,:)   ! for timestep
+  real(8), device :: dtd, dxd, chd
+  integer :: stat
+  type(dim3), parameter :: Th = dim3(256,1,1)
+  type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),1)
+!-----------------------------------------------------------------------
+  integer :: i, j, k
+  integer :: n_output
+  real(8) :: t, dt, t_output
+  real(8) :: ch
+  character*256 :: filename
+  character*256 :: errmsg
+!-----------------------------------------------------------------------
+  allocate( Ud(ix,jx,var1),U1d(ix,jx,var1),Vd(ix,jx,var2))
+  allocate(VLd(ix,jx,var1),VRd(ix,jx,var1))
+  allocate( Fd(ix,jx,var1), Gd(ix,jx,var1))
+  allocate(vmaxd(ix,jx),source=0.d0)
+!-----------------------------------------------------------------------
+
+  t    =  0.d0
+  dt   =  0.d0
+  call model(U,V,x,y,dx,ix,jx)
+  Ud = U; Vd = V; dxd = dx
+  call bc_for_U(Ud,ix,jx)
+  stat = cudaDeviceSynchronize()
+  call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
+  stat = cudaDeviceSynchronize()
+  chd = 0.d0
+!$cuf kernel do(2) <<<*, *>>>
+  do j=1,jx
+     do i=1,ix
+        chd=max(chd,vmaxd(i,j))
+     enddo
+  enddo
+  ch = chd
+  dt = cfl * dx / ch
+  if( dt < dtmin ) then
+     write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+     write(6,*) '     velocity is : ', ch
+     stop
+  endif
+  if ( dt > dtout ) then
+     write(6,*) 'error: ', dt, '>', dtout
+     stop
+  endif
+
+  t_output = -dt/3.d0
+  n_output =  0
+
+  write(6,*) '[Params]'
+  write(6,998) dt, dtout, ix, jx
+  write(6,999) lm_type, flux_type, time_type
+998 format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:', i5, i5 )
+999 format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
+  write(6,*) '== start =='
+
+!-----------------------------------------------------------------------
+  do k=1,loop_max
+
+     write(6,*) ' t = ', t
+!    Recovering primitive variables
+!     write(6,*) 'U --> V'
+     call u2v<<<Bl,Th>>>(Ud,Vd,ix,jx)
+     stat = cudaDeviceSynchronize()
+!   -----------------
+!    [ output ]
+     if ( t >= t_output ) then
+        U = Ud; V = Vd
+        write(6,*) 'data output   t = ', t
+        write(filename,990) n_output
+990     format ('data/field-',i5.5,'.dat')
+        call fileio_output(filename,ix,jx,t,x,y,U,V)
+        n_output = n_output + 1
+        t_output = t_output + dtout
+     endif
+!    [ end? ]
+     if ( t >= tend )  exit
+     if ( k >= loop_max ) then
+        write(6,*) 'max loop'
+        exit
+     endif
+!   -----------------
+!    CFL condition
+     call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
+     stat = cudaDeviceSynchronize()
+     chd = 0.d0
+!$cuf kernel do(2) <<<*, *>>>
+     do j=1,jx
+        do i=1,ix
+           chd=max(chd,vmaxd(i,j))
+        enddo
+     enddo
+     ch = chd
+     dt = cfl * dx / ch
+     if( dt < dtmin ) then
+        write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+        write(6,*) '     velocity is : ', ch
+        stop
+     endif
+     dtd = dt
+!   -----------------
+
+!    GLM solver for the first half timestep
+!    This should be done after set_dt()
+     call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
+     stat = cudaDeviceSynchronize()
+     
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (F)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
+!    fix VL/VR for periodic bc (F)
+!     write(6,*) 'bc'
+     stat = cudaDeviceSynchronize()
+     call bc_for_F(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+!    Numerical flux in the X direction (F)
+!     write(6,*) 'VL, VR --> F'
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
+     errmsg = cudaGetErrorString(cudaGetLastError())
+     !!! debug (first HLLD) !!!
+     if( trim(errmsg) /= "no error" ) then
+        write(6,*) ' Exit: ', trim(errmsg)
+        stop
+     endif
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (G)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
+!    fix VL/VR for periodic bc (G)
+     stat = cudaDeviceSynchronize()
+     call bc_for_G(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+!    Numerical flux in the Y direction (G)
+!     write(6,*) 'VL, VR --> G'
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
+     stat = cudaDeviceSynchronize()
+
+     if( time_type == 0 ) then
+!       write(6,*) 'U* = U + (dt/dx) (F-F)'
+        call rk_tvd21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+     elseif( time_type == 1 ) then
+!       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
+        call rk_std21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+     endif
+
+!    boundary condition
+     stat = cudaDeviceSynchronize()
+     call bc_for_U(U1d,ix,jx)
+     stat = cudaDeviceSynchronize()
+!     write(6,*) 'U* --> V'
+     call u2v<<<Bl,Th>>>(U1d,Vd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (F)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
+!    fix VL/VR for periodic bc (F)
+     stat = cudaDeviceSynchronize()
+     call bc_for_F(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+!    Numerical flux in the X direction (F)
+!     write(6,*) 'VL, VR --> F'
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (G)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
+!    fix VL/VR for periodic bc (G)
+     stat = cudaDeviceSynchronize()
+     call bc_for_G(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+!    Numerical flux in the Y direction (G)
+!     write(6,*) 'VL, VR --> G'
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
+     stat = cudaDeviceSynchronize()
+
+     if( time_type == 0 ) then
+!       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
+        call rk_tvd22<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+     elseif( time_type == 1 ) then
+!       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
+        call rk_std22<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
+     endif
+
+!    boundary condition
+     stat = cudaDeviceSynchronize()
+     call bc_for_U(Ud,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    GLM solver for the second half timestep
+     call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+     t = t + dt
+
+  end do
+
+  deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd,vmaxd)
+  write(6,*) '== end =='
+
+end program main
+!-----------------------------------------------------------------------

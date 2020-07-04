@@ -1,0 +1,2 @@
+*.cuf linguist-language=Fortran-Free-Form
+*.f90 linguist-language=Fortran-Free-Form

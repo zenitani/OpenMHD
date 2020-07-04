@@ -1,0 +1,47 @@
+attributes(global) &
+subroutine fastest_speed(U,V,vmax,ix,jx)
+!-----------------------------------------------------------------------
+!     fastest speed for CFL condition
+!-----------------------------------------------------------------------
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx
+  real(8), device, intent(in) :: U(ix,jx,var1)
+  real(8), device, intent(in) :: V(ix,jx,var2)
+  real(8), device, intent(out) :: vmax(ix,jx)
+!-----------------------------------------------------------------------
+  integer, device :: i, j, is, ie, js, je
+  real(8), device :: B2, f1, f2, vfx, vfy
+
+  is = 2; ie = ix-1
+  js = 2; je = jx-1
+
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  vmax(i,j) = 0.d0
+  
+!  do j=js,je
+!  do i=is,ie
+  if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) )then
+
+     B2 = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )
+     f1 = gamma * V(i,j,pr)
+
+!    fast mode in the X direction
+     f2 = 4 * f1 * U(i,j,bx)**2
+!     vfx = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*U(i,j,ro) ))
+     vfx = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*U(i,j,ro) ))
+
+!    fast mode in the Y direction
+     f2 = 4 * f1 * U(i,j,by)**2
+!     vfy = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*U(i,j,ro) ))
+     vfy = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*U(i,j,ro) ))
+
+!    max speed of MHD waves
+     vmax(i,j) = max( abs( V(i,j,vx) ) + vfx, abs( V(i,j,vy) ) + vfy )
+
+  endif
+
+  return
+end subroutine fastest_speed

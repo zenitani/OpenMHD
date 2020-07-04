@@ -57,7 +57,7 @@ program main
 !    U ==> V (1)
 !     write(6,*) 'U --> V'
      call u2v(U,V,ix,jx)
-!   -----------------  
+!   -----------------
 !    [ output ]
      if ( t >= tout ) then
         write(6,*) 'data output   t = ', t
@@ -75,7 +75,7 @@ program main
         write(6,*) 'max loop'
         goto 1000
      endif
-!   -----------------  
+!   -----------------
 !    V ==> VR, VL
      call limiter(V(1,1,ux),VL(1,1,ux),VR(1,1,ux),ix,jx,1,lm_type)
      call limiter(V(1,1,uy),VL(1,1,uy),VR(1,1,uy),ix,jx,1,lm_type)

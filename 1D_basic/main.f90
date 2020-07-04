@@ -61,7 +61,7 @@ program main
 !    Recovering primitive variables
 !     write(6,*) 'U --> V'
      call u2v(U,V,ix,jx)
-!   -----------------  
+!   -----------------
 !    [ output ]
      if ( t >= t_output ) then
         write(6,*) 'data output   t = ', t
@@ -77,7 +77,7 @@ program main
         write(6,*) 'max loop'
         exit
      endif
-!   -----------------  
+!   -----------------
 !    CFL condition
      call set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
      dtx = dt/dx

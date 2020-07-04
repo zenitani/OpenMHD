@@ -5,8 +5,6 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 !     2010/01/22  S. Zenitani  2nd order limiters (minmod, MC)
 !     2010/05/14  S. Zenitani  added van Leer limiter
 !     2012/07/05  S. Zenitani  added Koren limiter (bug fixed)
-!     2015/07/19  S. Zenitani  removed if-statements from minmod/MC limiters
-!     2015/12/23  S. Zenitani  removed if-statements from Koren limiter
 !     2016/09/07  S. Zenitani  X and Y directions
 !-----------------------------------------------------------------------
   implicit none

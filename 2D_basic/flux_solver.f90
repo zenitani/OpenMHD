@@ -7,8 +7,6 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !-----------------------------------------------------------------------
 !     2010/05/11  S. Zenitani  HLLC-G solver
 !     2010/05/12  S. Zenitani  HLLD solver
-!     2015/07/29  S. Zenitani  HLL solver: if-statements ==> max/min functions
-!     2015/08/15  S. Zenitani  HLLC-G solver: optimization
 !     2016/09/06  S. Zenitani  X/Y/Z directions
 !-----------------------------------------------------------------------
   implicit none

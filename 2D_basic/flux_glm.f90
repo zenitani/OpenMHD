@@ -5,9 +5,6 @@ subroutine flux_glm(F,VL,VR,ch,ix,jx,dir)
 !     This needs to be called right after LLF/HLL/HLLC/HLLD flux solver,
 !     because these solvers may set F(:,:,bx) and F(:,:,ps) to zero
 !-----------------------------------------------------------------------
-!     2010/09/25  S. Zenitani  GLM solver
-!     2016/09/06  S. Zenitani  X/Y/Z directions
-!-----------------------------------------------------------------------
   implicit none
   include 'param.h'
   integer, intent(in) :: ix, jx

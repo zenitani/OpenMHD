@@ -6,11 +6,11 @@ program main
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, parameter :: ix = 800 + 2
-  integer, parameter :: jx = 200 + 2
-  integer, parameter :: loop_max = 30000
-  real(8), parameter :: tend  = 40.0d0
-  real(8), parameter :: dtout =  5.d0 ! output interval
+  integer, parameter :: ix = 500 + 2
+  integer, parameter :: jx = 150 + 2
+  integer, parameter :: loop_max = 100000
+  real(8), parameter :: tend  = 150.0d0
+  real(8), parameter :: dtout =  10.d0 ! output interval
   real(8), parameter :: cfl   = 0.4d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
@@ -66,7 +66,7 @@ program main
 !    Recovering primitive variables
 !     write(6,*) 'U --> V'
      call u2v(U,V,ix,jx)
-!   -----------------  
+!   -----------------
 !    [ output ]
      if ( t >= t_output ) then
         write(6,*) 'data output   t = ', t
@@ -82,13 +82,13 @@ program main
         write(6,*) 'max loop'
         exit
      endif
-!   -----------------  
+!   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
      call set_dt2(Rm1,dt,dx,cfl)
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
-     call glm_ss(U,ch,0.5d0*dt,ix,jx)
+     call glm_ss2(U,ch,dt,ix,jx)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -101,11 +101,13 @@ program main
      call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
      call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
      call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+!    fix flux bc (F)
+     call bc_for_F(VL,VR,ix,jx)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)
      call flux_glm(F,VL,VR,ch,ix,jx,1)
-     call flux_resistive(F,U,VL,VR,EF,dx,ix,jx,1)
+     call flux_resistive(F,U,EF,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -124,7 +126,7 @@ program main
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
      call flux_glm(G,VL,VR,ch,ix,jx,2)
-     call flux_resistive(G,U,VL,VR,EG,dx,ix,jx,2)
+     call flux_resistive(G,U,EG,dx,ix,jx,2)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -135,6 +137,7 @@ program main
      endif
 !    boundary condition
      call bc_for_U(U1,ix,jx)
+
 !     write(6,*) 'U* --> V'
      call u2v(U1,V,ix,jx)
 !    Slope limiters on primitive variables
@@ -148,11 +151,13 @@ program main
      call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
      call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
      call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+!    fix flux bc (F)
+     call bc_for_F(VL,VR,ix,jx)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ix,jx,1,flux_type)
      call flux_glm(F,VL,VR,ch,ix,jx,1)
-     call flux_resistive(F,U1,VL,VR,EF,dx,ix,jx,1)
+     call flux_resistive(F,U1,EF,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -171,7 +176,7 @@ program main
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ix,jx,2,flux_type)
      call flux_glm(G,VL,VR,ch,ix,jx,2)
-     call flux_resistive(G,U1,VL,VR,EG,dx,ix,jx,2)
+     call flux_resistive(G,U1,EG,dx,ix,jx,2)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
@@ -181,12 +186,14 @@ program main
         call rk_std22(U,F,G,dt,dx,ix,jx)
      endif
 
-!    GLM solver for the second half timestep
-     call glm_ss(U,ch,0.5d0*dt,ix,jx)
-
 !    boundary condition
      call bc_for_U(U,ix,jx)
+
+!    GLM solver for the second half timestep
+     call glm_ss2(U,ch,dt,ix,jx)
+
      t=t+dt
+
   enddo
 
   write(6,*) '== end =='

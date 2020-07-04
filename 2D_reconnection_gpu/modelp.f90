@@ -1,4 +1,4 @@
-subroutine modelp2(U,V,x,y,dx,ix,jx)
+subroutine modelp(U,V,x,y,dx,ix,jx)
 !-----------------------------------------------------------------------
 !     Initial configuration for the parallel version (mainp2)
 !-----------------------------------------------------------------------
@@ -81,4 +81,4 @@ subroutine modelp2(U,V,x,y,dx,ix,jx)
   
 
   return
-end subroutine modelp2
+end subroutine modelp

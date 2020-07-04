@@ -1,0 +1,428 @@
+program main
+!-----------------------------------------------------------------------
+!     OpenMHD  Reconnection solver (parallel version with 1/4 BC)
+!        Ref: S. Zenitani, Phys. Plasmas 22, 032114 (2015)
+!        Ref: S. Zenitani, T. Miyoshi, Phys. Plasmas 18, 022105 (2011)
+!-----------------------------------------------------------------------
+!     2010/09/25  S. Zenitani  HLL reconnection code
+!     2010/09/29  S. Zenitani  MPI version
+!     2015/04/05  S. Zenitani  MPI-IO
+!     2018/05/02  S. Zenitani  parallel module (MPI-3 version)
+!     2020/08/04  S. Zenitani  CUDA + MPI version
+!-----------------------------------------------------------------------
+  use cudafor
+  use parallel
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, parameter :: ix =  500 + 2  ! 500 x   4 -->  2000 cells = 200 x 10
+  integer, parameter :: jx =  500 + 2  !                 500 cells =  50 x 10
+  integer, parameter :: mpi_nums(2)       = (/4, 1/)  ! MPI numbers
+  logical, parameter :: bc_periodicity(2) = (/.false., .false./)
+! Zenitani (2015): 12000 x 9000, Zenitani & Miyoshi (2011): 6000 x 4500 cells
+!-----------------------------------------------------------------------
+  integer, parameter :: loop_max = 1000000
+  real(8), parameter :: dtmin = 1.0d-7
+  real(8), parameter :: tend  = 251.0d0
+  real(8), parameter :: dtout =  25.0d0  ! output interval
+  real(8), parameter :: cfl   =   0.35d0 ! time step
+! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
+  integer :: n_start = 0
+! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
+  integer, parameter :: lm_type   = 1   ! Zenitani (2015)
+! integer, parameter :: lm_type   = 2   ! Zenitani & Miyoshi (2011)
+! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
+  integer, parameter :: flux_type = 3   ! Zenitani (2015)
+! integer, parameter :: flux_type = 1   ! Zenitani & Miyoshi (2011)
+! Time marching  (0: TVD RK2, 1: RK2)
+  integer, parameter :: time_type = 0
+! File I/O  (0: Standard, 1: MPI-IO)
+  integer, parameter :: io_type   = 1
+! Resistivity
+  real(8), parameter :: Rm1 = 60.d0, Rm0 = 1000.d0
+!-----------------------------------------------------------------------
+! See also modelp.f90
+!-----------------------------------------------------------------------
+  integer :: i, j, k
+  integer :: n_output
+  real(8) :: t, dt, t_output
+  real(8) :: ch
+  character*256 :: filename
+  character*256 :: errmsg
+  integer :: merr, myrank, mreq(1)   ! for MPI
+!-----------------------------------------------------------------------
+  real(8) :: x(ix), y(jx), dx
+  real(8) :: U(ix,jx,var1)  ! conserved variables (U)
+  real(8) :: U1(ix,jx,var1) ! conserved variables: medium state (U*)
+  real(8) :: V(ix,jx,var2)  ! primitive variables (V)
+  real(8) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
+  real(8) :: F(ix,jx,var1), G(ix,jx,var1)   ! numerical flux (F,G)
+  real(8) :: E(ix,jx),EF(ix,jx), EG(ix,jx)  ! resistivity for U, F, G
+!-----------------------------------------------------------------------
+  real(8), device, allocatable :: Ud(:,:,:)  ! conserved variables (U)
+  real(8), device, allocatable :: U1d(:,:,:) ! conserved variables: medium state (U*)
+  real(8), device, allocatable :: Vd(:,:,:)  ! primitive variables (V)
+  real(8), device, allocatable :: VLd(:,:,:), VRd(:,:,:) ! interpolated states
+  real(8), device, allocatable :: Fd(:,:,:), Gd(:,:,:)   ! numerical flux (F,G)
+  real(8), device, allocatable :: vmaxd(:,:)   ! for timestep
+  real(8), device, allocatable :: EFd(:,:), EGd(:,:)  ! resistivity for U, F, G
+  real(8), device :: dtd, dxd, chd
+  integer :: stat
+  type(dim3), parameter :: Th = dim3(256,1,1)
+  type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),1)
+  type(dim3), parameter :: Thh = dim3(1,512,1)
+  type(dim3), parameter :: Blh = dim3(1,ceiling(real(2*(ix+jx-6))/Thh%y),1)
+  integer(kind=cuda_stream_kind) :: stream1
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+! for MPI
+  call parallel_init(mpi_nums,bc_periodicity,ix,jx)
+  myrank = ranks%myrank
+  stat = cudaStreamCreate(stream1,cudaStreamNonBlocking)
+!-----------------------------------------------------------------------
+  allocate( Ud(ix,jx,var1),U1d(ix,jx,var1),Vd(ix,jx,var2))
+  allocate(VLd(ix,jx,var1),VRd(ix,jx,var1))
+  allocate( Fd(ix,jx,var1), Gd(ix,jx,var1))
+  allocate( EFd(ix,jx),EGd(ix,jx))
+  allocate(vmaxd(ix,jx),source=0.d0)
+!-----------------------------------------------------------------------
+
+  t    =  0.d0
+  dt   =  0.d0
+! We calculate dx here
+  call modelp(U,V,x,y,dx,ix,jx)
+  Ud = U; Vd = V; dxd = dx
+  call set_eta(E,EF,EG,x,y,dx,Rm1,Rm0,ix,jx)
+  EFd = EF; EGd = EG
+! boundary conditions
+  call parallel_exchange(Ud,ix,jx,1) ! in the x direction
+  call parallel_exchange(Ud,ix,jx,2) ! in the y direction
+  stat = cudaDeviceSynchronize()
+  call mpibc_for_U(Ud,ix,jx)
+  stat = cudaDeviceSynchronize()
+  call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
+  stat = cudaDeviceSynchronize()
+  chd = 0.d0
+!$cuf kernel do(2) <<<*, *>>>
+  do j=1,jx
+     do i=1,ix
+        chd=max(chd,vmaxd(i,j))
+     enddo
+  enddo
+  ch = chd
+  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
+  call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
+  call mpi_barrier(cart2d%comm,merr)
+
+  dt = cfl * dx / ch
+  call set_dt2(Rm1,dt,dx,cfl)
+  if( dt < dtmin ) then
+     write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+     write(6,*) '     velocity is : ', ch
+     stop
+  endif
+  if ( dt > dtout ) then
+     write(6,*) 'error: ', dt, '>', dtout
+     stop
+  endif
+  if( myrank == 0 ) then
+     write(6,*) '[Params]'
+     write(6,997) version, ranks%size, cart2d%sizes
+     write(6,998) dt, dtout, cart2d%sizes(1)*(ix-2)+2, ix, cart2d%sizes(2)*(jx-2)+2, jx
+     write(6,999) lm_type, flux_type, time_type
+997  format ('Code version: ', i8, '  MPI node # : ', i5,' (',i4,' x ',i4,')' )
+998  format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:',i6,' (',i5,') x ',i6,' (',i5,') ')
+999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
+     write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
+     write(6,*) '== start =='
+  endif
+
+  ! If n_start is negative, look for a latest restart file.
+  if ( n_start < 0 ) then
+     if ( myrank == 0 ) then
+        do k = floor(tend/dtout),0,-1
+           n_start = k
+           if ( io_type == 0 )  write(filename,990) myrank, n_start
+           if ( io_type /= 0 )  write(filename,980) n_start
+           open(15,file=filename,form='unformatted',access='stream',status='old',err=100)
+           close(15)
+           exit
+100        continue
+        enddo
+     endif
+     call mpi_bcast(n_start,1,mpi_integer,0,cart2d%comm,merr)
+  endif
+  call mpi_barrier(cart2d%comm,merr)
+
+  ! If n_start is non-zero, restart from a previous file.
+  if ( n_start /= 0 ) then
+     if ( io_type == 0 ) then
+        write(6,*) 'reading data ...   rank = ', myrank
+        write(filename,990) myrank, n_start
+        call fileio_input(filename,ix,jx,t,x,y,U)
+        Ud = U
+     else
+        if( myrank == 0 )  write(6,*) 'reading data ...'
+        write(filename,980) n_start
+        call mpiio_input(filename,ix,jx,t,x,y,U)
+        Ud = U
+     endif
+  endif
+  t_output = t - dt/3.d0
+  n_output = n_start
+
+!-----------------------------------------------------------------------
+  do k=1,loop_max
+
+     if( myrank == 0 ) then
+        write(6,*) ' t = ', t
+     endif
+!    Recovering primitive variables
+!     write(6,*) 'U --> V'
+     call u2v<<<Bl,Th>>>(Ud,Vd,ix,jx)
+     stat = cudaDeviceSynchronize()
+!   -----------------
+!    [ output ]
+     if ( t >= t_output ) then
+        U = Ud; V = Vd
+        if (( k > 1 ).or.( n_start == 0 )) then
+           if ( io_type == 0 ) then
+              write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
+              write(filename,990) myrank, n_output
+              call fileio_output(filename,ix,jx,t,x,y,U,V)
+           else
+              if( myrank == 0 )  write(6,*) 'writing data ...   t = ', t
+              write(filename,980) n_output
+              call mpiio_output(filename,ix,jx,t,x,y,U,V)
+           endif
+        endif
+        n_output = n_output + 1
+        t_output = t_output + dtout
+        call mpi_barrier(cart2d%comm,merr)
+     endif
+!    [ end? ]
+     if ( t >= tend )  exit
+     if ( k >= loop_max ) then
+        if( myrank == 0 )  write(6,*) 'max loop'
+        exit
+     endif
+!   -----------------
+!    CFL condition
+     call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
+     stat = cudaDeviceSynchronize()
+     chd = 0.d0
+!$cuf kernel do(2) <<<*, *>>>
+     do j=1,jx
+        do i=1,ix
+           chd=max(chd,vmaxd(i,j))
+        enddo
+     enddo
+     ch = chd
+     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
+     call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
+     dt = cfl * dx / ch
+     call set_dt2(Rm1,dt,dx,cfl)
+     if( dt < dtmin ) then
+        write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+        write(6,*) '     velocity is : ', ch
+        stop
+     endif
+     dtd = dt; chd = ch
+!   -----------------
+
+!    GLM solver for the first half timestep
+!    This should be done after set_dt()
+     call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (F)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
+
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (F)'
+     stat = cudaDeviceSynchronize()
+     call parallel_exchange2(VLd,VRd,ix,jx,1) ! in the x direction
+     stat = cudaDeviceSynchronize()
+     call mpibc_for_F(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Numerical flux in the X direction (F)
+!     write(6,*) 'VL, VR --> F'
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
+     errmsg = cudaGetErrorString(cudaGetLastError())
+     !!! debug (first HLLD) !!!
+     if( trim(errmsg) /= "no error" ) then
+        write(6,*) ' Exit: ', trim(errmsg)
+        stop
+     endif
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
+     stat = cudaDeviceSynchronize()
+     call flux_resistive<<<Bl,Th>>>(Fd,Ud,EFd,dxd,ix,jx,1)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (G)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
+
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (G)'
+     stat = cudaDeviceSynchronize()
+     call parallel_exchange2(VLd,VRd,ix,jx,2) ! in the y direction
+     stat = cudaDeviceSynchronize()
+     call mpibc_for_G(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Numerical flux in the Y direction (G)
+!     write(6,*) 'VL, VR --> G'
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
+     stat = cudaDeviceSynchronize()
+     call flux_resistive<<<Bl,Th>>>(Gd,Ud,EGd,dxd,ix,jx,2)
+     stat = cudaDeviceSynchronize()
+
+     if( time_type == 0 ) then
+!       write(6,*) 'U* = U + (dt/dx) (F-F)'
+!        call rk_tvd21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_tvd21_halo<<<Blh,Thh>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_tvd21_core<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+     elseif( time_type == 1 ) then
+!       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
+!        call rk_std21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_std21_halo<<<Blh,Thh>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_std21_core<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+     endif
+
+!    boundary conditions
+!     stat = cudaDeviceSynchronize()
+     stat = cudaStreamSynchronize(0)
+     call parallel_exchange(U1d,ix,jx,1) ! in the x direction
+     call parallel_exchange(U1d,ix,jx,2) ! in the y direction
+!     stat = cudaDeviceSynchronize()
+     stat = cudaStreamSynchronize(0)
+     call mpibc_for_U(U1d,ix,jx)
+!     write(6,*) 'U* --> V'
+     stat = cudaDeviceSynchronize()
+     call u2v<<<Bl,Th>>>(U1d,Vd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (F)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
+
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (F)'
+     stat = cudaDeviceSynchronize()
+     call parallel_exchange2(VLd,VRd,ix,jx,1) ! in the x direction
+     stat = cudaDeviceSynchronize()
+     call mpibc_for_F(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Numerical flux in the X direction (F)
+!     write(6,*) 'VL, VR --> F'
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
+     stat = cudaDeviceSynchronize()
+     call flux_resistive<<<Bl,Th>>>(Fd,U1d,EFd,dxd,ix,jx,1)
+     stat = cudaDeviceSynchronize()
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (G)'
+     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
+
+!    Interpolated primitive variables at MPI boundaries
+!     write(6,*) 'adjusting VL/VR (G)'
+     stat = cudaDeviceSynchronize()
+     call parallel_exchange2(VLd,VRd,ix,jx,2) ! in the y direction
+     stat = cudaDeviceSynchronize()
+     call mpibc_for_G(VLd,VRd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    Numerical flux in the Y direction (G)
+!     write(6,*) 'VL, VR --> G'
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
+     stat = cudaDeviceSynchronize()
+     call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
+     stat = cudaDeviceSynchronize()
+     call flux_resistive<<<Bl,Th>>>(Gd,U1d,EGd,dxd,ix,jx,2)
+     stat = cudaDeviceSynchronize()
+
+     if( time_type == 0 ) then
+!       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
+!        call rk_tvd22<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_tvd22_halo<<<Blh,Thh>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_tvd22_core<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+     elseif( time_type == 1 ) then
+!       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
+!        call rk_std22<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_std22_halo<<<Blh,Thh>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_std22_core<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
+     endif
+
+!    boundary conditions
+!     stat = cudaDeviceSynchronize()
+     stat = cudaStreamSynchronize(0)
+     call parallel_exchange(Ud,ix,jx,1) ! in the x direction
+     call parallel_exchange(Ud,ix,jx,2) ! in the y direction
+!     stat = cudaDeviceSynchronize()
+     stat = cudaStreamSynchronize(0)
+     call mpibc_for_U(Ud,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+!    GLM solver for the second half timestep
+     call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
+     stat = cudaDeviceSynchronize()
+
+     t=t+dt
+
+  enddo
+!-----------------------------------------------------------------------
+
+  stat = cudaStreamDestroy(stream1)
+  call parallel_finalize()
+  deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd,vmaxd,EFd,EGd)
+  if( myrank == 0 )  write(6,*) '== end =='
+
+980 format ('data/field-',i5.5,'.dat')
+990 format ('data/field-rank',i4.4,'-',i5.5,'.dat')
+!981 format ('data/field-',i5.5,'.dat.restart')
+!991 format ('data/field-rank',i4.4,'-',i5.5,'.dat.restart')
+
+end program main
+!-----------------------------------------------------------------------

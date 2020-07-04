@@ -1,0 +1,241 @@
+attributes(global) &
+subroutine limiter(wk,wL,wR,ix,jx,dir,type)
+!-----------------------------------------------------------------------
+!     This routine interpolates variables with slope limiters
+!-----------------------------------------------------------------------
+!     2010/01/22  S. Zenitani  2nd order limiters (minmod, MC)
+!     2010/05/14  S. Zenitani  added van Leer limiter
+!     2012/07/05  S. Zenitani  added Koren limiter (bug fixed)
+!     2016/09/07  S. Zenitani  X and Y directions
+!     2020/07/04  S. Zenitani  CUDA fortran version
+!-----------------------------------------------------------------------
+  implicit none
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx               ! size of arrays [input]
+  real(8), device, intent(in)  :: wk(ix,jx)            ! work array [input]
+  real(8), device, intent(out) :: wL(ix,jx), wR(ix,jx) ! interpolated values [output]
+! direction [input]: 1 (X), 2 (Y), 3 (Z)
+  integer, value  :: dir
+! slope limiters [input]: 0 (flat), 1 (minmod), 2 (MC), 3 (van Leer), 4 (Koren)
+  integer, value  :: type
+!-----------------------------------------------------------------------
+  integer, device :: i, j, is, ie, js, je
+  real(8), device :: gA, gB, gC, grad                  ! gradients
+  real(8), device :: f1 = 1.d0 / 6.d0
+!-----------------------------------------------------------------------
+
+!  wL = -999999999.d0
+!  wR = -999999999.d0
+  
+  is=2; ie=ix-1; js=2; je=jx-1  
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+
+  select case(type)
+  !-----------------------------------------------------------------------
+  !  1st order
+  !-----------------------------------------------------------------------
+  case(0)
+
+     select case(dir)
+     case(1)
+        if( (js<=j) .and. (j<=je) ) then
+           if( (1<=i) .and. (i<=(ix-1)) ) then
+              wL(i,j) = wk(i,j)
+              wR(i,j) = wk(i+1,j)
+           endif
+        endif
+
+     case(2)
+        if( (is<=i) .and. (i<=ie) ) then
+           if( (1<=j) .and. (j<=(jx-1)) ) then
+              wL(i,j) = wk(i,j)
+              wR(i,j) = wk(i,j+1)
+           endif
+        endif
+
+     endselect
+
+  !-----------------------------------------------------------------------
+  !  2nd order:  minmod limiter
+  !-----------------------------------------------------------------------
+  case(1)
+
+     select case(dir)
+     case(1)
+
+        if( (js<=j) .and. (j<=je) ) then
+           if( i==1 ) then
+              wL(i,j) = wk(i,j)
+           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+              gA = ( wk(i,j)  -wk(i-1,j))
+              gB = ( wk(i+1,j)-wk(i,j)  )
+              grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
+              wR(i-1,j) = wk(i,j) - grad
+              wL(i,j)   = wk(i,j) + grad
+           elseif( i==ix ) then
+              wR(i-1,j) = wk(i,j)
+           endif
+        endif
+
+     case(2)
+
+        if( (is<=i) .and. (i<=ie) ) then
+           if( j==1 ) then
+              wL(i,j) = wk(i,j)
+           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+              gA = ( wk(i,j)  -wk(i,j-1))
+              gB = ( wk(i,j+1)-wk(i,j)  )
+              grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
+              wR(i,j-1) = wk(i,j) - grad
+              wL(i,j)   = wk(i,j) + grad
+           elseif( j==jx ) then
+              wR(i,j-1) = wk(i,j)
+           endif
+        endif
+
+     endselect
+
+  !-----------------------------------------------------------------------
+  !  2nd order:  Monotonized central (MC) limiter
+  !-----------------------------------------------------------------------
+  case(2)
+     
+     select case(dir)
+     case(1)
+
+        if( (js<=j) .and. (j<=je) ) then
+           if( i==1 ) then
+              wL(i,j) = wk(i,j)
+           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+              gA =        ( wk(i,j)  -wk(i-1,j))
+              gB =        ( wk(i+1,j)-wk(i,j)  )
+              gC = 0.25d0*( wk(i+1,j)-wk(i-1,j))
+              grad = (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+              wR(i-1,j) = wk(i,j) - grad
+              wL(i,j)   = wk(i,j) + grad
+           elseif( i==ix ) then
+              wR(i-1,j) = wk(i,j)
+           endif
+        endif
+
+     case(2)
+
+        if( (is<=i) .and. (i<=ie) ) then
+           if( j==1 ) then
+              wL(i,j)   = wk(i,j)
+           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+              gA =       ( wk(i,j)  -wk(i,j-1))
+              gB =       ( wk(i,j+1)-wk(i,j)  )
+              gC = 0.25d0*( wk(i,j+1)-wk(i,j-1))
+              grad = (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+              wR(i,j-1) = wk(i,j) - grad
+              wL(i,j)   = wk(i,j) + grad
+           elseif( j==jx ) then
+              wR(i,j-1) = wk(i,j)
+           endif
+        endif
+
+     endselect
+     
+  !-----------------------------------------------------------------------
+  !  2nd order:  van Leer limiter
+  !-----------------------------------------------------------------------
+  case(3)
+
+     select case(dir)
+     case(1)
+
+        if( (js<=j) .and. (j<=je) ) then
+           if( i==1 ) then
+              wL(i,j) = wk(i,j)
+           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+              gA = ( wk(i,j)  -wk(i-1,j))
+              gB = ( wk(i+1,j)-wk(i,j)  )
+              if( gA*gB <= 0 ) then
+                 grad = 0.d0
+              else
+                 grad = gA*gB / ( gA + gB )
+              endif
+              wR(i-1,j) = wk(i,j) - grad
+              wL(i,j)   = wk(i,j) + grad
+           elseif( i==ix ) then
+              wR(i-1,j) = wk(i,j)
+           endif
+        endif
+
+     case(2)
+
+        if( (is<=i) .and. (i<=ie) ) then
+           if( j==1 ) then
+              wL(i,j)   = wk(i,j)
+           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+              gA = ( wk(i,j)  -wk(i,j-1))
+              gB = ( wk(i,j+1)-wk(i,j)  )
+              if( gA*gB <= 0 ) then
+                 grad = 0.d0
+              else
+                 grad = gA*gB / ( gA + gB )
+              endif
+              wR(i,j-1) = wk(i,j) - grad
+              wL(i,j)   = wk(i,j) + grad
+           elseif( j==jx ) then
+              wR(i,j-1) = wk(i,j)
+           endif
+        endif
+
+     endselect
+
+  !-----------------------------------------------------------------------
+  !  3rd order:  Koren limiter
+  !-----------------------------------------------------------------------
+  case(4)
+
+     select case(dir)
+     case(1)
+
+        if( (js<=j) .and. (j<=je) ) then
+           if( i==1 ) then
+              wL(i,j) = wk(i,j)
+           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+              gA = ( wk(i,j)  -wk(i-1,j))
+              gB = ( wk(i+1,j)-wk(i,j)  )
+              gC = f1*( 2*gA+gB )
+              wR(i-1,j) = wk(i,j) - (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+
+              gC = f1*( gA+2*gB )
+              wL(i,j) = wk(i,j) + (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+           elseif( i==ix ) then
+              wR(i-1,j) = wk(i,j)
+           endif
+        endif
+         
+     case(2)
+
+        if( (is<=i) .and. (i<=ie) ) then
+           if( j==1 ) then
+              wL(i,j)   = wk(i,j)
+           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+              gA = ( wk(i,j)  -wk(i,j-1))
+              gB = ( wk(i,j+1)-wk(i,j)  )
+              gC = f1*( 2*gA+gB )
+              wR(i,j-1) = wk(i,j) - (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+              gC = f1*( gA+2*gB )
+              wL(i,j) = wk(i,j) + (sign(0.5d0,gA)+sign(0.5d0,gB))*min(abs(gA),abs(gB),abs(gC))
+           elseif( j==jx ) then
+              wR(i,j-1) = wk(i,j)
+           endif
+        endif
+
+     endselect
+
+  !-----------------------------------------------------------------------
+  case default
+!     write(6,*) 'unknown limiter'
+     stop
+     
+  endselect
+  !-----------------------------------------------------------------------
+  
+  return
+end subroutine limiter

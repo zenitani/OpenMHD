@@ -61,7 +61,7 @@ program main
 !    Recovering primitive variables
 !     write(6,*) 'U --> V'
      call u2v(U,V,ix,jx)
-!   -----------------  
+!   -----------------
 !    [ output ]
      if ( t >= t_output ) then
         write(6,*) 'data output   t = ', t
@@ -77,13 +77,13 @@ program main
         write(6,*) 'max loop'
         exit
      endif
-!   -----------------  
+!   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
 !     write(6,*) 'U --> SS'
-     call glm_ss(U,ch,0.5d0*dt,ix,jx)
+     call glm_ss2(U,ch,dt,ix,jx)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -176,12 +176,12 @@ program main
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
         call rk_std22(U,F,G,dt,dx,ix,jx)
      endif
-
-!    GLM solver for the second half timestep
-     call glm_ss(U,ch,0.5d0*dt,ix,jx)
-
 !    boundary condition
      call bc_for_U(U,ix,jx)
+
+!    GLM solver for the second half timestep
+     call glm_ss2(U,ch,dt,ix,jx)
+
      t=t+dt
 
   enddo

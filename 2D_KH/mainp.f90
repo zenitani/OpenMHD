@@ -2,7 +2,6 @@ program main
 !-----------------------------------------------------------------------
 !     OpenMHD  Riemann solver (parallel version)
 !-----------------------------------------------------------------------
-!     2010/09/27  S. Zenitani  K-H instability
 !     2010/09/27  S. Zenitani  K-H instability (MPI version)
 !     2015/04/05  S. Zenitani  MPI-IO
 !     2018/05/02  S. Zenitani  parallel module (MPI-3 version)
@@ -76,7 +75,7 @@ program main
      write(6,998) dt, dtout, cart2d%sizes(1)*(ix-2)+2, ix, cart2d%sizes(2)*(jx-2)+2, jx
      write(6,999) lm_type, flux_type, time_type
 997  format ('Code version: ', i8, '  MPI node # : ', i5,' (',i4,' x ',i4,')' )
-998  format (' dt: ',e10.3,' dtout: ',e10.3,' grids:',i6,' (',i5,') x ',i6,' (',i5,') ')
+998  format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:',i6,' (',i5,') x ',i6,' (',i5,') ')
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
      write(6,*) '== start =='
   endif
@@ -122,7 +121,7 @@ program main
 !    Recovering primitive variables
 !     write(6,*) 'U --> V'
      call u2v(U,V,ix,jx)
-!   -----------------  
+!   -----------------
 !    [ output ]
      if ( t >= t_output ) then
         if (( k > 1 ).or.( n_start == 0 )) then
@@ -146,7 +145,7 @@ program main
         if( myrank == 0 )  write(6,*) 'max loop'
         exit
      endif
-!   -----------------  
+!   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
      call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
@@ -156,7 +155,7 @@ program main
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
 !     write(6,*) 'U --> SS'
-     call glm_ss(U,ch,0.5d0*dt,ix,jx)
+     call glm_ss2(U,ch,dt,ix,jx)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -257,14 +256,14 @@ program main
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
         call rk_std22(U,F,G,dt,dx,ix,jx)
      endif
-
-!    GLM solver for the second half timestep
-     call glm_ss(U,ch,0.5d0*dt,ix,jx)
-
 !    boundary conditions
      call parallel_exchange(U,ix,jx,1)
      call parallel_exchange(U,ix,jx,2)
      call mpibc_for_U(U,ix,jx)
+
+!    GLM solver for the second half timestep
+     call glm_ss2(U,ch,dt,ix,jx)
+
      t=t+dt
 
   enddo

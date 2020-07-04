@@ -10,8 +10,8 @@ subroutine model(U,V,x,y,dx,ix,jx)
   integer, intent(in)  :: ix, jx
 ! ---------------------------------------------------
 ! x & y positions (Note: domain_y(2) is automatically calculated)
-  real(8), parameter :: domain_x(2) = (/-20.d0, 20.d0/)
-  real(8), parameter :: domain_y(1) = (/-5.d0/)
+  real(8), parameter :: domain_x(2) = (/0.d0, 50.d0/)
+  real(8), parameter :: domain_y(1) = (/0.d0/)
 ! plasma beta in the upstream region
   real(8), parameter :: beta = 0.2d0
 ! ---------------------------------------------------
