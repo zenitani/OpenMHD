@@ -266,19 +266,15 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
-!        call rk_tvd21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_tvd21_halo<<<Blh,Thh>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_tvd21_core<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_tvd21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
-!        call rk_std21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_std21_halo<<<Blh,Thh>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_std21_core<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_std21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
      endif
 
 !    boundary condition
-!     stat = cudaDeviceSynchronize()
-     stat = cudaStreamSynchronize(0)
+     stat = cudaDeviceSynchronize()
+!     stat = cudaStreamSynchronize(0)
      call parallel_exchange(U1d,ix,jx,1) ! in the x direction
      call parallel_exchange(U1d,ix,jx,2) ! in the y direction
      stat = cudaDeviceSynchronize()
@@ -336,19 +332,15 @@ program main
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
-!        call rk_tvd22<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_tvd22_halo<<<Blh,Thh>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_tvd22_core<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_tvd22<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx)
      elseif( time_type == 1 ) then
 !       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
-!        call rk_std22<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_std22_halo<<<Blh,Thh>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
-        call rk_std22_core<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
+        call rk_std22<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx)
      endif
 
 !    boundary conditions
-!     stat = cudaDeviceSynchronize()
-     stat = cudaStreamSynchronize(0)
+     stat = cudaDeviceSynchronize()
+!     stat = cudaStreamSynchronize(0)
      call parallel_exchange(Ud,ix,jx,1) ! in the x direction
      call parallel_exchange(Ud,ix,jx,2) ! in the y direction
      stat = cudaDeviceSynchronize()
