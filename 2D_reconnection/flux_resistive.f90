@@ -56,8 +56,8 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
         F(i,j,en) = F(i,j,en) + 0.5d0 * &
              (JyS*(U(i,j,bz)+U(i+1,j,bz))-JzS*(U(i,j,by)+U(i+1,j,by)))
 !             (JyS*(VL(i,j,bz)+VR(i,j,bz))-JzS*(VL(i,j,by)+VR(i,j,by)))
-        F(i,j,by) = F(i,j,by) - EtS(i,j) * JzS
-        F(i,j,bz) = F(i,j,bz) + EtS(i,j) * JyS
+        F(i,j,by) = F(i,j,by) - JzS
+        F(i,j,bz) = F(i,j,bz) + JyS
      enddo
      enddo
 !$omp end parallel do
