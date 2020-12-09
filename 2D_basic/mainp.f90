@@ -98,7 +98,10 @@ program main
   call mpi_barrier(cart2d%comm,merr)
 
   ! If n_start is non-zero, restart from a previous file.
-  if ( n_start /= 0 ) then
+  if ( n_start == 0 ) then
+     n_output = 0
+     t_output = -dt/3.d0
+  else
      if ( io_type == 0 ) then
         write(6,*) 'reading data ...   rank = ', myrank
         write(filename,990) myrank, n_start
@@ -108,9 +111,9 @@ program main
         write(filename,980) n_start
         call mpiio_input(filename,ix,jx,t,x,y,U)
      endif
+     n_output = n_start + 1
+     t_output = t + dtout
   endif
-  t_output = t - dt/3.d0
-  n_output = n_start
 
 !-----------------------------------------------------------------------
   do k=1,loop_max

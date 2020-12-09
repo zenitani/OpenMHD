@@ -10,11 +10,13 @@ program main
   include 'param.h'
   integer, parameter :: ix = 2000 + 2
   integer, parameter :: jx =  500 + 2
-  integer, parameter :: loop_max = 300000
+  integer, parameter :: loop_max = 1000000
   real(8), parameter :: dtmin = 1.0d-7
   real(8), parameter :: tend  = 251.0d0
   real(8), parameter :: dtout =  25.d0 ! output interval
   real(8), parameter :: cfl   = 0.35d0 ! time step
+! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
+  integer :: n_start = 0
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
@@ -89,15 +91,37 @@ program main
      stop
   endif
 
-  t_output = -dt/3.d0
-  n_output =  0
-
   write(6,*) '[Params]'
   write(6,998) dt, dtout, ix, jx
   write(6,999) lm_type, flux_type, time_type
 998 format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:', i5, i5 )
 999 format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
   write(6,*) '== start =='
+
+  ! If n_start is negative, look for a latest restart file.
+  if ( n_start < 0 ) then
+     do k = floor(tend/dtout),0,-1
+        n_start = k
+        write(filename,990) n_start
+        open(15,file=filename,form='unformatted',access='stream',status='old',err=100)
+        close(15)
+        exit
+100     continue
+     enddo
+  endif
+
+  ! If n_start is non-zero, restart from a previous file.
+  if ( n_start == 0 ) then
+     n_output = 0
+     t_output = -dt/3.d0
+  else
+     write(6,*) 'reading data ...'
+     write(filename,990) n_start
+     call fileio_input(filename,ix,jx,t,x,y,U)
+     Ud = U
+     n_output = n_start + 1
+     t_output = t + dtout
+  endif
 
 !-----------------------------------------------------------------------
   do k=1,loop_max
@@ -113,7 +137,6 @@ program main
         U = Ud; V = Vd
         write(6,*) 'data output   t = ', t
         write(filename,990) n_output
-990     format ('data/field-',i5.5,'.dat')
         call fileio_output(filename,ix,jx,t,x,y,U,V)
         n_output = n_output + 1
         t_output = t_output + dtout
@@ -295,5 +318,8 @@ program main
 
   deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd,vmaxd,EFd,EGd)
   write(6,*) '== end =='
+
+990 format ('data/field-',i5.5,'.dat')
+
 end program main
 !-----------------------------------------------------------------------

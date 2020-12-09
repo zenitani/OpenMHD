@@ -1,13 +1,8 @@
-### PGI fortran
-# F90 = pgfortran -Mcuda=cc35  # CfCA
-# F90 = pgfortran -Mcuda -O2 -pg
-# F90 = pgfortran -Mcuda=cc70 -O2
-# F90 = pgfortran -Mcuda -O2
 ### NVIDIA
-F90 = nvfortran -Mcuda -O2
-
-# NIFS
-# F90 = mpif90 -Mcuda -O2
+F90 = nvfortran -Mcuda
+### NIFS
+# F90 = mpif90 -Mcuda
+# F90 = mpif90 -Mcuda -mcmodel=medium
 
 
 OBJS = model.o u2v.o fileio.o \
