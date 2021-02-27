@@ -139,7 +139,7 @@ program main
 !    This should be done after set_dt()
      call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
      stat = cudaDeviceSynchronize()
-     
+
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
      call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
@@ -159,8 +159,8 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     errmsg = cudaGetErrorString(cudaGetLastError())
      !!! debug (first HLLD) !!!
+     errmsg = cudaGetErrorString(cudaGetLastError())
      if( trim(errmsg) /= "no error" ) then
         write(6,*) ' Exit: ', trim(errmsg)
         stop
@@ -270,7 +270,7 @@ program main
 
      t = t + dt
 
-  end do
+  enddo
 
   deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd,vmaxd)
   write(6,*) '== end =='

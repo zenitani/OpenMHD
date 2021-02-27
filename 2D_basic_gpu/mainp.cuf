@@ -353,7 +353,7 @@ program main
 
      t = t + dt
 
-  end do
+  enddo
 !-----------------------------------------------------------------------
 
   stat = cudaStreamDestroy(stream1)
