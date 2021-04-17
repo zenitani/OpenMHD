@@ -98,11 +98,8 @@ program main
 ! boundary conditions
   call parallel_exchange(Ud,ix,jx,1) ! in the x direction
   call parallel_exchange(Ud,ix,jx,2) ! in the y direction
-  stat = cudaDeviceSynchronize()
   call mpibc_for_U(Ud,ix,jx)
-  stat = cudaDeviceSynchronize()
   call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
-  stat = cudaDeviceSynchronize()
   chd = 0.d0
 !$cuf kernel do(2) <<<*, *>>>
   do j=1,jx
@@ -183,7 +180,6 @@ program main
 !    Recovering primitive variables
 !     write(6,*) 'U --> V'
      call u2v<<<Bl,Th>>>(Ud,Vd,ix,jx)
-     stat = cudaDeviceSynchronize()
 !   -----------------
 !    [ output ]
      if ( t >= t_output ) then
@@ -212,7 +208,6 @@ program main
 !   -----------------
 !    CFL condition
      call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
-     stat = cudaDeviceSynchronize()
      chd = 0.d0
 !$cuf kernel do(2) <<<*, *>>>
      do j=1,jx
@@ -236,7 +231,6 @@ program main
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
      call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -252,11 +246,8 @@ program main
 
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
-     stat = cudaDeviceSynchronize()
      call parallel_exchange2(VLd,VRd,ix,jx,1) ! in the x direction
-     stat = cudaDeviceSynchronize()
      call mpibc_for_F(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
@@ -267,11 +258,8 @@ program main
         write(6,*) ' Exit: ', trim(errmsg)
         stop
      endif
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
-     stat = cudaDeviceSynchronize()
      call flux_resistive<<<Bl,Th>>>(Fd,Ud,EFd,dxd,ix,jx,1)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -287,20 +275,14 @@ program main
 
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (G)'
-     stat = cudaDeviceSynchronize()
      call parallel_exchange2(VLd,VRd,ix,jx,2) ! in the y direction
-     stat = cudaDeviceSynchronize()
      call mpibc_for_G(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
-     stat = cudaDeviceSynchronize()
      call flux_resistive<<<Bl,Th>>>(Gd,Ud,EGd,dxd,ix,jx,2)
-     stat = cudaDeviceSynchronize()
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -311,17 +293,13 @@ program main
      endif
 
 !    boundary conditions
-     stat = cudaDeviceSynchronize()
 !     stat = cudaStreamSynchronize(0)
      call parallel_exchange(U1d,ix,jx,1) ! in the x direction
      call parallel_exchange(U1d,ix,jx,2) ! in the y direction
-     stat = cudaDeviceSynchronize()
 !     stat = cudaStreamSynchronize(0)
      call mpibc_for_U(U1d,ix,jx)
 !     write(6,*) 'U* --> V'
-     stat = cudaDeviceSynchronize()
      call u2v<<<Bl,Th>>>(U1d,Vd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -337,20 +315,14 @@ program main
 
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
-     stat = cudaDeviceSynchronize()
      call parallel_exchange2(VLd,VRd,ix,jx,1) ! in the x direction
-     stat = cudaDeviceSynchronize()
      call mpibc_for_F(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
-     stat = cudaDeviceSynchronize()
      call flux_resistive<<<Bl,Th>>>(Fd,U1d,EFd,dxd,ix,jx,1)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -366,20 +338,14 @@ program main
 
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (G)'
-     stat = cudaDeviceSynchronize()
      call parallel_exchange2(VLd,VRd,ix,jx,2) ! in the y direction
-     stat = cudaDeviceSynchronize()
      call mpibc_for_G(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
-     stat = cudaDeviceSynchronize()
      call flux_resistive<<<Bl,Th>>>(Gd,U1d,EGd,dxd,ix,jx,2)
-     stat = cudaDeviceSynchronize()
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
@@ -390,18 +356,14 @@ program main
      endif
 
 !    boundary conditions
-     stat = cudaDeviceSynchronize()
 !     stat = cudaStreamSynchronize(0)
      call parallel_exchange(Ud,ix,jx,1) ! in the x direction
      call parallel_exchange(Ud,ix,jx,2) ! in the y direction
-     stat = cudaDeviceSynchronize()
 !     stat = cudaStreamSynchronize(0)
      call mpibc_for_U(Ud,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    GLM solver for the second half timestep
      call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
      t=t+dt
 

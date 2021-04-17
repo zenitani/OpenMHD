@@ -57,9 +57,7 @@ program main
   call model(U,V,x,y,dx,ix,jx)
   Ud = U; Vd = V; dxd = dx
   call bc_for_U(Ud,ix,jx)
-  stat = cudaDeviceSynchronize()
   call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
-  stat = cudaDeviceSynchronize()
   chd = 0.d0
 !$cuf kernel do(2) <<<*, *>>>
   do j=1,jx
@@ -96,7 +94,6 @@ program main
 !    Recovering primitive variables
 !     write(6,*) 'U --> V'
      call u2v<<<Bl,Th>>>(Ud,Vd,ix,jx)
-     stat = cudaDeviceSynchronize()
 !   -----------------
 !    [ output ]
      if ( t >= t_output ) then
@@ -117,7 +114,6 @@ program main
 !   -----------------
 !    CFL condition
      call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
-     stat = cudaDeviceSynchronize()
      chd = 0.d0
 !$cuf kernel do(2) <<<*, *>>>
      do j=1,jx
@@ -138,7 +134,6 @@ program main
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
      call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -153,9 +148,7 @@ program main
      call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
 !    fix VL/VR for periodic bc (F)
 !     write(6,*) 'bc'
-     stat = cudaDeviceSynchronize()
      call bc_for_F(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
@@ -165,9 +158,7 @@ program main
         write(6,*) ' Exit: ', trim(errmsg)
         stop
      endif
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -181,15 +172,11 @@ program main
      call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
      call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
 !    fix VL/VR for periodic bc (G)
-     stat = cudaDeviceSynchronize()
      call bc_for_G(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
-     stat = cudaDeviceSynchronize()
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -200,12 +187,9 @@ program main
      endif
 
 !    boundary condition
-     stat = cudaDeviceSynchronize()
      call bc_for_U(U1d,ix,jx)
-     stat = cudaDeviceSynchronize()
 !     write(6,*) 'U* --> V'
      call u2v<<<Bl,Th>>>(U1d,Vd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
@@ -219,15 +203,11 @@ program main
      call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
      call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
 !    fix VL/VR for periodic bc (F)
-     stat = cudaDeviceSynchronize()
      call bc_for_F(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
-     stat = cudaDeviceSynchronize()
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -241,15 +221,11 @@ program main
      call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
      call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
 !    fix VL/VR for periodic bc (G)
-     stat = cudaDeviceSynchronize()
      call bc_for_G(VLd,VRd,ix,jx)
-     stat = cudaDeviceSynchronize()
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
-     stat = cudaDeviceSynchronize()
      call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
-     stat = cudaDeviceSynchronize()
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
@@ -260,13 +236,10 @@ program main
      endif
 
 !    boundary condition
-     stat = cudaDeviceSynchronize()
      call bc_for_U(Ud,ix,jx)
-     stat = cudaDeviceSynchronize()
 
 !    GLM solver for the second half timestep
      call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
-     stat = cudaDeviceSynchronize()
 
      t = t + dt
 
