@@ -176,15 +176,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
-     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
-     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
-     call limiter(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
-     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
-     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
-     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
-     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+     call limiter(V(:,:,vx),VL(:,:,vx),VR(:,:,vx),ix,jx,1,lm_type)
+     call limiter(V(:,:,vy),VL(:,:,vy),VR(:,:,vy),ix,jx,1,lm_type)
+     call limiter(V(:,:,vz),VL(:,:,vz),VR(:,:,vz),ix,jx,1,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,1,lm_type)
+     call limiter(U(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,1,lm_type)
+     call limiter(U(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,1,lm_type)
+     call limiter(U(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,1,lm_type)
+     call limiter(U(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,1,lm_type)
+     call limiter(U(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,1,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
      call parallel_exchange2(VL,VR,ix,jx,1)
@@ -197,15 +197,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
-     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,2,lm_type)
-     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,2,lm_type)
-     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,2,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,2,lm_type)
-     call limiter(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,2,lm_type)
-     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,2,lm_type)
-     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,2,lm_type)
-     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
-     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
+     call limiter(V(:,:,vx),VL(:,:,vx),VR(:,:,vx),ix,jx,2,lm_type)
+     call limiter(V(:,:,vy),VL(:,:,vy),VR(:,:,vy),ix,jx,2,lm_type)
+     call limiter(V(:,:,vz),VL(:,:,vz),VR(:,:,vz),ix,jx,2,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,2,lm_type)
+     call limiter(U(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,2,lm_type)
+     call limiter(U(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,2,lm_type)
+     call limiter(U(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,2,lm_type)
+     call limiter(U(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,2,lm_type)
+     call limiter(U(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,2,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (G)'
      call parallel_exchange2(VL,VR,ix,jx,2)
@@ -232,15 +232,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
-     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
-     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
-     call limiter(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
-     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
-     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
-     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
-     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+     call limiter(V(:,:,vx),VL(:,:,vx),VR(:,:,vx),ix,jx,1,lm_type)
+     call limiter(V(:,:,vy),VL(:,:,vy),VR(:,:,vy),ix,jx,1,lm_type)
+     call limiter(V(:,:,vz),VL(:,:,vz),VR(:,:,vz),ix,jx,1,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,1,lm_type)
+     call limiter(U1(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,1,lm_type)
+     call limiter(U1(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,1,lm_type)
+     call limiter(U1(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,1,lm_type)
+     call limiter(U1(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,1,lm_type)
+     call limiter(U1(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,1,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (F)'
      call parallel_exchange2(VL,VR,ix,jx,1)
@@ -253,15 +253,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
-     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,2,lm_type)
-     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,2,lm_type)
-     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,2,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,2,lm_type)
-     call limiter(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,2,lm_type)
-     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,2,lm_type)
-     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,2,lm_type)
-     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,2,lm_type)
-     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,2,lm_type)
+     call limiter(V(:,:,vx),VL(:,:,vx),VR(:,:,vx),ix,jx,2,lm_type)
+     call limiter(V(:,:,vy),VL(:,:,vy),VR(:,:,vy),ix,jx,2,lm_type)
+     call limiter(V(:,:,vz),VL(:,:,vz),VR(:,:,vz),ix,jx,2,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,2,lm_type)
+     call limiter(U1(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,2,lm_type)
+     call limiter(U1(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,2,lm_type)
+     call limiter(U1(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,2,lm_type)
+     call limiter(U1(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,2,lm_type)
+     call limiter(U1(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,2,lm_type)
 !    Interpolated primitive variables at MPI boundaries
 !     write(6,*) 'adjusting VL/VR (G)'
      call parallel_exchange2(VL,VR,ix,jx,2)

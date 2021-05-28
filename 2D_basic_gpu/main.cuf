@@ -25,7 +25,6 @@ program main
 !-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), dx
   real(8) :: U(ix,jx,var1)  ! conserved variables (U)
-  real(8) :: U1(ix,jx,var1) ! conserved variables: medium state (U*)
   real(8) :: V(ix,jx,var2)  ! primitive variables (V)
 !-----------------------------------------------------------------------
   real(8), device, allocatable :: Ud(:,:,:)  ! conserved variables (U)
@@ -33,7 +32,6 @@ program main
   real(8), device, allocatable :: Vd(:,:,:)  ! primitive variables (V)
   real(8), device, allocatable :: VLd(:,:,:), VRd(:,:,:) ! interpolated states
   real(8), device, allocatable :: Fd(:,:,:), Gd(:,:,:)   ! numerical flux (F,G)
-  real(8), device, allocatable :: vmaxd(:,:)   ! for timestep
   real(8), device :: dtd, dxd, chd
   integer :: stat
   type(dim3), parameter :: Th = dim3(256,1,1)
@@ -49,7 +47,6 @@ program main
   allocate( Ud(ix,jx,var1),U1d(ix,jx,var1),Vd(ix,jx,var2))
   allocate(VLd(ix,jx,var1),VRd(ix,jx,var1))
   allocate( Fd(ix,jx,var1), Gd(ix,jx,var1))
-  allocate(vmaxd(ix,jx),source=0.d0)
 !-----------------------------------------------------------------------
 
   t    =  0.d0
@@ -57,12 +54,12 @@ program main
   call model(U,V,x,y,dx,ix,jx)
   Ud = U; Vd = V; dxd = dx
   call bc_for_U(Ud,ix,jx)
-  call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
+  call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
   chd = 0.d0
 !$cuf kernel do(2) <<<*, *>>>
-  do j=1,jx
-     do i=1,ix
-        chd=max(chd,vmaxd(i,j))
+  do j=2,jx-1
+     do i=2,ix-1
+        chd=max(chd,VRd(i,j,vx))
      enddo
   enddo
   ch = chd
@@ -113,12 +110,12 @@ program main
      endif
 !   -----------------
 !    CFL condition
-     call fastest_speed<<<Bl,Th>>>(Ud,Vd,vmaxd,ix,jx)
+     call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
      chd = 0.d0
 !$cuf kernel do(2) <<<*, *>>>
-     do j=1,jx
-        do i=1,ix
-           chd=max(chd,vmaxd(i,j))
+     do j=2,jx-1
+        do i=2,ix-1
+           chd=max(chd,VRd(i,j,vx))
         enddo
      enddo
      ch = chd
@@ -137,15 +134,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vx),VLd(:,:,vx),VRd(:,:,vx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vy),VLd(:,:,vy),VRd(:,:,vy),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vz),VLd(:,:,vz),VRd(:,:,vz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,pr),VLd(:,:,pr),VRd(:,:,pr),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,ro),VLd(:,:,ro),VRd(:,:,ro),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,bx),VLd(:,:,bx),VRd(:,:,bx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,by),VLd(:,:,by),VRd(:,:,by),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,bz),VLd(:,:,bz),VRd(:,:,bz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,ps),VLd(:,:,ps),VRd(:,:,ps),ix,jx,1,lm_type)
 !    fix VL/VR for periodic bc (F)
 !     write(6,*) 'bc'
      call bc_for_F(VLd,VRd,ix,jx)
@@ -162,15 +159,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
-     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Ud(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vx),VLd(:,:,vx),VRd(:,:,vx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vy),VLd(:,:,vy),VRd(:,:,vy),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vz),VLd(:,:,vz),VRd(:,:,vz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,pr),VLd(:,:,pr),VRd(:,:,pr),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,ro),VLd(:,:,ro),VRd(:,:,ro),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,bx),VLd(:,:,bx),VRd(:,:,bx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,by),VLd(:,:,by),VRd(:,:,by),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,bz),VLd(:,:,bz),VRd(:,:,bz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,ps),VLd(:,:,ps),VRd(:,:,ps),ix,jx,2,lm_type)
 !    fix VL/VR for periodic bc (G)
      call bc_for_G(VLd,VRd,ix,jx)
 !    Numerical flux in the Y direction (G)
@@ -193,15 +190,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,1,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vx),VLd(:,:,vx),VRd(:,:,vx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vy),VLd(:,:,vy),VRd(:,:,vy),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vz),VLd(:,:,vz),VRd(:,:,vz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,pr),VLd(:,:,pr),VRd(:,:,pr),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,ro),VLd(:,:,ro),VRd(:,:,ro),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,bx),VLd(:,:,bx),VRd(:,:,bx),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,by),VLd(:,:,by),VRd(:,:,by),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,bz),VLd(:,:,bz),VRd(:,:,bz),ix,jx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,ps),VLd(:,:,ps),VRd(:,:,ps),ix,jx,1,lm_type)
 !    fix VL/VR for periodic bc (F)
      call bc_for_F(VLd,VRd,ix,jx)
 !    Numerical flux in the X direction (F)
@@ -211,15 +208,15 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
-     call limiter<<<Bl,Th>>>(Vd(1,1,vx),VLd(1,1,vx),VRd(1,1,vx),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vy),VLd(1,1,vy),VRd(1,1,vy),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,vz),VLd(1,1,vz),VRd(1,1,vz),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(Vd(1,1,pr),VLd(1,1,pr),VRd(1,1,pr),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,ro),VLd(1,1,ro),VRd(1,1,ro),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,bx),VLd(1,1,bx),VRd(1,1,bx),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,by),VLd(1,1,by),VRd(1,1,by),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,bz),VLd(1,1,bz),VRd(1,1,bz),ix,jx,2,lm_type)
-     call limiter<<<Bl,Th>>>(U1d(1,1,ps),VLd(1,1,ps),VRd(1,1,ps),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vx),VLd(:,:,vx),VRd(:,:,vx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vy),VLd(:,:,vy),VRd(:,:,vy),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,vz),VLd(:,:,vz),VRd(:,:,vz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,pr),VLd(:,:,pr),VRd(:,:,pr),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,ro),VLd(:,:,ro),VRd(:,:,ro),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,bx),VLd(:,:,bx),VRd(:,:,bx),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,by),VLd(:,:,by),VRd(:,:,by),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,bz),VLd(:,:,bz),VRd(:,:,bz),ix,jx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,ps),VLd(:,:,ps),VRd(:,:,ps),ix,jx,2,lm_type)
 !    fix VL/VR for periodic bc (G)
      call bc_for_G(VLd,VRd,ix,jx)
 !    Numerical flux in the Y direction (G)
@@ -245,7 +242,7 @@ program main
 
   enddo
 
-  deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd,vmaxd)
+  deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd)
   write(6,*) '== end =='
 
 end program main

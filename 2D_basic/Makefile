@@ -1,6 +1,6 @@
 ### gfortran
 # F90 = gfortran -O2 -Wall
-F90 = /opt/openmpi64g/bin/mpif90 -Wall -O2
+F90 = mpif90 -Wall -O2
 ### Intel fortran ("-heap-arrays" option is useful, but use 'ulimit -s unlimited' for OpenMP)
 # F90 = ifort -ipo -heap-arrays
 # F90 = /opt/openmpi64i/bin/mpif90 -debug all -heap-arrays

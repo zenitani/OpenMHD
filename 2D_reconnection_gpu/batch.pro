@@ -7,9 +7,9 @@ resolve_routine, "data_read"
 ;; reading the data ...
 ;; data_read,data,x,y,t,'data/field-'+string(10,format='(i05)')+'.dat'
 ;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-data_read,data,x,y,t,'data/field-'+string(10,format='(i05)')+'.dat',ix1=0,ix2=1301,jx1=0,jx2=151
-;; Zenitani & Miyoshi 2011 [6000 x 4500]
-;data_read,data,x,y,t,'data/field-'+string(10,format='(i05)')+'.dat',ix1=0,ix2=3901,jx1=0,jx2=451
+data_read,data,x,y,t,'data/field-00010.dat',xrange=[0,130.0],yrange=[0.0,15.0]
+;data_read,data,x,y,t,'data/field-00010.dat',ix1=0,ix2=1301,jx1=0,jx2=151
+;data_read,data,x,y,t,'data/field-00010.dat',ix1=0,ix2=3901,jx1=0,jx2=451
 ;; ---------------------------------------------------------------------
 
 ;; 2D mirroring (This depends on the BC)

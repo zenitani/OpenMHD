@@ -4,9 +4,10 @@ vx=0 & vy=1 & vz=2 & pr=3 & ro=4 & bx=5 & by=6 & bz=7 & ps=8
 resolve_routine, "data_read"
 
 ;; reading the data ...
-data_read,data,x,y,t,'data/field-'+string(20,format='(i05)')+'.dat'
+data_read,data,x,y,t,'data/field-00020.dat'
 ;; reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-;; data_read,data,x,y,t,'data/field-'+string(20,format='(i05)')+'.dat',ix1=0,ix2=100,jx1=11
+;; data_read,data,x,y,t,'data/field-00020.dat',ix1=0,ix2=101,jx1=101
+;; data_read,data,x,y,t,'data/field-00020.dat',xrange=[0.0,3.1416], yrange=[0.0,3.1416]
 
 ;; 2D image
 myimg = image(data[*,*,pr],x,y,axis_style=2,xtitle='$X$',ytitle='$Y$', $

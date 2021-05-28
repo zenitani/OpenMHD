@@ -7,9 +7,10 @@ import gc #  garbage collection
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-# x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 15)
-# reading the data (partial domain: [ix1,ix2] x [jx1,jx2])
-x,y,t,data = openmhd.data_read("data/field-%05d.dat" % 15,ix1=0,ix2=301,jx1=0,jx2=51)
+# x,y,t,data = openmhd.data_read("data/field-00015.dat")
+# reading the data (subdomain: [ix1,ix2] x [jx1,jx2] or xrange (x1,x2) x yrange (y1,y2))
+# x,y,t,data = openmhd.data_read("data/field-00015.dat",ix1=0,ix2=301,jx1=0,jx2=51)
+x,y,t,data = openmhd.data_read("data/field-00015.dat",xrange=(0.0,30.0),yrange=(0.0,5.0))
 
 # 2D mirroring (This depends on the BC)
 ix = x.size
