@@ -44,7 +44,7 @@ program main
   call set_eta(E,EF,EG,x,y,dx,Rm1,Rm0,ix,jx)
   call bc_for_U(U,ix,jx)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-  call set_dt2(Rm1,dt,dx,cfl)
+  dt = min( dt, 0.5d0*cfl*Rm1*(dx**2) )
   t_output = -dt/3.d0
   n_output =  0
 
@@ -85,7 +85,7 @@ program main
 !   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-     call set_dt2(Rm1,dt,dx,cfl)
+     dt = min( dt, 0.5d0*cfl*Rm1*(dx**2) )
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
      call glm_ss2(U,ch,dt,ix,jx)

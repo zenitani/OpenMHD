@@ -33,7 +33,6 @@ program main
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
-  character*256 :: errmsg
 !-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), dx
   real(8) :: U(ix,jx,var1)  ! conserved variables (U)
@@ -74,8 +73,8 @@ program main
      enddo
   enddo
   ch = chd
-  dt = cfl * dx / ch
-  call set_dt2(Rm1,dt,dx,cfl)
+  dt = min( cfl*dx/ch, 0.5d0*cfl*Rm1*(dx**2) )
+
   if( dt < dtmin ) then
      write(6,*) ' dt is too small : ', dt, ' < ', dtmin
      write(6,*) '     velocity is : ', ch
@@ -152,7 +151,7 @@ program main
         enddo
      enddo
      ch = chd
-     dt = cfl * dx / ch
+     dt = min( cfl*dx/ch, 0.5d0*cfl*Rm1*(dx**2) )
      if( dt < dtmin ) then
         write(6,*) ' dt is too small : ', dt, ' < ', dtmin
         write(6,*) '     velocity is : ', ch
@@ -182,12 +181,6 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     !!! debug (first HLLD) !!!
-     errmsg = cudaGetErrorString(cudaGetLastError())
-     if( trim(errmsg) /= "no error" ) then
-        write(6,*) ' Exit: ', trim(errmsg)
-        stop
-     endif
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
      call flux_resistive<<<Bl,Th>>>(Fd,Ud,EFd,dxd,ix,jx,1)
 

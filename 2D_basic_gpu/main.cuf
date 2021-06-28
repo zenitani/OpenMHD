@@ -42,7 +42,6 @@ program main
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
-  character*256 :: errmsg
 !-----------------------------------------------------------------------
   allocate( Ud(ix,jx,var1),U1d(ix,jx,var1),Vd(ix,jx,var2))
   allocate(VLd(ix,jx,var1),VRd(ix,jx,var1))
@@ -149,12 +148,6 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     !!! debug (first HLLD) !!!
-     errmsg = cudaGetErrorString(cudaGetLastError())
-     if( trim(errmsg) /= "no error" ) then
-        write(6,*) ' Exit: ', trim(errmsg)
-        stop
-     endif
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
 
 !    Slope limiters on primitive variables

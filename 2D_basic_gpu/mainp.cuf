@@ -52,7 +52,6 @@ program main
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
-  character*256 :: errmsg
   integer :: merr, myrank, mreq(2)   ! for MPI
 !-----------------------------------------------------------------------
 
@@ -223,12 +222,6 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     errmsg = cudaGetErrorString(cudaGetLastError())
-     !!! debug (first HLLD) !!!
-     if( trim(errmsg) /= "no error" ) then
-        write(6,*) ' Exit: ', trim(errmsg)
-        stop
-     endif
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
 
 !    Slope limiters on primitive variables

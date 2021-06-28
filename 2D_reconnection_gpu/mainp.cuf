@@ -48,7 +48,6 @@ program main
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
-  character*256 :: errmsg
   integer :: merr, myrank, mreq(1)   ! for MPI
 !-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), dx
@@ -109,8 +108,7 @@ program main
   call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
   call mpi_barrier(cart2d%comm,merr)
 
-  dt = cfl * dx / ch
-  call set_dt2(Rm1,dt,dx,cfl)
+  dt = min( cfl*dx/ch, 0.5d0*cfl*Rm1*(dx**2) )
   if( dt < dtmin ) then
      write(6,*) ' dt is too small : ', dt, ' < ', dtmin
      write(6,*) '     velocity is : ', ch
@@ -215,8 +213,7 @@ program main
      ch = chd
      call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
      call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
-     dt = cfl * dx / ch
-     call set_dt2(Rm1,dt,dx,cfl)
+     dt = min( cfl*dx/ch, 0.5d0*cfl*Rm1*(dx**2) )
      if( dt < dtmin ) then
         write(6,*) ' dt is too small : ', dt, ' < ', dtmin
         write(6,*) '     velocity is : ', ch
@@ -249,12 +246,6 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     errmsg = cudaGetErrorString(cudaGetLastError())
-     !!! debug (first HLLD) !!!
-     if( trim(errmsg) /= "no error" ) then
-        write(6,*) ' Exit: ', trim(errmsg)
-        stop
-     endif
      call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
      call flux_resistive<<<Bl,Th>>>(Fd,Ud,EFd,dxd,ix,jx,1)
 

@@ -5,7 +5,7 @@ F90 = nvfortran -Mcuda
 # F90 = mpif90 -Mcuda -mcmodel=medium
 
 
-OBJS = model.o set_dt2.o set_eta.o fileio.o \
+OBJS = model.o set_eta.o fileio.o \
 	u2v.o bc.o rk.o flux_solver.o limiter.o flux_glm.o glm_ss2.o \
 	fastest_speed.o flux_resistive.o
 OBJP = modelp.o mpiio.o mpibc.o
@@ -17,9 +17,6 @@ run : main.o $(OBJS)
 	$(F90) -o a.out main.o $(OBJS)
 
 model.o: model.f90 param.h
-	$(F90) $(FFLAGS) -c $<
-
-set_dt2.o: set_dt2.f90 param.h
 	$(F90) $(FFLAGS) -c $<
 
 set_eta.o: set_eta.f90 param.h
