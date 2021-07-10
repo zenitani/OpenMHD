@@ -35,7 +35,7 @@ program main
   real(8), device, allocatable :: Fd(:,:,:), Gd(:,:,:)   ! numerical flux (F,G)
   real(8), device :: dtd, dxd, chd
   integer :: stat
-  type(dim3), parameter :: Th = dim3(256,1,1)
+  type(dim3), parameter :: Th = dim3(64,1,1)
   type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),1)
 !-----------------------------------------------------------------------
   integer :: i, j, k

@@ -65,10 +65,8 @@ program main
   real(8), device, allocatable :: EFd(:,:), EGd(:,:)  ! resistivity for U, F, G
   real(8), device :: dtd, dxd, chd
   integer :: stat
-  type(dim3), parameter :: Th = dim3(256,1,1)
+  type(dim3), parameter :: Th = dim3(64,1,1)
   type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),1)
-  type(dim3), parameter :: Thh = dim3(1,512,1)
-  type(dim3), parameter :: Blh = dim3(1,ceiling(real(2*(ix+jx-6))/Thh%y),1)
   integer(kind=cuda_stream_kind) :: stream1
 !-----------------------------------------------------------------------
 
