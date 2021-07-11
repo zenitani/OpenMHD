@@ -20,7 +20,7 @@ F90 = mpif90 -Wall -O2
 # F90 = mpifrtpx
 
 OBJS = model.o set_dt.o set_dt2.o set_eta.o u2v.o bc.o fileio.o rk.o \
-	flux_solver.o limiter.o flux_resistive.o flux_glm.o glm_ss2.o
+	flux_solver.o limiter.o flux_resistive.o glm_ss2.o
 OBJP = modelp.o mpibc.o mpiio.o
 
 all: run runp

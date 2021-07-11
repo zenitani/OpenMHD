@@ -176,8 +176,7 @@ program main
      call parallel_exchange2(VL,VR,ix,jx,1) ! in the x direction
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
-     call flux_glm(F,VL,VR,ch,ix,jx,1)
+     call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -195,8 +194,7 @@ program main
      call parallel_exchange2(VL,VR,ix,jx,2) ! in the y direction
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     call flux_solver(G,VL,VR,ix,jx,2,flux_type)
-     call flux_glm(G,VL,VR,ch,ix,jx,2)
+     call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -227,8 +225,7 @@ program main
      call parallel_exchange2(VL,VR,ix,jx,1) ! in the x direction
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
-     call flux_glm(F,VL,VR,ch,ix,jx,1)
+     call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -246,8 +243,7 @@ program main
      call parallel_exchange2(VL,VR,ix,jx,2) ! in the y direction
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     call flux_solver(G,VL,VR,ix,jx,2,flux_type)
-     call flux_glm(G,VL,VR,ch,ix,jx,2)
+     call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'

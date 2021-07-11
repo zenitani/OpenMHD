@@ -105,8 +105,7 @@ program main
      call bc_for_F(VL,VR,ix,jx)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
-     call flux_glm(F,VL,VR,ch,ix,jx,1)
+     call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
      call flux_resistive(F,U,EF,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
@@ -124,8 +123,7 @@ program main
      call bc_for_G(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     call flux_solver(G,VL,VR,ix,jx,2,flux_type)
-     call flux_glm(G,VL,VR,ch,ix,jx,2)
+     call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
      call flux_resistive(G,U,EG,dx,ix,jx,2)
 
      if( time_type == 0 ) then
@@ -155,8 +153,7 @@ program main
      call bc_for_F(VL,VR,ix,jx)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
-     call flux_glm(F,VL,VR,ch,ix,jx,1)
+     call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
      call flux_resistive(F,U1,EF,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
@@ -174,8 +171,7 @@ program main
      call bc_for_G(VL,VR,ix,jx)
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     call flux_solver(G,VL,VR,ix,jx,2,flux_type)
-     call flux_glm(G,VL,VR,ch,ix,jx,2)
+     call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
      call flux_resistive(G,U1,EG,dx,ix,jx,2)
 
      if( time_type == 0 ) then

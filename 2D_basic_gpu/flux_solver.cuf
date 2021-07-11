@@ -1,5 +1,5 @@
 attributes(global) &
-subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
+subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 !-----------------------------------------------------------------------
 !     HLLC-G flux solver
 !       Ref: K. F. Gurski, SIAM J. Sci. Comput., 25, 2165 (2004)
@@ -20,6 +20,9 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
   real(8), device, intent(out) :: F(ix,jx,var1)
 ! left/right states (VL,VR) [input]
   real(8), device, intent(in)  :: VL(ix,jx,var1), VR(ix,jx,var1)
+! div cleaning wave speed
+  real(8), device, intent(in) :: ch
+  real(8), device :: ch2
 ! direction [input]: 1 (X), 2 (Y), 3 (Z)
   integer, value  :: dir
 ! numerical flux [input]: 0 (LLF Rusanov), 1 (HLL), 2 (HLLC), 3 (HLLD)
@@ -53,6 +56,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
 !-----------------------------------------------------------------------
 
   FL = 0.d0; FR = 0.d0
+  ch2 = ch**2
 
 ! directions
   vn  = vx + mod(dir-1,3)
@@ -143,6 +147,9 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
      F(i,j,bt1)   = 0.5d0 * ( FL(bt1)  +FR(ro)    - f1*( VR(i,j,bt1)-VL(i,j,bt1) ) )
      F(i,j,bt2)   = 0.5d0 * ( FL(bt2)  +FR(ro)    - f1*( VR(i,j,bt2)-VL(i,j,bt2) ) )
 
+     F(i,j,bn) = 0.5d0*(     ( VL(i,j,ps)+VR(i,j,ps) ) - ch*( VR(i,j,bn)-VL(i,j,bn) ) )
+     F(i,j,ps) = 0.5d0*( ch2*( VL(i,j,bn)+VR(i,j,bn) ) - ch*( VR(i,j,ps)-VL(i,j,ps) ) )
+
 !     enddo
 !     enddo
      endif
@@ -213,6 +220,9 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
      F(i,j,ro)    = f1*( aR*FL(ro)  - aL*FR(ro)  + f2*(VR(i,j,ro) -VL(i,j,ro) ) )
      F(i,j,bt1)   = f1*( aR*FL(bt1) - aL*FR(bt1) + f2*(VR(i,j,bt1)-VL(i,j,bt1)) )
      F(i,j,bt2)   = f1*( aR*FL(bt2) - aL*FR(bt2) + f2*(VR(i,j,bt2)-VL(i,j,bt2)) )
+
+     F(i,j,bn) = 0.5d0*(     ( VL(i,j,ps)+VR(i,j,ps) ) - ch*( VR(i,j,bn)-VL(i,j,bn) ) )
+     F(i,j,ps) = 0.5d0*( ch2*( VL(i,j,bn)+VR(i,j,bn) ) - ch*( VR(i,j,ps)-VL(i,j,ps) ) )
 
 !     enddo
 !     enddo
@@ -346,6 +356,9 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
      F(i,j,ro)  = f1*( aL *( roL    - VL(i,j,ro) ) + FL(ro) ) &
                 + f2*( aR *( roR    - VR(i,j,ro) ) + FR(ro) )
 
+     F(i,j,bn) = 0.5d0*(     ( VL(i,j,ps)+VR(i,j,ps) ) - ch*( VR(i,j,bn)-VL(i,j,bn) ) )
+     F(i,j,ps) = 0.5d0*( ch2*( VL(i,j,bn)+VR(i,j,bn) ) - ch*( VR(i,j,ps)-VL(i,j,ps) ) )
+
 !     endif
 
 !  enddo
@@ -452,38 +465,33 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
         if ( ( aL >= ( aM - hllg_factor*aVL ) ) .or. &
              ( ( aM + hllg_factor*aVR ) >= aR ) ) then
 
+           !f1 = 1.d0 / ( aR - aL )
+           f2 = aL * aR
+           F(i,j,bt1)   = f1*( aR*FL(bt1) - aL*FR(bt1) + f2*(VR(i,j,bt1)-VL(i,j,bt1)) )
+           F(i,j,bt2)   = f1*( aR*FL(bt2) - aL*FR(bt2) + f2*(VR(i,j,bt2)-VL(i,j,bt2)) )
+
            at1 = U_hll(mt1) / U_hll(ro) ! vt1_HLL
            at2 = U_hll(mt2) / U_hll(ro) ! vt2_HLL
 
-!          F = F(L*)
-           if ( aM >= 0 ) then
+           enL = ( ( aL-VL(i,j,vn) )*UL(en) - ptL*VL(i,j,vn) + pt*aM + &
+                U_hll(bn)*( vBL - aM*U_hll(bn) - at1*U_hll(bt1) - at2*U_hll(bt2) ) ) / ( aL - aM )
+           enR = ( ( aR-VR(i,j,vn) )*UR(en) - ptR*VR(i,j,vn) + pt*aM + &
+                U_hll(bn)*( vBR - aM*U_hll(bn) - at1*U_hll(bt1) - at2*U_hll(bt2) ) ) / ( aR - aM )
 
-              U2(en) = ( ( aL-VL(i,j,vn) )*UL(en) - ptL*VL(i,j,vn) + pt*aM + &
-                   U_hll(bn)*( vBL - aM*U_hll(bn) - at1*U_hll(bt1) - at2*U_hll(bt2) ) ) / ( aL - aM )
-              U2(mn)  = roL * aM
-              U2(mt1) = roL * at1
-              U2(mt2) = roL * at2
+!          Weight factor, 0 or 1.  This looks tricky.
+           f1 = 0.5d0 + sign(0.5d0,aM)  !!  F = F(L*)
+           f2 = 1.d0 - f1               !!  F = F(R*)
 
-              F(i,j,mx:en) = aL *( U2(mx:en)  - UL(mx:en)   ) + FL(mx:en)
-              F(i,j,ro)    = aL *( roL        - VL(i,j,ro)  ) + FL(ro)
-              F(i,j,bt1)   = aL *( U_hll(bt1) - VL(i,j,bt1) ) + FL(bt1)
-              F(i,j,bt2)   = aL *( U_hll(bt2) - VL(i,j,bt2) ) + FL(bt2)
-
-!          F = F(R*)
-           else
-
-              U2(en) = ( ( aR-VR(i,j,vn) )*UR(en) - ptR*VR(i,j,vn) + pt*aM + &
-                   U_hll(bn)*( vBR - aM*U_hll(bn) - at1*U_hll(bt1) - at2*U_hll(bt2) ) ) / ( aR - aM )
-              U2(mn)  = roR * aM
-              U2(mt1) = roR * at1
-              U2(mt2) = roR * at2
-
-              F(i,j,mx:en) = aR *( U2(mx:en)  - UR(mx:en)   ) + FR(mx:en)
-              F(i,j,ro)    = aR *( roR        - VR(i,j,ro)  ) + FR(ro)
-              F(i,j,bt1)   = aR *( U_hll(bt1) - VR(i,j,bt1) ) + FR(bt1)
-              F(i,j,bt2)   = aR *( U_hll(bt2) - VR(i,j,bt2) ) + FR(bt2)
-
-           endif
+           F(i,j,mn)  = f1*( aL *( roL*aM - UL(mn) ) + FL(mn) ) &
+                      + f2*( aR *( roR*aM - UR(mn) ) + FR(mn) )
+           F(i,j,mt1) = f1*( aL *( roL*at1- UL(mt1)) + FL(mt1)) &
+                      + f2*( aR *( roR*at1- UR(mt1)) + FR(mt1))
+           F(i,j,mt2) = f1*( aL *( roL*at2- UL(mt2)) + FL(mt2)) &
+                      + f2*( aR *( roR*at2- UR(mt2)) + FR(mt2))
+           F(i,j,en)  = f1*( aL *( enL    - UL(en) ) + FL(en) ) &
+                      + f2*( aR *( enR    - UR(en) ) + FR(en) )
+           F(i,j,ro)  = f1*( aL *( roL    - VL(i,j,ro) ) + FL(ro) ) &
+                      + f2*( aR *( roR    - VR(i,j,ro) ) + FR(ro) )
 
 ! ========== HLLD flux ==========
         else
@@ -586,6 +594,9 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,type)
         endif
 
      endif
+
+     F(i,j,bn) = 0.5d0*(     ( VL(i,j,ps)+VR(i,j,ps) ) - ch*( VR(i,j,bn)-VL(i,j,bn) ) )
+     F(i,j,ps) = 0.5d0*( ch2*( VL(i,j,bn)+VR(i,j,bn) ) - ch*( VR(i,j,ps)-VL(i,j,ps) ) )
 
 !    enddo
 !    enddo

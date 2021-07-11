@@ -243,8 +243,7 @@ program main
 
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1,flux_type)
      call flux_resistive<<<Bl,Th>>>(Fd,Ud,EFd,dxd,ix,jx,1)
 
 !    Slope limiters on primitive variables
@@ -266,8 +265,7 @@ program main
 
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
-     call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2,flux_type)
      call flux_resistive<<<Bl,Th>>>(Gd,Ud,EGd,dxd,ix,jx,2)
 
      if( time_type == 0 ) then
@@ -306,8 +304,7 @@ program main
 
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,ix,jx,1,flux_type)
-     call flux_glm<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1)
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,1,flux_type)
      call flux_resistive<<<Bl,Th>>>(Fd,U1d,EFd,dxd,ix,jx,1)
 
 !    Slope limiters on primitive variables
@@ -329,8 +326,7 @@ program main
 
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
-     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,ix,jx,2,flux_type)
-     call flux_glm<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2)
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,2,flux_type)
      call flux_resistive<<<Bl,Th>>>(Gd,U1d,EGd,dxd,ix,jx,2)
 
      if( time_type == 0 ) then

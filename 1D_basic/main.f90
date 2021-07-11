@@ -29,6 +29,7 @@ program main
   integer :: i, k
   integer :: n_output
   real(8) :: t, dt, t_output, dtx
+  real(8), parameter :: zero = 0.d0 ! 0 to disable hyperbolic div cleaning
   real(8) :: vmax
   character*256 :: filename
 !-----------------------------------------------------------------------
@@ -83,18 +84,18 @@ program main
      dtx = dt/dx
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
-     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
-     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
-     call limiter(U(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
-     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
-     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
-     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
-     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+     call limiter(V(:,:,vx),VL(:,:,vx),VR(:,:,vx),ix,jx,1,lm_type)
+     call limiter(V(:,:,vy),VL(:,:,vy),VR(:,:,vy),ix,jx,1,lm_type)
+     call limiter(V(:,:,vz),VL(:,:,vz),VR(:,:,vz),ix,jx,1,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,1,lm_type)
+     call limiter(U(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,1,lm_type)
+     call limiter(U(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,1,lm_type)
+     call limiter(U(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,1,lm_type)
+     call limiter(U(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,1,lm_type)
+     call limiter(U(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,1,lm_type)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
+     call flux_solver(F,VL,VR,zero,ix,jx,1,flux_type)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -116,18 +117,18 @@ program main
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (F)'
-     call limiter(V(1,1,vx),VL(1,1,vx),VR(1,1,vx),ix,jx,1,lm_type)
-     call limiter(V(1,1,vy),VL(1,1,vy),VR(1,1,vy),ix,jx,1,lm_type)
-     call limiter(V(1,1,vz),VL(1,1,vz),VR(1,1,vz),ix,jx,1,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
-     call limiter(U1(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
-     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
-     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
-     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
-     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+     call limiter(V(:,:,vx),VL(:,:,vx),VR(:,:,vx),ix,jx,1,lm_type)
+     call limiter(V(:,:,vy),VL(:,:,vy),VR(:,:,vy),ix,jx,1,lm_type)
+     call limiter(V(:,:,vz),VL(:,:,vz),VR(:,:,vz),ix,jx,1,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,1,lm_type)
+     call limiter(U1(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,1,lm_type)
+     call limiter(U1(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,1,lm_type)
+     call limiter(U1(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,1,lm_type)
+     call limiter(U1(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,1,lm_type)
+     call limiter(U1(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,1,lm_type)
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
-     call flux_solver(F,VL,VR,ix,jx,1,flux_type)
+     call flux_solver(F,VL,VR,zero,ix,jx,1,flux_type)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'

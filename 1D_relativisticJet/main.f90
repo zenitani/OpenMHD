@@ -77,15 +77,15 @@ program main
      endif
 !   -----------------
 !    V ==> VR, VL
-     call limiter(V(1,1,ux),VL(1,1,ux),VR(1,1,ux),ix,jx,1,lm_type)
-     call limiter(V(1,1,uy),VL(1,1,uy),VR(1,1,uy),ix,jx,1,lm_type)
-     call limiter(V(1,1,uz),VL(1,1,uz),VR(1,1,uz),ix,jx,1,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
-     call limiter(V(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
-     call limiter(U(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
-     call limiter(U(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
-     call limiter(U(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
-     call limiter(U(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+     call limiter(V(:,:,ux),VL(:,:,ux),VR(:,:,ux),ix,jx,1,lm_type)
+     call limiter(V(:,:,uy),VL(:,:,uy),VR(:,:,uy),ix,jx,1,lm_type)
+     call limiter(V(:,:,uz),VL(:,:,uz),VR(:,:,uz),ix,jx,1,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,1,lm_type)
+     call limiter(V(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,1,lm_type)
+     call limiter(U(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,1,lm_type)
+     call limiter(U(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,1,lm_type)
+     call limiter(U(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,1,lm_type)
+     call limiter(U(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,1,lm_type)
 !    VR, VL ==> Riemann Flux
      call flux_solver(F,VL,VR,ix,jx,1,hlld)
 
@@ -109,15 +109,15 @@ program main
 !     write(6,*) 'U* --> V'
      call u2v(U1,V,ix,jx)
 !    V ==> VR, VL
-     call limiter(V(1,1,ux),VL(1,1,ux),VR(1,1,ux),ix,jx,1,lm_type)
-     call limiter(V(1,1,uy),VL(1,1,uy),VR(1,1,uy),ix,jx,1,lm_type)
-     call limiter(V(1,1,uz),VL(1,1,uz),VR(1,1,uz),ix,jx,1,lm_type)
-     call limiter(V(1,1,pr),VL(1,1,pr),VR(1,1,pr),ix,jx,1,lm_type)
-     call limiter(V(1,1,ro),VL(1,1,ro),VR(1,1,ro),ix,jx,1,lm_type)
-     call limiter(U1(1,1,bx),VL(1,1,bx),VR(1,1,bx),ix,jx,1,lm_type)
-     call limiter(U1(1,1,by),VL(1,1,by),VR(1,1,by),ix,jx,1,lm_type)
-     call limiter(U1(1,1,bz),VL(1,1,bz),VR(1,1,bz),ix,jx,1,lm_type)
-     call limiter(U1(1,1,ps),VL(1,1,ps),VR(1,1,ps),ix,jx,1,lm_type)
+     call limiter(V(:,:,ux),VL(:,:,ux),VR(:,:,ux),ix,jx,1,lm_type)
+     call limiter(V(:,:,uy),VL(:,:,uy),VR(:,:,uy),ix,jx,1,lm_type)
+     call limiter(V(:,:,uz),VL(:,:,uz),VR(:,:,uz),ix,jx,1,lm_type)
+     call limiter(V(:,:,pr),VL(:,:,pr),VR(:,:,pr),ix,jx,1,lm_type)
+     call limiter(V(:,:,ro),VL(:,:,ro),VR(:,:,ro),ix,jx,1,lm_type)
+     call limiter(U1(:,:,bx),VL(:,:,bx),VR(:,:,bx),ix,jx,1,lm_type)
+     call limiter(U1(:,:,by),VL(:,:,by),VR(:,:,by),ix,jx,1,lm_type)
+     call limiter(U1(:,:,bz),VL(:,:,bz),VR(:,:,bz),ix,jx,1,lm_type)
+     call limiter(U1(:,:,ps),VL(:,:,ps),VR(:,:,ps),ix,jx,1,lm_type)
 !    VR, VL ==> Riemann Flux
      call flux_solver(F,VL,VR,ix,jx,1,hlld)
      if( time_type == 0 ) then

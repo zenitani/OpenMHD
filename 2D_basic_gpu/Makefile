@@ -6,7 +6,7 @@ F90 = nvfortran -Mcuda
 
 
 OBJS = model.o u2v.o fileio.o \
-	bc.o rk.o flux_solver.o limiter.o flux_glm.o glm_ss2.o fastest_speed.o
+	bc.o rk.o flux_solver.o limiter.o glm_ss2.o fastest_speed.o
 OBJP = modelp.o mpiio.o
 
 all : run runp

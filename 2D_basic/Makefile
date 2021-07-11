@@ -18,7 +18,7 @@ F90 = mpif90 -Wall -O2
 # F90 = f90sjx -Umpi -Uflat
 
 OBJS = model.o set_dt.o u2v.o bc.o fileio.o rk.o \
-	flux_solver.o limiter.o flux_glm.o glm_ss2.o
+	flux_solver.o limiter.o glm_ss2.o
 OBJP = modelp.o mpiio.o
 
 all: run runp
