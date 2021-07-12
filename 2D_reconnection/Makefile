@@ -38,3 +38,4 @@ runp : parallel.o mainp.o $(OBJS) $(OBJP)
 
 clean :
 	rm -f *.out *.o *.mod data/*.dat data/*.dat.restart
+	rm -rf __pycache__/

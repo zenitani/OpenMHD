@@ -25,3 +25,4 @@ fileio.o: fileio.f90 param.h
 
 clean :
 	rm -f *.out *.o *.mod data/*.dat
+	rm -rf __pycache__/

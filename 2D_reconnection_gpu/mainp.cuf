@@ -6,7 +6,6 @@ program main
 !-----------------------------------------------------------------------
 !     2010/09/25  S. Zenitani  HLL reconnection code
 !     2010/09/29  S. Zenitani  MPI version
-!     2015/04/05  S. Zenitani  MPI-IO
 !     2018/05/02  S. Zenitani  parallel module (MPI-3 version)
 !     2020/08/04  S. Zenitani  CUDA + MPI version
 !-----------------------------------------------------------------------
@@ -19,7 +18,7 @@ program main
   integer, parameter :: jx =  500 + 2  !                 500 cells =  50 x 10
   integer, parameter :: mpi_nums(2)       = (/4, 1/)  ! MPI numbers
   logical, parameter :: bc_periodicity(2) = (/.false., .false./)
-! Zenitani (2015): 12000 x 9000, Zenitani & Miyoshi (2011): 6000 x 4500 cells
+! Zenitani & Miyoshi (2011): 6000 x 4500 cells
 !-----------------------------------------------------------------------
   integer, parameter :: loop_max = 1000000
   real(8), parameter :: dtmin = 1.0d-7
@@ -358,9 +357,9 @@ program main
   if( myrank == 0 )  write(6,*) '== end =='
 
 980 format ('data/field-',i5.5,'.dat')
-990 format ('data/field-rank',i4.4,'-',i5.5,'.dat')
+990 format ('data/field-rank',i5.5,'-',i5.5,'.dat')
 !981 format ('data/field-',i5.5,'.dat.restart')
-!991 format ('data/field-rank',i4.4,'-',i5.5,'.dat.restart')
+!991 format ('data/field-rank',i5.5,'-',i5.5,'.dat.restart')
 
 end program main
 !-----------------------------------------------------------------------

@@ -272,9 +272,9 @@ program main
   if( myrank == 0 )  write(6,*) '== end =='
 
 980 format ('data/field-',i5.5,'.dat')
-990 format ('data/field-rank',i4.4,'-',i5.5,'.dat')
+990 format ('data/field-rank',i5.5,'-',i5.5,'.dat')
 !981 format ('data/field-',i5.5,'.dat.restart')
-!991 format ('data/field-rank',i4.4,'-',i5.5,'.dat.restart')
+!991 format ('data/field-rank',i5.5,'-',i5.5,'.dat.restart')
 
 end program main
 !-----------------------------------------------------------------------
