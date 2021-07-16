@@ -10,8 +10,8 @@ program main
   use parallel
   implicit none
   include 'param.h'
-  integer, parameter :: ix = 400 + 2
-  integer, parameter :: jx = 400 + 2
+  integer, parameter :: ix = 200 + 2
+  integer, parameter :: jx = 200 + 2
   integer, parameter :: mpi_nums(2)       = (/2, 2/)  ! MPI numbers
   logical, parameter :: bc_periodicity(2) = (/.true., .true./)
   integer, parameter :: loop_max = 3000000
@@ -43,7 +43,6 @@ program main
   integer :: stat
   type(dim3), parameter :: Th = dim3(64,1,1)
   type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),1)
-  integer(kind=cuda_stream_kind) :: stream1
 !-----------------------------------------------------------------------
   integer :: i, j, k
   integer :: n_output
@@ -57,7 +56,6 @@ program main
 ! for MPI
   call parallel_init(mpi_nums,bc_periodicity,ix,jx)
   myrank = ranks%myrank
-  stat = cudaStreamCreate(stream1)
 !-----------------------------------------------------------------------
   allocate( Ud(ix,jx,var1),U1d(ix,jx,var1),Vd(ix,jx,var2))
   allocate(VLd(ix,jx,var1),VRd(ix,jx,var1))
@@ -73,7 +71,7 @@ program main
   call parallel_exchange(Ud,ix,jx,2) ! in the y direction
   call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
   chd = 0.d0
-!$cuf kernel do(2) <<<*, *>>>
+!$cuf kernel do(2) <<<*, *, stream=0>>>
   do j=2,jx-1
      do i=2,ix-1
         chd=max(chd,VRd(i,j,vx))
@@ -179,7 +177,7 @@ program main
 !    CFL condition
      call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
      chd = 0.d0
-!$cuf kernel do(2) <<<*, *>>>
+!$cuf kernel do(2) <<<*, *, stream=0>>>
      do j=2,jx-1
         do i=2,ix-1
            chd=max(chd,VRd(i,j,vx))
@@ -248,7 +246,6 @@ program main
      endif
 
 !    boundary condition
-!     stat = cudaStreamSynchronize(0)
      call parallel_exchange(U1d,ix,jx,1) ! in the x direction
      call parallel_exchange(U1d,ix,jx,2) ! in the y direction
 !     write(6,*) 'U* --> V'
@@ -301,7 +298,6 @@ program main
      endif
 
 !    boundary conditions
-!     stat = cudaStreamSynchronize(0)
      call parallel_exchange(Ud,ix,jx,1) ! in the x direction
      call parallel_exchange(Ud,ix,jx,2) ! in the y direction
 
@@ -313,7 +309,6 @@ program main
   enddo
 !-----------------------------------------------------------------------
 
-  stat = cudaStreamDestroy(stream1)
   call parallel_finalize()
   deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd)
   if( myrank == 0 )  write(6,*) '== end =='

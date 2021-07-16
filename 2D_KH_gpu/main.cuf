@@ -56,7 +56,7 @@ program main
   call bc_for_U(Ud,ix,jx)
   call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
   chd = 0.d0
-!$cuf kernel do(2) <<<*, *>>>
+!$cuf kernel do(2) <<<*, *, stream=0>>>
   do j=2,jx-1
      do i=2,ix-1
         chd=max(chd,VRd(i,j,vx))
@@ -133,7 +133,7 @@ program main
 !    CFL condition
      call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
      chd = 0.d0
-!$cuf kernel do(2) <<<*, *>>>
+!$cuf kernel do(2) <<<*, *, stream=0>>>
      do j=2,jx-1
         do i=2,ix-1
            chd=max(chd,VRd(i,j,vx))
