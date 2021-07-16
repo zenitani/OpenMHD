@@ -84,6 +84,7 @@ contains
 
   attributes(host) &
   subroutine parallel_exchange(Ud,ix,jx,dir)
+    use cudafor
     include 'param.h'
     integer, intent(in) :: ix, jx
     real(8), device, intent(inout) :: Ud(ix,jx,var1)
@@ -96,6 +97,7 @@ contains
     integer :: msize, merr
     integer :: mleft, mright
     integer :: i,j,k
+    integer :: stat
 !----------------------------------------------------------------------
 
     select case(dir)
@@ -132,6 +134,7 @@ contains
                 bufsnd1(j,k) = Ud(2,j,k)
              enddo
           enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
           call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
@@ -141,6 +144,7 @@ contains
                 bufsnd2(j,k) = Ud(ix-1,j,k)
              enddo
           enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
@@ -165,6 +169,7 @@ contains
        endselect
        ! MPI mode switch
 
+       stat = cudaDeviceSynchronize()
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
 
@@ -202,6 +207,7 @@ contains
                 bufsnd1(i,k) = Ud(i,2,k)
              enddo
           enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
           call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
@@ -211,6 +217,7 @@ contains
                 bufsnd2(i,k) = Ud(i,jx-1,k)
              enddo
           enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
@@ -235,6 +242,7 @@ contains
        endselect
        ! MPI mode switch
 
+       stat = cudaDeviceSynchronize()
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
    
@@ -245,6 +253,7 @@ contains
 
   attributes(host) &
   subroutine parallel_exchange2(VLd,VRd,ix,jx,dir)
+    use cudafor
     include 'param.h'
     integer, intent(in) :: ix, jx
     real(8), device, intent(inout) :: VLd(ix,jx,var1)  ! left values (VL)
@@ -258,6 +267,7 @@ contains
     integer :: msize, merr
     integer :: mleft, mright
     integer :: i,j,k
+    integer :: stat
 !----------------------------------------------------------------------
 
     select case(dir)
@@ -294,6 +304,7 @@ contains
                 bufsnd1(j,k) = VRd(1,j,k)
              enddo
           enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
           call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
@@ -303,6 +314,7 @@ contains
                 bufsnd2(j,k) = VLd(ix-1,j,k)
              enddo
           enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
@@ -327,6 +339,7 @@ contains
        endselect
        ! MPI mode switch
 
+       stat = cudaDeviceSynchronize()
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
 
@@ -359,20 +372,22 @@ contains
           ! nonblocking communication (mreq1)
           call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
 !$cuf kernel do(2) <<<*, *>>>
-             do k=1,var1
-                do i=1,ix
-                   bufsnd1(i,k) = VRd(i,1,k)
-                enddo
+          do k=1,var1
+             do i=1,ix
+                bufsnd1(i,k) = VRd(i,1,k)
              enddo
+          enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
           call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
 !$cuf kernel do(2) <<<*, *>>>
-             do k=1,var1
-                do i=1,ix
-                   bufsnd2(i,k) = VLd(i,jx-1,k)
-                enddo
+          do k=1,var1
+             do i=1,ix
+                bufsnd2(i,k) = VLd(i,jx-1,k)
              enddo
+          enddo
+          stat = cudaDeviceSynchronize()
           call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
@@ -397,6 +412,7 @@ contains
        endselect
        ! MPI mode switch
 
+       stat = cudaDeviceSynchronize()
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
    
