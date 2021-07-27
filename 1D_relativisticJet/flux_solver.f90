@@ -39,7 +39,7 @@ subroutine flux_solver(F,VL,VR,ix,jx,dir,hlld)
 ! for hlld states
   real(8) :: pt, ehll, mxhll, a1, a0
   integer :: un, ut1, ut2, bn, bt1, bt2, mn, mt1, mt2
-  real(8) :: aM, at1, at2, mybn, mybt1, mybt2, f1, f2
+  real(8) :: aM, at1, at2, mybt1, mybt2, f1, f2
   real(8) :: Rd, Re, Rmn, Rmt1, Rmt2, Rbt1, Rbt2
 
 
