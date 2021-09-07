@@ -25,7 +25,8 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
   real(8), device :: ch2
 ! direction [input]: 1 (X), 2 (Y), 3 (Z)
   integer, value  :: dir
-! numerical flux [input]: 0 (LLF Rusanov), 1 (HLL), 2 (HLLC), 3 (HLLD)
+! numerical flux [input]:
+! 0 (LLF Rusanov), 1 (HLL), 2 (HLLC), 3 (HLLD), 4 (LHLLD experimental)
   integer, value  :: type
 !-----------------------------------------------------------------------
 ! left/right conserved variables (UL & UR; local)
@@ -115,9 +116,9 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 !    FL(ps)  = 0.d0
 
 !    VL --> fast mode
-     f1 = gamma * VL(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VL(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-     aL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
+     f1 = gamma * VL(i,j,pr) ! f1: gamma p
+     f2 = 4 * VL(i,j,bn)**2  ! f2: 4 B_n^2
+     aL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VL(i,j,ro) ))
 
 !    VR --> UR
      v2 = dot_product( VR(i,j,vx:vz), VR(i,j,vx:vz) )
@@ -137,9 +138,9 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 !    FR(ps)  = 0.d0
 
 !    VR --> fast mode
-     f1 = gamma * VR(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VR(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-     aR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
+     f1 = gamma * VR(i,j,pr) ! f1: gamma p
+     f2 = 4 * VR(i,j,bn)**2  ! f2: 4 B_n^2
+     aR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VR(i,j,ro) ))
 
      f1 = max( abs(VL(i,j,vn))+aL, abs(VR(i,j,vn))+aR )
      F(i,j,mx:en) = 0.5d0 * ( FL(mx:en)+FR(mx:en) - f1*( UR(mx:en)-UL(mx:en) ) )
@@ -179,10 +180,10 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      FL(bt2) = VL(i,j,vn)*VL(i,j,bt2)-VL(i,j,bn)*VL(i,j,vt2)
 
 !    VL --> fast mode^2
-     f1 = gamma * VL(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VL(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-!    vfL= sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     aL = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+     f1 = gamma * VL(i,j,pr) ! f1: gamma p
+     f2 = 4 * VL(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfL= sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VL(i,j,ro) ))
+     aL = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
 
 !    VR --> UR
      v2 = dot_product( VR(i,j,vx:vz), VR(i,j,vx:vz) )
@@ -200,10 +201,10 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      FR(bt2) = VR(i,j,vn)*VR(i,j,bt2)-VR(i,j,bn)*VR(i,j,vt2)
 
 !    VR --> fast mode^2
-     f1 = gamma * VR(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VR(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-!    vfR= sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     aR = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+     f1 = gamma * VR(i,j,pr) ! f1: gamma p
+     f2 = 4 * VR(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfR= sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VR(i,j,ro) ))
+     aR = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
 
 !    Riemann fan speed (MK05 eq. 67)
 !     aL = min( VL(i,j,vn) - vfL, VR(i,j,vn) - vfR )
@@ -253,10 +254,10 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      FL(bt2) = VL(i,j,vn)*VL(i,j,bt2)-VL(i,j,bn)*VL(i,j,vt2)
 
 !    VL --> fast mode^2, total pressure
-     f1 = gamma * VL(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VL(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+     f1 = gamma * VL(i,j,pr) ! f1: gamma p
+     f2 = 4 * VL(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VL(i,j,ro) ))
+     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
 
 !    VR --> UR
@@ -275,10 +276,10 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      FR(bt2) = VR(i,j,vn)*VR(i,j,bt2)-VR(i,j,bn)*VR(i,j,vt2)
 
 !    VR --> fast mode^2, total pressure
-     f1 = gamma * VR(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VR(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+     f1 = gamma * VR(i,j,pr) ! f1: gamma p
+     f2 = 4 * VR(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VR(i,j,ro) ))
+     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
 
 !    Riemann fan speed (MK05 eq. 67)
@@ -289,15 +290,6 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      f1 = sqrt( max( aL, aR ) )  ! faster fast-wave (This aL [aR] stores vfL^2 [vfR^2])
      aL = min( min(VL(i,j,vn),VR(i,j,vn))-f1, 0.d0 ) ! *** if (aL > 0), then F = F(L) ***
      aR = max( max(VL(i,j,vn),VR(i,j,vn))+f1, 0.d0 ) ! *** if (aR < 0), then F = F(R) ***
-
-!!    F = F(L)
-!     if ( aL >= 0 ) then
-!        F(i,j,:) = FL(:)
-!!    F = F(R)
-!     elseif ( aR <= 0 ) then
-!        F(i,j,:) = FR(:)
-!!    F = F(HLLC)
-!     else
 
      ! HLL
      f1 = 1.d0 / ( aR - aL )
@@ -359,8 +351,6 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      F(i,j,bn) = 0.5d0*(     ( VL(i,j,ps)+VR(i,j,ps) ) - ch*( VR(i,j,bn)-VL(i,j,bn) ) )
      F(i,j,ps) = 0.5d0*( ch2*( VL(i,j,bn)+VR(i,j,bn) ) - ch*( VR(i,j,ps)-VL(i,j,ps) ) )
 
-!     endif
-
 !  enddo
 !  enddo
   endif
@@ -390,10 +380,10 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      FL(bt2) = VL(i,j,vn)*VL(i,j,bt2)-VL(i,j,bn)*VL(i,j,vt2)
 
 !    VL --> fast mode^2, total pressure
-     f1 = gamma * VL(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VL(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VL(i,j,ro) ))
-     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+     f1 = gamma * VL(i,j,pr) ! f1: gamma p
+     f2 = 4 * VL(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VL(i,j,ro) ))
+     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
 
 !    VR --> UR
@@ -412,10 +402,10 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      FR(bt2) = VR(i,j,vn)*VR(i,j,bt2)-VR(i,j,bn)*VR(i,j,vt2)
 
 !    VR --> fast mode^2, total pressure
-     f1 = gamma * VR(i,j,pr)      ! f1: gamma p
-     f2 = 4 * f1 * VR(i,j,bn)**2  ! f2: 4 gamma p B_n^2
-!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*VR(i,j,ro) ))
-     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+     f1 = gamma * VR(i,j,pr) ! f1: gamma p
+     f2 = 4 * VR(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VR(i,j,ro) ))
+     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
 
 !    Riemann fan speed (MK05 eq. 67)
@@ -444,7 +434,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 
 !       entropy wave
         aM = U_hll(mn) / U_hll(ro)
-        
+
 !       Total pressure
         pt  = ptL + VL(i,j,ro) * ( aL - VL(i,j,vn) ) * ( aM - VL(i,j,vn) )
         roL = VL(i,j,ro) * ( aL - VL(i,j,vn) ) / ( aL - aM ) ! ro(L*)
@@ -588,6 +578,206 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
                  F(i,j,bt2)   = aR1*U2(bt2) - (aR1-aR)*UR1(bt2) - aR*VR(i,j,bt2) + FR(bt2)
 
               endif
+
+           endif
+
+        endif
+
+     endif
+
+     F(i,j,bn) = 0.5d0*(     ( VL(i,j,ps)+VR(i,j,ps) ) - ch*( VR(i,j,bn)-VL(i,j,bn) ) )
+     F(i,j,ps) = 0.5d0*( ch2*( VL(i,j,bn)+VR(i,j,bn) ) - ch*( VR(i,j,ps)-VL(i,j,ps) ) )
+
+!    enddo
+!    enddo
+     endif
+
+  !-----------------------------------------------------------------------
+  !   LHLLD solver (experimental)
+  !-----------------------------------------------------------------------
+  case(4)
+
+     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
+!    do j=js,je
+!    do i=is,ie
+
+!    VL --> UL
+     v2 = dot_product( VL(i,j,vx:vz), VL(i,j,vx:vz) )
+     B2 = dot_product( VL(i,j,bx:bz), VL(i,j,bx:bz) )
+     vBL= dot_product( VL(i,j,vx:vz), VL(i,j,bx:bz) )
+     UL(mx:mz) = VL(i,j,ro) * VL(i,j,vx:vz)
+     UL(en)    = 0.5d0 * ( VL(i,j,ro)*v2 + B2 ) + r1*VL(i,j,pr)
+!    VL --> FL
+     FL(ro)  = VL(i,j,ro) * VL(i,j,vn)
+     FL(mn)  = VL(i,j,ro)*VL(i,j,vn)*VL(i,j,vn)  - VL(i,j,bn)*VL(i,j,bn) + VL(i,j,pr) + 0.5d0*B2
+     FL(mt1) = VL(i,j,ro)*VL(i,j,vn)*VL(i,j,vt1) - VL(i,j,bn)*VL(i,j,bt1)
+     FL(mt2) = VL(i,j,ro)*VL(i,j,vn)*VL(i,j,vt2) - VL(i,j,bn)*VL(i,j,bt2)
+     FL(en)  = ( 0.5d0*VL(i,j,ro)*v2 + r2*VL(i,j,pr) + B2 ) * VL(i,j,vn) - vBL * VL(i,j,bn)
+     FL(bt1) = VL(i,j,vn)*VL(i,j,bt1)-VL(i,j,bn)*VL(i,j,vt1)
+     FL(bt2) = VL(i,j,vn)*VL(i,j,bt2)-VL(i,j,bn)*VL(i,j,vt2)
+
+!    VL --> fast mode^2, total pressure
+     f1 = gamma * VL(i,j,pr) ! f1: gamma p
+     f2 = 4 * VL(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfL = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VL(i,j,ro) ))
+     aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+     ptL = VL(i,j,pr) + 0.5d0*B2
+!    LHLLD
+     aL1 = ( (v2+B2) + sqrt(max( (v2+B2)**2 - v2*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+
+!    VR --> UR
+     v2 = dot_product( VR(i,j,vx:vz), VR(i,j,vx:vz) )
+     B2 = dot_product( VR(i,j,bx:bz), VR(i,j,bx:bz) )
+     vBR= dot_product( VR(i,j,vx:vz), VR(i,j,bx:bz) )
+     UR(mx:mz) = VR(i,j,ro) * VR(i,j,vx:vz)
+     UR(en)    = 0.5d0 * ( VR(i,j,ro)*v2 + B2 ) + r1*VR(i,j,pr)
+!    VR --> FR
+     FR(ro)  = VR(i,j,ro) * VR(i,j,vn)
+     FR(mn)  = VR(i,j,ro)*VR(i,j,vn)*VR(i,j,vn)  - VR(i,j,bn)*VR(i,j,bn) + VR(i,j,pr) + 0.5d0*B2
+     FR(mt1) = VR(i,j,ro)*VR(i,j,vn)*VR(i,j,vt1) - VR(i,j,bn)*VR(i,j,bt1)
+     FR(mt2) = VR(i,j,ro)*VR(i,j,vn)*VR(i,j,vt2) - VR(i,j,bn)*VR(i,j,bt2)
+     FR(en)  = ( 0.5d0*VR(i,j,ro)*v2 + r2*VR(i,j,pr) + B2 ) * VR(i,j,vn) - vBR * VR(i,j,bn)
+     FR(bt1) = VR(i,j,vn)*VR(i,j,bt1)-VR(i,j,bn)*VR(i,j,vt1)
+     FR(bt2) = VR(i,j,vn)*VR(i,j,bt2)-VR(i,j,bn)*VR(i,j,vt2)
+
+!    VR --> fast mode^2, total pressure
+     f1 = gamma * VR(i,j,pr) ! f1: gamma p
+     f2 = 4 * VR(i,j,bn)**2  ! f2: 4 B_n^2
+!    vfR = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f1*f2 )) / ( 2*VR(i,j,ro) ))
+     aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+     ptR = VR(i,j,pr) + 0.5d0*B2
+!    LHLLD
+     aR1 = ( (v2+B2) + sqrt(max( (v2+B2)**2 - v2*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+
+!    pressure correction factor phi (f2)
+     f1 = min( 1.d0, max( aL1, aR1 ) / max( aL, aR ) )  ! phi**2
+     f2 = 2 * sqrt(f1) - f1  ! phi
+
+!    Riemann fan speed (MK05 eq. 67)
+     f1 = sqrt( max( aL, aR ) )  ! faster fast-wave (This aL [aR] stores vfL^2 [vfR^2])
+     aL = min( VL(i,j,vn), VR(i,j,vn) ) - f1
+     aR = max( VL(i,j,vn), VR(i,j,vn) ) + f1
+
+!    F = F(L)
+     if ( aL >= 0 ) then
+        F(i,j,:) = FL(:)
+!    F = F(R)
+     elseif ( aR <= 0 ) then
+        F(i,j,:) = FR(:)
+
+!    HLLC/HLLD flux
+     else
+
+!       HLL state
+        f1 = 1.d0 / ( aR - aL )
+        U_hll(mx:en) = f1*( aR*UR(mx:en) - aL*UL(mx:en) - FR(mx:en) + FL(mx:en) )
+        U_hll(ro:bz) = f1*( aR*VR(i,j,ro:bz) - aL*VL(i,j,ro:bz) - FR(ro:bz) + FL(ro:bz) )
+
+!       entropy wave
+        aM = U_hll(mn) / U_hll(ro)
+
+!       Total pressure
+!       pt  = ptL + VL(i,j,ro) * ( aL - VL(i,j,vn) ) * ( aM - VL(i,j,vn) )
+        pt  = ( VR(i,j,ro)*ptL*(aR-VR(i,j,vn)) - VL(i,j,ro)*ptR*(aL-VL(i,j,vn)) &
+             + f2*VL(i,j,ro)*VR(i,j,ro)*(aR-VR(i,j,vn))*(aL-VL(i,j,vn))*(VR(i,j,vn)-VL(i,j,vn)) ) &
+             / ( VR(i,j,ro)*(aR-VR(i,j,vn)) - VL(i,j,ro)*(aL-VL(i,j,vn)) )
+        roL = VL(i,j,ro) * ( aL - VL(i,j,vn) ) / ( aL - aM ) ! ro(L*)
+        roR = VR(i,j,ro) * ( aR - VR(i,j,vn) ) / ( aR - aM ) ! ro(R*)
+
+!       For logical consistency, we employ Bn_hll as B_x in the intermediate states
+        aVL = abs( U_hll(bn) )/sqrt( roL )  ! Alfven wave (L)
+        aVR = abs( U_hll(bn) )/sqrt( roR )  ! Alfven wave (R)
+
+!       Intermediate state (L*)
+        f1 = 1.d0 / ( VL(i,j,ro)*(aL-VL(i,j,vn))*(aL-aM) - U_hll(bn)**2 ) ! HLLD denominator
+        UL1(bt1) = VL(i,j,bt1) * f1 * ( VL(i,j,ro)*(aL-VL(i,j,vn))**2 - U_hll(bn)**2 )
+        UL1(bt2) = VL(i,j,bt2) * f1 * ( VL(i,j,ro)*(aL-VL(i,j,vn))**2 - U_hll(bn)**2 )
+        vt1L     = VL(i,j,vt1) - f1 * U_hll(bn)*VL(i,j,bt1)*(aM-VL(i,j,vn))
+        vt2L     = VL(i,j,vt2) - f1 * U_hll(bn)*VL(i,j,bt2)*(aM-VL(i,j,vn))
+
+        UL1(ro)  = roL
+        UL1(en)  = ( ( aL-VL(i,j,vn) )*UL(en) - ptL*VL(i,j,vn) + pt*aM + &
+             U_hll(bn)*( vBL - aM*U_hll(bn) - vt1L*UL1(bt1) - vt2L*UL1(bt2)) ) / ( aL - aM )
+        UL1(mn)  = roL * aM
+        UL1(mt1) = roL * vt1L
+        UL1(mt2) = roL * vt2L
+
+!       Intermediate state (R*)
+        f1 = 1.d0 / ( VR(i,j,ro)*(aR-VR(i,j,vn))*(aR-aM) - U_hll(bn)**2 ) ! HLLD denominator
+        UR1(bt1) = VR(i,j,bt1) * f1 * ( VR(i,j,ro)*(aR-VR(i,j,vn))**2 - U_hll(bn)**2 )
+        UR1(bt2) = VR(i,j,bt2) * f1 * ( VR(i,j,ro)*(aR-VR(i,j,vn))**2 - U_hll(bn)**2 )
+        vt1R     = VR(i,j,vt1) - f1 * U_hll(bn)*VR(i,j,bt1)*(aM-VR(i,j,vn))
+        vt2R     = VR(i,j,vt2) - f1 * U_hll(bn)*VR(i,j,bt2)*(aM-VR(i,j,vn))
+
+        UR1(ro)  = roR
+        UR1(en)  = ( ( aR-VR(i,j,vn) )*UR(en) - ptR*VR(i,j,vn) + pt*aM + &
+             U_hll(bn)*( vBR - aM*U_hll(bn) - vt1R*UR1(bt1) - vt2R*UR1(bt2)) ) / ( aR - aM )
+        UR1(mn)  = roR * aM
+        UR1(mt1) = roR * vt1R
+        UR1(mt2) = roR * vt2R
+           
+!       rotational waves
+        aL1 = aM - aVL
+        aR1 = aM + aVR
+
+!       F = F(L*)
+        if( aL1 >= 0 ) then
+
+           F(i,j,mx:en) = aL *( UL1(mx:en) - UL(mx:en)   ) + FL(mx:en)
+           F(i,j,ro)    = aL *( UL1(ro)    - VL(i,j,ro)  ) + FL(ro)
+           F(i,j,bt1)   = aL *( UL1(bt1)   - VL(i,j,bt1) ) + FL(bt1)
+           F(i,j,bt2)   = aL *( UL1(bt2)   - VL(i,j,bt2) ) + FL(bt2)
+
+!       F = F(R*)
+        elseif( aR1 <= 0 ) then
+
+           F(i,j,mx:en) = aR *( UR1(mx:en) - UR(mx:en)   ) + FR(mx:en)
+           F(i,j,ro)    = aR *( UR1(ro)    - VR(i,j,ro)  ) + FR(ro)
+           F(i,j,bt1)   = aR *( UR1(bt1)   - VR(i,j,bt1) ) + FR(bt1)
+           F(i,j,bt2)   = aR *( UR1(bt2)   - VR(i,j,bt2) ) + FR(bt2)
+
+!       Central states are tricky
+!       Question: can we really rule out U_hll(bn) == 0 ?
+        else
+
+           roLs = sqrt( roL )  ! sqrt(ro(L*))
+           roRs = sqrt( roR )  ! sqrt(ro(R*))
+           f1   = 1.d0 / ( roLs + roRs )
+           f2   = sign( 1.d0, U_hll(bn) )
+           at1  = f1 * ( roLs*vt1L + roRs*vt1R + ( UR1(bt1)-UL1(bt1) )*f2 )
+           at2  = f1 * ( roLs*vt2L + roRs*vt2R + ( UR1(bt2)-UL1(bt2) )*f2 )
+           U2(bt1) = f1 * ( roLs*UR1(bt1) + roRs*UL1(bt1) + roLs*roRs*( vt1R-vt1L )*f2 )
+           U2(bt2) = f1 * ( roLs*UR1(bt2) + roRs*UL1(bt2) + roLs*roRs*( vt2R-vt2L )*f2 )
+
+!          F = F(L**)
+           if( aM >= 0 ) then
+
+              U2(ro) = roL
+              U2(en) = UL1(en) - roLs * ( vt1L*UL1(bt1) + vt2L*UL1(bt2) &
+                   - at1*U2(bt1) - at2*U2(bt2) ) * f2
+              U2(mn)  = roL * aM
+              U2(mt1) = roL * at1
+              U2(mt2) = roL * at2
+
+              F(i,j,mx:en) = aL1*U2(mx:en) - (aL1-aL)*UL1(mx:en) - aL*UL(mx:en) + FL(mx:en)
+              F(i,j,ro)    = aL1*U2(ro)  - (aL1-aL)*UL1(ro)  - aL*VL(i,j,ro)  + FL(ro)
+              F(i,j,bt1)   = aL1*U2(bt1) - (aL1-aL)*UL1(bt1) - aL*VL(i,j,bt1) + FL(bt1)
+              F(i,j,bt2)   = aL1*U2(bt2) - (aL1-aL)*UL1(bt2) - aL*VL(i,j,bt2) + FL(bt2)
+
+!          F = F(R**)
+           else
+
+              U2(ro) = roR
+              U2(en) = UR1(en) + roRs * ( vt1R*UR1(bt1) + vt2R*UR1(bt2) &
+                   - at1*U2(bt1) - at2*U2(bt2) ) * f2
+              U2(mn)  = roR * aM
+              U2(mt1) = roR * at1
+              U2(mt2) = roR * at2
+
+              F(i,j,mx:en) = aR1*U2(mx:en) - (aR1-aR)*UR1(mx:en) - aR*UR(mx:en) + FR(mx:en)
+              F(i,j,ro)    = aR1*U2(ro)  - (aR1-aR)*UR1(ro)  - aR*VR(i,j,ro)  + FR(ro)
+              F(i,j,bt1)   = aR1*U2(bt1) - (aR1-aR)*UR1(bt1) - aR*VR(i,j,bt1) + FR(bt1)
+              F(i,j,bt2)   = aR1*U2(bt2) - (aR1-aR)*UR1(bt2) - aR*VR(i,j,bt2) + FR(bt2)
 
            endif
 
