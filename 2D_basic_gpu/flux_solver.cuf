@@ -429,7 +429,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 
 !       HLL state
         f1 = 1.d0 / ( aR - aL )
-        U_hll(mx:en) = f1*( aR*UR(mx:en) - aL*UL(mx:en) - FR(mx:en) + FL(mx:en) )
+        U_hll(mx:mz) = f1*( aR*UR(mx:mz) - aL*UL(mx:mz) - FR(mx:mz) + FL(mx:mz) )
         U_hll(ro:bz) = f1*( aR*VR(i,j,ro:bz) - aL*VL(i,j,ro:bz) - FR(ro:bz) + FL(ro:bz) )
 
 !       entropy wave
@@ -623,7 +623,8 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      aL  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
      ptL = VL(i,j,pr) + 0.5d0*B2
 !    LHLLD
-     aL1 = ( (v2+B2) + sqrt(max( (v2+B2)**2 - v2*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
+     f1  = VL(i,j,ro) * v2
+     aL1 = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VL(i,j,ro) )
 
 !    VR --> UR
      v2 = dot_product( VR(i,j,vx:vz), VR(i,j,vx:vz) )
@@ -647,11 +648,12 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      aR  = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
      ptR = VR(i,j,pr) + 0.5d0*B2
 !    LHLLD
-     aR1 = ( (v2+B2) + sqrt(max( (v2+B2)**2 - v2*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
+     f1  = VR(i,j,ro) * v2
+     aR1 = ( (f1+B2) + sqrt(max( (f1+B2)**2 - f1*f2, 0.d0 ))) / ( 2*VR(i,j,ro) )
 
-!    pressure correction factor phi (f2)
-     f1 = min( 1.d0, max( aL1, aR1 ) / max( aL, aR ) )  ! phi**2
-     f2 = 2 * sqrt(f1) - f1  ! phi
+!    pressure correction factor psi (f2)
+     f1 = min( 1.d0, max( aL1, aR1 ) / max( aL, aR ) )  ! chi**2
+     f2 = 2 * sqrt(f1) - f1  ! psi
 
 !    Riemann fan speed (MK05 eq. 67)
      f1 = sqrt( max( aL, aR ) )  ! faster fast-wave (This aL [aR] stores vfL^2 [vfR^2])
@@ -670,7 +672,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 
 !       HLL state
         f1 = 1.d0 / ( aR - aL )
-        U_hll(mx:en) = f1*( aR*UR(mx:en) - aL*UL(mx:en) - FR(mx:en) + FL(mx:en) )
+        U_hll(mx:mz) = f1*( aR*UR(mx:mz) - aL*UL(mx:mz) - FR(mx:mz) + FL(mx:mz) )
         U_hll(ro:bz) = f1*( aR*VR(i,j,ro:bz) - aL*VL(i,j,ro:bz) - FR(ro:bz) + FL(ro:bz) )
 
 !       entropy wave
@@ -678,6 +680,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 
 !       Total pressure
 !       pt  = ptL + VL(i,j,ro) * ( aL - VL(i,j,vn) ) * ( aM - VL(i,j,vn) )
+!       f2 (psi) is defined 25 lines earlier
         pt  = ( VR(i,j,ro)*ptL*(aR-VR(i,j,vn)) - VL(i,j,ro)*ptR*(aL-VL(i,j,vn)) &
              + f2*VL(i,j,ro)*VR(i,j,ro)*(aR-VR(i,j,vn))*(aL-VL(i,j,vn))*(VR(i,j,vn)-VL(i,j,vn)) ) &
              / ( VR(i,j,ro)*(aR-VR(i,j,vn)) - VL(i,j,ro)*(aL-VL(i,j,vn)) )
