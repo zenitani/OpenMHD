@@ -137,7 +137,6 @@ contains
     real(8), device, allocatable :: bufsnd2(:,:), bufrcv2(:,:)
     integer :: mreq1(2), mreq2(2)
     integer :: msize, merr
-    integer :: mleft, mright
     integer :: i,j,k
     integer :: stat
 !----------------------------------------------------------------------
@@ -147,8 +146,6 @@ contains
 
        allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
        allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
-       mleft  = ranks%west
-       mright = ranks%east
        msize  = jx*var1
 
        ! MPI mode switch
@@ -156,7 +153,7 @@ contains
        case(0)  ! no MPI
 
           ! periodic
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%west /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do j=1,jx
@@ -169,7 +166,7 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq1(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do j=1,jx
@@ -177,9 +174,9 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq2(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do j=1,jx
@@ -187,10 +184,10 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( mright /= mpi_proc_null ) then
+          if( ranks%east /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do j=1,jx
@@ -199,7 +196,7 @@ contains
              enddo
           endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%west /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do j=1,jx
@@ -208,7 +205,7 @@ contains
              enddo
           endif
 
-       endselect
+       end select
        ! MPI mode switch
 
        stat = cudaStreamSynchronize(comm_stream)
@@ -220,8 +217,6 @@ contains
 
        allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
        allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
-       mleft  = ranks%south
-       mright = ranks%north
        msize  = ix*var1
 
        ! MPI mode switch
@@ -229,7 +224,7 @@ contains
        case(0)  ! no MPI
 
           ! periodic
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%south /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do i=1,ix
@@ -242,7 +237,7 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq1(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do i=1,ix
@@ -250,9 +245,9 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq2(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do i=1,ix
@@ -260,10 +255,10 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( mright /= mpi_proc_null ) then
+          if( ranks%north /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do i=1,ix
@@ -272,7 +267,7 @@ contains
              enddo
           endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%south /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do i=1,ix
@@ -281,14 +276,14 @@ contains
              enddo
           endif
 
-       endselect
+       end select
        ! MPI mode switch
 
        stat = cudaStreamSynchronize(comm_stream)
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
    
-    endselect
+    end select
 
   end subroutine parallel_exchange
 
@@ -307,7 +302,6 @@ contains
     real(8), device, allocatable :: bufsnd2(:,:), bufrcv2(:,:)
     integer :: mreq1(2), mreq2(2)
     integer :: msize, merr
-    integer :: mleft, mright
     integer :: i,j,k
     integer :: stat
 !----------------------------------------------------------------------
@@ -317,8 +311,6 @@ contains
 
        allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
        allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
-       mleft  = ranks%west
-       mright = ranks%east
        msize  = jx*var1
 
        ! MPI mode switch
@@ -326,7 +318,7 @@ contains
        case(0)  ! no MPI
 
           ! periodic
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%west /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do j=1,jx
@@ -339,7 +331,7 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq1(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do j=1,jx
@@ -347,9 +339,9 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq2(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do j=1,jx
@@ -357,10 +349,10 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( mright /= mpi_proc_null ) then
+          if( ranks%east /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do j=1,jx
@@ -369,7 +361,7 @@ contains
              enddo
           endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%west /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do j=1,jx
@@ -378,7 +370,7 @@ contains
              enddo
           endif
 
-       endselect
+       end select
        ! MPI mode switch
 
        stat = cudaStreamSynchronize(comm_stream)
@@ -390,8 +382,6 @@ contains
 
        allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
        allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
-       mleft  = ranks%south
-       mright = ranks%north
        msize  = ix*var1
 
        ! MPI mode switch
@@ -399,7 +389,7 @@ contains
        case(0)  ! no MPI
 
           ! periodic
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%south /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do i=1,ix
@@ -412,7 +402,7 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,mright,0,cart2d%comm,mreq1(1),merr)
+          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq1(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do i=1,ix
@@ -420,9 +410,9 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd1,msize,mpi_real8,mleft,0,cart2d%comm,mreq1(2),merr)
+          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,mleft,1,cart2d%comm,mreq2(1),merr)
+          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq2(1),merr)
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1
              do i=1,ix
@@ -430,10 +420,10 @@ contains
              enddo
           enddo
           stat = cudaStreamSynchronize(comm_stream)
-          call mpi_isend(bufsnd2,msize,mpi_real8,mright,1,cart2d%comm,mreq2(2),merr)
+          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( mright /= mpi_proc_null ) then
+          if( ranks%north /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do i=1,ix
@@ -442,7 +432,7 @@ contains
              enddo
           endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( mleft /= mpi_proc_null ) then
+          if( ranks%south /= mpi_proc_null ) then
 !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
              do k=1,var1
                 do i=1,ix
@@ -451,14 +441,14 @@ contains
              enddo
           endif
 
-       endselect
+       end select
        ! MPI mode switch
 
        stat = cudaStreamSynchronize(comm_stream)
        deallocate( bufsnd1, bufrcv1 )
        deallocate( bufsnd2, bufrcv2 )
    
-    endselect
+    end select
 
   end subroutine parallel_exchange2
 

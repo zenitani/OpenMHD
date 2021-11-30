@@ -79,7 +79,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      is = 2; ie = ix-1
      js = 1; je = jx-1
   case(3)
-  endselect
+  end select
 
 
   j = (blockIdx%y-1)*blockDim%y + threadIdx%y
@@ -795,7 +795,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 !    enddo
      endif
 
-  endselect
+  end select
   !-----------------------------------------------------------------------
 
   return

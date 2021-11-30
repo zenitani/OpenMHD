@@ -54,7 +54,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            endif
         endif
 
-     endselect
+     end select
 
   !-----------------------------------------------------------------------
   !  2nd order:  minmod limiter
@@ -94,7 +94,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            endif
         endif
 
-     endselect
+     end select
 
   !-----------------------------------------------------------------------
   !  2nd order:  Monotonized central (MC) limiter
@@ -136,7 +136,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            endif
         endif
 
-     endselect
+     end select
      
   !-----------------------------------------------------------------------
   !  2nd order:  van Leer limiter
@@ -184,7 +184,7 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            endif
         endif
 
-     endselect
+     end select
 
   !-----------------------------------------------------------------------
   !  3rd order:  Koren limiter
@@ -227,14 +227,14 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
            endif
         endif
 
-     endselect
+     end select
 
   !-----------------------------------------------------------------------
   case default
 !     write(6,*) 'unknown limiter'
      stop
      
-  endselect
+  end select
   !-----------------------------------------------------------------------
   
   return

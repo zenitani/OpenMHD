@@ -33,7 +33,7 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
      is = 2; ie = ix-1
      js = 1; je = jx-1
   case(3)
-  endselect
+  end select
 
 !  f1 = 1.d0 / dx
 
@@ -84,7 +84,7 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
      enddo
 !$omp end parallel do
 
-  endselect
+  end select
 
   return
 end subroutine flux_resistive
@@ -121,7 +121,7 @@ subroutine flux_resistive_uni(F,U,eta,dx,ix,jx,dir)
      is = 2; ie = ix-1
      js = 1; je = jx-1
   case(3)
-  endselect
+  end select
 
 !  f1 = 1.d0 / dx
   eta_dx = eta / dx
@@ -171,7 +171,7 @@ subroutine flux_resistive_uni(F,U,eta,dx,ix,jx,dir)
      enddo
 !$omp end parallel do
 
-  endselect
+  end select
 
   return
 end subroutine flux_resistive_uni

@@ -78,7 +78,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
      is = min(2,ix); ie = max(1,ix-1)
      js = 1; je = jx-1
   case(3)
-  endselect
+  end select
 
 ! main switch
   select case(type)
@@ -785,7 +785,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
   enddo
 !$omp end parallel do
 
-endselect
+  end select
   !-----------------------------------------------------------------------
 
   return
