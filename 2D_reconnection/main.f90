@@ -6,12 +6,12 @@ program main
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
-  integer, parameter :: ix = 500 + 2
-  integer, parameter :: jx = 150 + 2
-  integer, parameter :: loop_max = 100000
-  real(8), parameter :: tend  = 150.0d0
-  real(8), parameter :: dtout =  10.d0 ! output interval
-  real(8), parameter :: cfl   = 0.4d0 ! time step
+  integer, parameter :: ix = 2000 + 2
+  integer, parameter :: jx =  500 + 2
+  integer, parameter :: loop_max = 1000000
+  real(8), parameter :: tend  = 251.0d0
+  real(8), parameter :: dtout =  25.d0 ! output interval
+  real(8), parameter :: cfl   = 0.35d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
@@ -19,7 +19,7 @@ program main
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 ! Resistivity
-  real(8), parameter :: Rm1 = 60.d0, Rm0 = 500.d0
+  real(8), parameter :: Rm1 = 60.d0, Rm0 = 1000.d0
 !-----------------------------------------------------------------------
 ! See also model.f90
 !-----------------------------------------------------------------------
