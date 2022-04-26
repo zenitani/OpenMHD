@@ -52,10 +52,9 @@ def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None):
     f = open(filename, 'rb')
     buf = np.fromfile(file=f,dtype=np.double,count=1)
     t0 = buf[0]
-    buf = np.fromfile(file=f,dtype=np.int32,count=1)
+    buf = np.fromfile(file=f,dtype=np.int32,count=2)
     ix0 = buf[0]
-    buf = np.fromfile(file=f,dtype=np.int32,count=1)
-    jx0 = buf[0]
+    jx0 = buf[1]
     print( ' t = ', t0 )
     print( ' size = (',ix0,' x ',jx0,')' )
 
@@ -162,10 +161,9 @@ def data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=Non
     f = open(filename, 'rb')
     buf = np.fromfile(file=f,dtype='>d',count=1)
     t0 = buf[0]
-    buf = np.fromfile(file=f,dtype='>i',count=1)
+    buf = np.fromfile(file=f,dtype='>i',count=2)
     ix0 = buf[0]
-    buf = np.fromfile(file=f,dtype='>i',count=1)
-    jx0 = buf[0]
+    jx0 = buf[1]
     print( ' t = ', t0 )
     print( ' size = (',ix0,' x ',jx0,')' )
 
