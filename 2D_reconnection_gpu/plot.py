@@ -1,14 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import openmhd
-import gc
+import gc #  garbage collection
+
 # dummy index
 vx=0;vy=1;vz=2;pr=3;ro=4;bx=5;by=6;bz=7;ps=8
 
 # reading the data ...
-# x,y,t,data = openmhd.data_read(8)
+# x,y,t,data = openmhd.data_read("data/field-00010.dat")
 # reading the data (subdomain: [ix1,ix2] x [jx1,jx2] or xrange (x1,x2) x yrange (y1,y2))
-# x,y,t,data = openmhd.data_read("data/field-00010.dat",ix1=0,ix2=301,jx1=0,jx2=51)
+# x,y,t,data = openmhd.data_read("data/field-00010.dat",ix1=0,ix2=1301,jx1=0,jx2=151)
+# x,y,t,data = openmhd.data_read("data/field-00010.dat",ix1=0,ix2=3901,jx1=0,jx2=451) # Zenitani & Miyoshi 2011 [6000 x 4500]
 x,y,t,data = openmhd.data_read("data/field-00010.dat",xrange=(0.0,130.0),yrange=(0.0,15.0))
 
 # 2D mirroring (This depends on the BC)
@@ -65,12 +67,13 @@ plt.colorbar()
 
 # preparing Vector potential (Az)
 az = np.ndarray((x.size,y.size),np.double)
-# az[0,0] = 0.0
-az[0,-1] = 0.5*(data[0,-1,bx] - data[0,-1,by])
-for j in range(y.size-1,0,-1):
-    az[0,j-1] = az[0,j] - 0.5*(data[0,j-1,bx]+data[0,j,bx])
+fx = 0.5*(x[1]-x[0])
+fy = 0.5*(y[1]-y[0])
+az[0,0] = (fy*data[0,0,bx] - fx*data[0,0,by])
+for j in range(1,y.size):
+    az[0,j] = az[0,j-1] + fy*(data[0,j-1,bx]+data[0,j,bx])
 for i in range(1,x.size):
-    az[i,:] = az[i-1,:] - 0.5*(data[i-1,:,by]+data[i,:,by])
+    az[i,:] = az[i-1,:] - fx*(data[i-1,:,by]+data[i,:,by])
 
 # contour of Az = magnetic field lines
 plt.contour(az.T,extent=extent,colors='w',linestyles='solid')

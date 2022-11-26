@@ -224,7 +224,8 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
   !  HLLC solver
   !-----------------------------------------------------------------------
   case(2)
-!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll)
+!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2) &
+!$omp private(aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll)
      do j=js,je
      do i=is,ie
 
@@ -349,8 +350,9 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
   !   HLLD solver
   !-----------------------------------------------------------------------
   case(3)
-!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll, &
-!$omp&                    aL1,aR1,aVL,aVR,UL1,UR1,U2,vt1L,vt1R,vt2L,vt2R,roLs,roRs)
+!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2) &
+!$omp private(aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll) &
+!$omp private(aL1,aR1,aVL,aVR,UL1,UR1,U2,vt1L,vt1R,vt2L,vt2R,roLs,roRs)
   do j=js,je
   do i=is,ie
 
@@ -586,8 +588,9 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
   !   LHLLD solver (experimental)
   !-----------------------------------------------------------------------
   case(4)
-!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2,aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll, &
-!$omp&                    aL1,aR1,aVL,aVR,UL1,UR1,U2,vt1L,vt1R,vt2L,vt2R,roLs,roRs)
+!$omp parallel do private(i,j,v2,B2,vBL,vBR,UL,UR,FL,FR,f1,f2) &
+!$omp private(aL,aR,aM,at1,at2,ptL,ptR,pt,roL,roR,enL,enR,U_hll) &
+!$omp private(aL1,aR1,aVL,aVR,UL1,UR1,U2,vt1L,vt1R,vt2L,vt2R,roLs,roRs)
   do j=js,je
   do i=is,ie
 
