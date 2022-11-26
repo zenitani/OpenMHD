@@ -22,11 +22,18 @@ subroutine glm_ss2(U,ch,dt,ix,jx)
   real(8), intent(in) :: ch, dt  ! div cleaning wave speed and the timestep
 !-----------------------------------------------------------------------
   real(8) :: f1 = 1.d0
+  real(8) :: tmp(ix,jx)
 
   f1 = exp( -0.5d0*dt*ch/cr )
-!$omp parallel workshare
-  U(:,:,ps) = f1 * U(:,:,ps)
-!$omp end parallel workshare
+!$omp parallel
+!$omp workshare
+  tmp(:,:) = f1 * U(:,:,ps)
+!$omp end workshare
+!$omp barrier
+!$omp workshare
+  U(:,:,ps) = tmp(:,:)
+!$omp end workshare
+!$omp end parallel
 
   return
 end subroutine glm_ss2
