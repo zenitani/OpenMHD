@@ -1,5 +1,9 @@
-#F90 = /opt/intel/Compiler/11.1/067/bin/intel64/ifort
+### gfortran
 F90 = gfortran -O2 -Wall
+### Intel fortran ("-heap-arrays" option is useful)
+# F90 = ifort -heap-arrays
+### AMD AOCC fortran
+# F90 = flang -O2
 
 OBJS = model.o u2v.o output.o limiter.o flux_solver.o
 

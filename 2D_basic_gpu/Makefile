@@ -1,10 +1,9 @@
-### NVIDIA
+### NVIDIA HPC SDK
 F90 = nvfortran -Mcuda
-### NIFS
 # F90 = mpif90 -Mcuda
 # F90 = mpif90 -Mcuda -mcmodel=medium
-### CfCA
 # F90 = mpif90 -cuda -mcmodel=medium -gpu=cuda11.6,cc80 -tp=zen2
+
 
 OBJS = model.o u2v.o fileio.o \
 	bc.o rk.o flux_solver.o limiter.o glm_ss2.o fastest_speed.o
