@@ -2,11 +2,11 @@
 # F90 = gfortran -O2 -Wall
 F90 = mpif90 -Wall -O2
 ### Intel fortran ("-heap-arrays" option is useful, but use 'ulimit -s unlimited' for OpenMP)
-# F90 = ifort -ipo -heap-arrays
-# F90 = mpiifort -debug all -heap-arrays
-# F90 = mpiifort -g
-# F90 = mpiifort -ipo -heap-arrays
-# F90 = mpiifort -ipo -qopenmp
+# F90 = ifx -ipo -heap-arrays
+# F90 = mpiifort -fc=ifx -debug all -heap-arrays
+# F90 = mpiifort -fc=ifx -g
+# F90 = mpiifort -fc=ifx -ipo -heap-arrays
+# F90 = mpiifort -fc=ifx -ipo -qopenmp
 ### AMD AOCC fortran
 # F90 = flang -O2
 ### CfCA/XC, KDK-A system

@@ -1,7 +1,7 @@
 ### gfortran
 F90 = gfortran -O2 -Wall
 ### Intel fortran ("-heap-arrays" option is useful)
-# F90 = ifort -heap-arrays
+# F90 = ifx -heap-arrays
 ### AMD AOCC fortran
 # F90 = flang -O2
 
