@@ -39,16 +39,16 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      select case(dir)
      case(1)
-        if( (js<=j) .and. (j<=je) ) then
-           if( (1<=i) .and. (i<=(ix-1)) ) then
+        if( (js<=j).and.(j<=je) ) then
+           if( (1<=i).and.(i<=(ix-1)) ) then
               wL(i,j) = wk(i,j)
               wR(i,j) = wk(i+1,j)
            endif
         endif
 
      case(2)
-        if( (is<=i) .and. (i<=ie) ) then
-           if( (1<=j) .and. (j<=(jx-1)) ) then
+        if( (is<=i).and.(i<=ie) ) then
+           if( (1<=j).and.(j<=(jx-1)) ) then
               wL(i,j) = wk(i,j)
               wR(i,j) = wk(i,j+1)
            endif
@@ -64,10 +64,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
      select case(dir)
      case(1)
 
-        if( (js<=j) .and. (j<=je) ) then
+        if( (js<=j).and.(j<=je) ) then
            if( i==1 ) then
               wL(i,j) = wk(i,j)
-           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+           elseif( (2<=i).and.(i<=(ix-1)) ) then
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
               grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
@@ -80,10 +80,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      case(2)
 
-        if( (is<=i) .and. (i<=ie) ) then
+        if( (is<=i).and.(i<=ie) ) then
            if( j==1 ) then
               wL(i,j) = wk(i,j)
-           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+           elseif( (2<=j).and.(j<=(jx-1)) ) then
               gA = ( wk(i,j)  -wk(i,j-1))
               gB = ( wk(i,j+1)-wk(i,j)  )
               grad = (sign(0.25d0,gA)+sign(0.25d0,gB))*min(abs(gA),abs(gB))
@@ -104,10 +104,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
      select case(dir)
      case(1)
 
-        if( (js<=j) .and. (j<=je) ) then
+        if( (js<=j).and.(j<=je) ) then
            if( i==1 ) then
               wL(i,j) = wk(i,j)
-           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+           elseif( (2<=i).and.(i<=(ix-1)) ) then
               gA =        ( wk(i,j)  -wk(i-1,j))
               gB =        ( wk(i+1,j)-wk(i,j)  )
               gC = 0.25d0*( wk(i+1,j)-wk(i-1,j))
@@ -121,10 +121,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      case(2)
 
-        if( (is<=i) .and. (i<=ie) ) then
+        if( (is<=i).and.(i<=ie) ) then
            if( j==1 ) then
               wL(i,j)   = wk(i,j)
-           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+           elseif( (2<=j).and.(j<=(jx-1)) ) then
               gA =       ( wk(i,j)  -wk(i,j-1))
               gB =       ( wk(i,j+1)-wk(i,j)  )
               gC = 0.25d0*( wk(i,j+1)-wk(i,j-1))
@@ -146,10 +146,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
      select case(dir)
      case(1)
 
-        if( (js<=j) .and. (j<=je) ) then
+        if( (js<=j).and.(j<=je) ) then
            if( i==1 ) then
               wL(i,j) = wk(i,j)
-           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+           elseif( (2<=i).and.(i<=(ix-1)) ) then
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
               if( gA*gB <= 0 ) then
@@ -166,10 +166,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
 
      case(2)
 
-        if( (is<=i) .and. (i<=ie) ) then
+        if( (is<=i).and.(i<=ie) ) then
            if( j==1 ) then
               wL(i,j)   = wk(i,j)
-           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+           elseif( (2<=j).and.(j<=(jx-1)) ) then
               gA = ( wk(i,j)  -wk(i,j-1))
               gB = ( wk(i,j+1)-wk(i,j)  )
               if( gA*gB <= 0 ) then
@@ -194,10 +194,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
      select case(dir)
      case(1)
 
-        if( (js<=j) .and. (j<=je) ) then
+        if( (js<=j).and.(j<=je) ) then
            if( i==1 ) then
               wL(i,j) = wk(i,j)
-           elseif( (2<=i) .and. (i<=(ix-1)) ) then
+           elseif( (2<=i).and.(i<=(ix-1)) ) then
               gA = ( wk(i,j)  -wk(i-1,j))
               gB = ( wk(i+1,j)-wk(i,j)  )
               gC = f1*( 2*gA+gB )
@@ -212,10 +212,10 @@ subroutine limiter(wk,wL,wR,ix,jx,dir,type)
          
      case(2)
 
-        if( (is<=i) .and. (i<=ie) ) then
+        if( (is<=i).and.(i<=ie) ) then
            if( j==1 ) then
               wL(i,j)   = wk(i,j)
-           elseif( (2<=j) .and. (j<=(jx-1)) ) then
+           elseif( (2<=j).and.(j<=(jx-1)) ) then
               gA = ( wk(i,j)  -wk(i,j-1))
               gB = ( wk(i,j+1)-wk(i,j)  )
               gC = f1*( 2*gA+gB )

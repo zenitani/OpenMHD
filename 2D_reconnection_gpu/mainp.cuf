@@ -43,7 +43,7 @@ program main
 ! See also modelp.f90
 !-----------------------------------------------------------------------
   integer :: i, j, k
-  integer :: n_output
+  integer :: n_loop,n_output
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
@@ -93,11 +93,9 @@ program main
   call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
   chd = 0.d0
 !$cuf kernel do(2) <<<*, *, stream=0>>> reduction(max:chd)
-  do j=2,jx-1
-     do i=2,ix-1
-        chd=max(chd,VRd(i,j,vx))
-     enddo
-  enddo
+  do j=2,jx-1; do i=2,ix-1
+     chd=max(chd,VRd(i,j,vx))
+  enddo; enddo
   ch = chd
   call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
   call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
@@ -162,7 +160,7 @@ program main
   endif
 
 !-----------------------------------------------------------------------
-  do k=1,loop_max
+  do n_loop=1,loop_max
 
      if( myrank == 0 ) then
         write(6,*) ' t = ', t
@@ -174,7 +172,7 @@ program main
 !    [ output ]
      if ( t >= t_output ) then
         U = Ud; V = Vd
-        if (( k > 1 ).or.( n_start == 0 )) then
+        if (( n_loop > 1 ).or.( n_start == 0 )) then
            if ( io_type == 0 ) then
               write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
               write(filename,990) myrank, n_output
@@ -191,7 +189,7 @@ program main
      endif
 !    [ end? ]
      if ( t >= tend )  exit
-     if ( k >= loop_max ) then
+     if ( n_loop >= loop_max ) then
         if( myrank == 0 )  write(6,*) 'max loop'
         exit
      endif
@@ -200,11 +198,9 @@ program main
      call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,vx),ix,jx)
      chd = 0.d0
 !$cuf kernel do(2) <<<*, *, stream=0>>> reduction(max:chd)
-     do j=2,jx-1
-        do i=2,ix-1
-           chd=max(chd,VRd(i,j,vx))
-        enddo
-     enddo
+     do j=2,jx-1; do i=2,ix-1
+        chd=max(chd,VRd(i,j,vx))
+     enddo; enddo
      ch = chd
      call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
      call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)

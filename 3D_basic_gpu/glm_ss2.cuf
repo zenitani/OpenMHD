@@ -1,0 +1,30 @@
+attributes(global) &
+subroutine glm_ss2(U,ch,dt,ix,jx,kx)
+!-----------------------------------------------------------------------
+!     GLM source term solver
+!-----------------------------------------------------------------------
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+! The ratio of the hyperbolic and parabolic effects
+!   c_r = ( c_p**2 / c_h ) ~ 0.18
+! Ref: Dedner et al. (2002)  p.657, p.661
+  real(8), parameter :: cr = 0.2d0
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx, kx
+  real(8), device, intent(inout) :: U(ix,jx,kx,var1)  ! conserved variables (U)
+  real(8), device, intent(in) :: ch, dt  ! div cleaning wave speed and the timestep
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k
+  real(8), device :: f1 = 1.d0
+
+  f1 = exp( -0.5d0*dt*ch/cr )
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)).and.(2<=k).and.(k<=(kx-1)) ) then
+     U(i,j,k,ps) = f1 * U(i,j,k,ps)
+  endif
+
+  return
+end subroutine glm_ss2

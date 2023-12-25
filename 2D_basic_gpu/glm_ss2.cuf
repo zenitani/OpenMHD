@@ -28,7 +28,9 @@ subroutine glm_ss2(U,ch,dt,ix,jx)
   f1 = exp( -0.5d0*dt*ch/cr )
   j = (blockIdx%y-1)*blockDim%y + threadIdx%y
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
-  U(i,j,ps) = f1 * U(i,j,ps)
+  if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)) ) then
+     U(i,j,ps) = f1 * U(i,j,ps)
+  endif
 
   return
 end subroutine glm_ss2

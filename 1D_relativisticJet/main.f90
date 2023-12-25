@@ -22,8 +22,9 @@ program main
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
   logical, parameter :: hlld = .true. ! HLLD or HLL
-  integer :: i, j, k, kout
-  real(8) :: t, dt, tout, dtx
+  integer :: i
+  integer :: n_loop,n_output
+  real(8) :: t, dt, t_output, dtx
   character*256 :: filename
 !-----------------------------------------------------------------------
   real(8) :: x(ix),y(jx),dx
@@ -38,8 +39,8 @@ program main
   dt   =  cfl * dx
   dtx  =  dt/dx
   t    =  0.d0
-  tout = -dt/3.d0
-  kout =  0
+  t_output = -dt/3.d0
+  n_output =  0
 
   if ( dt > dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
@@ -51,7 +52,7 @@ program main
   write(6,*) '== start =='
 
 !-----------------------------------------------------------------------
-  do k=1,loop_max
+  do n_loop=1,loop_max
 
      write(6,*) ' t = ', t
 !    U ==> V (1)
@@ -59,19 +60,19 @@ program main
      call u2v(U,V,ix,jx)
 !   -----------------
 !    [ output ]
-     if ( t >= tout ) then
+     if ( t >= t_output ) then
         write(6,*) 'data output   t = ', t
-        write(filename,990) kout
+        write(filename,990) n_output
 990     format ('data/x-',i5.5,'.dat')
         call output(filename,ix,jx,t,x,y,U,V)
-        kout = kout + 1
-        tout = tout + dtout
+        n_output = n_output + 1
+        t_output = t_output + dtout
      endif
 !    [ end? ]
      if ( t >= tend ) then
         goto 1000
      endif
-     if ( k >= loop_max ) then
+     if ( n_loop >= loop_max ) then
         write(6,*) 'max loop'
         goto 1000
      endif

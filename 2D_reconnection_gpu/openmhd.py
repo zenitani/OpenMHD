@@ -1,1 +1,1 @@
-../visualization/python3/openmhd.py
+../visualization/openmhd2d.py

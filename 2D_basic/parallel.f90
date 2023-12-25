@@ -84,6 +84,7 @@ contains
 
     ! ----- MPI-3 shared memory communication ------------------------
     if( use_shm ) then
+
        ! node-local mapping
        tmpA = (/ranks%north, ranks%east, ranks%south, ranks%west/)
        call mpi_comm_split_type(cart2d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local, merr)

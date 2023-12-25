@@ -21,8 +21,7 @@ program main
 !-----------------------------------------------------------------------
 ! See also model.f90
 !-----------------------------------------------------------------------
-  integer :: k
-  integer :: n_output
+  integer :: n_loop,n_output
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
@@ -55,7 +54,7 @@ program main
   write(6,*) '== start =='
 
 !-----------------------------------------------------------------------
-  do k=1,loop_max
+  do n_loop=1,loop_max
 
      write(6,*) ' t = ', t
 !    Recovering primitive variables
@@ -73,7 +72,7 @@ program main
      endif
 !    [ end? ]
      if ( t >= tend )  exit
-     if ( k >= loop_max ) then
+     if ( n_loop >= loop_max ) then
         write(6,*) 'max loop'
         exit
      endif

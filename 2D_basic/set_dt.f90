@@ -56,7 +56,7 @@ subroutine set_dt(U,V,vmax,dt,dx,cfl,ix,jx)
      if( vmax < 0.d0 ) then
         write(6,*) 'Potential error in OpenMP/reduction ...'
      endif
-     mymax = maxloc(vtmp,2)
+     mymax = maxloc(vtmp)
      imax = mymax(1); jmax = mymax(2)
      write(6,*) ' dt is too small : ', dt, ' < ', dtmin
      write(6,*) '     velocity is : ', vmax

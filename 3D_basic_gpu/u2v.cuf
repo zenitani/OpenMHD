@@ -1,0 +1,41 @@
+attributes(global) &
+subroutine u2v(U,V,ix,jx,kx)
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value  :: ix, jx, kx
+  real(8), device, intent(in)  :: U(ix,jx,kx,var1)  ! conserved variables  [input]
+  real(8), device, intent(out) :: V(ix,jx,kx,var2)  ! primitive variables  [output]
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k
+  real(8), device :: B2, rv2
+  real(8), parameter :: f1 = gamma - 1
+
+! V = 0.d0
+
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+
+!  if( (1<=k).and.(k<=kx) )then
+!  if( (1<=j).and.(j<=jx) )then
+!  if( (1<=i).and.(i<=ix) )then
+  ! (1<=i).and.(1<=j)
+  if( (i<=ix).and.(j<=jx).and.(k<=kx) )then
+
+     V(i,j,k,vx:vz) = U(i,j,k,mx:mz) / U(i,j,k,ro)
+     rv2 = dot_product( V(i,j,k,vx:vz), U(i,j,k,mx:mz) )  ! rho v**2
+     B2  = dot_product( U(i,j,k,bx:bz), U(i,j,k,bx:bz) )  ! B**2
+     V(i,j,k,pr)    = f1 * ( U(i,j,k,en) - 0.5d0*(rv2+B2) )
+     if( V(i,j,k,pr) <= 0.0 ) then
+        stop
+     elseif( U(i,j,k,ro) <= 0.0 ) then
+        stop
+     endif
+  endif
+!  endif
+!  endif
+!  endif
+
+  return
+end subroutine u2v

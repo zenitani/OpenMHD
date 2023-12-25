@@ -1,0 +1,105 @@
+attributes(host) &
+subroutine bc_for_U(U,ix,jx,kx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: U(ix,jx,kx,var1)
+  integer :: i, j, k, m
+
+! east/west
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+     do k=1,kx
+        do j=1,jx
+           U(ix,j,k,m) = U(   2,j,k,m)
+           U( 1,j,k,m) = U(ix-1,j,k,m)
+        enddo
+     enddo
+  enddo
+  
+! north/south
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+     do k=1,kx
+        do i=1,ix
+           U(i,jx,k,m) = U(i,   2,k,m)
+           U(i, 1,k,m) = U(i,jx-1,k,m)
+        enddo
+     enddo
+  enddo
+  
+! upstairs/downstairs
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+     do j=1,ix
+        do i=1,ix
+           U(i,j,kx,m) = U(i,j,   2,m)
+           U(i,j, 1,m) = U(i,j,kx-1,m)
+        enddo
+     enddo
+  enddo
+
+end subroutine bc_for_U
+
+
+attributes(host) &
+subroutine bc_for_F(VL,VR,ix,jx,kx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: VL(ix,jx,kx,var1), VR(ix,jx,kx,var1) ! interpolated states
+  integer :: i, j, k, m
+
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+     do k=1,kx
+        do j=1,jx
+           VR(ix-1,j,k,m) = VR(   1,j,k,m)
+           VL(   1,j,k,m) = VL(ix-1,j,k,m)
+        enddo
+     enddo
+  enddo
+
+end subroutine bc_for_F
+
+
+attributes(host) &
+subroutine bc_for_G(VL,VR,ix,jx,kx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: VL(ix,jx,kx,var1), VR(ix,jx,kx,var1) ! interpolated states
+  integer :: i, j, k, m
+
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+     do k=1,kx
+        do i=1,ix
+           VL(i,   1,k,m) = VL(i,jx-1,k,m)
+           VR(i,jx-1,k,m) = VR(i,   1,k,m)
+        enddo
+     enddo
+  enddo
+
+end subroutine bc_for_G
+
+
+attributes(host) &
+subroutine bc_for_H(VL,VR,ix,jx,kx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: VL(ix,jx,kx,var1), VR(ix,jx,kx,var1) ! interpolated states
+  integer :: i, j, k, m
+
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+     do j=1,ix
+        do i=1,ix
+           VL(i,j,   1,m) = VL(i,j,kx-1,m)
+           VR(i,j,kx-1,m) = VR(i,j,   1,m)
+        enddo
+     enddo
+  enddo
+
+end subroutine bc_for_H

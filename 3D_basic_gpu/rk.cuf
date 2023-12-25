@@ -1,0 +1,143 @@
+!-----------------------------------------------------------------------
+!    Runge-Kutta routines
+!-----------------------------------------------------------------------
+! This file contains TVD-RK2 routines and standard RK2 routines
+! Note that these routines assume dx == dy == dz.
+
+
+! 1/2 step of TVD Runge=Kutta method
+attributes(global) &
+subroutine rk_tvd21(wk,wk1,wF,wG,wH,dt,dx,ix,jx,kx)
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx, kx
+  real(8), device, intent(in) :: wk(ix,jx,kx,var1)
+  real(8), device, intent(out):: wk1(ix,jx,kx,var1)
+  real(8), device, intent(in) :: wF(ix,jx,kx,var1), wG(ix,jx,kx,var1), wH(ix,jx,kx,var1)
+  real(8), device, intent(in) :: dt, dx
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k, m
+  real(8), device :: dtx
+
+  dtx = dt/dx
+!  dtx = dt
+!  write(6,*) dt, dx, dtx
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)).and.(2<=k).and.(k<=(kx-1)) ) then
+     do m=1,var1
+!     do k=2,kx-1
+!     do j=2,jx-1
+!     do i=2,ix-1
+        wk1(i,j,k,m) = wk(i,j,k,m) + &
+             dtx * ( wF(i-1,j,k,m) - wF(i,j,k,m) &
+                   + wG(i,j-1,k,m) - wG(i,j,k,m) &
+                   + wH(i,j,k-1,m) - wH(i,j,k,m) )
+!     enddo
+!     enddo
+!     enddo
+     enddo
+  endif
+
+  return
+end subroutine rk_tvd21
+
+
+! 2/2 step of TVD Runge=Kutta method
+attributes(global) &
+subroutine rk_tvd22(wk,wk1,wF,wG,wH,dt,dx,ix,jx,kx)
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx, kx
+  real(8), device, intent(inout) :: wk(ix,jx,kx,var1)
+  real(8), device, intent(in) :: wk1(ix,jx,kx,var1)
+  real(8), device, intent(in) :: wF(ix,jx,kx,var1), wG(ix,jx,kx,var1), wH(ix,jx,kx,var1)
+  real(8), device, intent(in) :: dt, dx
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k, m
+  real(8), device :: dtx
+
+  dtx = dt/dx
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)).and.(2<=k).and.(k<=(kx-1)) ) then
+     do m=1,var1
+        wk(i,j,k,m) = 0.5d0*( wk(i,j,k,m)+wk1(i,j,k,m) + &
+                              dtx * ( wF(i-1,j,k,m) - wF(i,j,k,m) &
+                                    + wG(i,j-1,k,m) - wG(i,j,k,m) &
+                                    + wH(i,j,k-1,m) - wH(i,j,k,m) ) &
+                              )
+     enddo
+  endif
+
+  return
+end subroutine rk_tvd22
+
+
+! 1/2 step of the standard Runge=Kutta method
+attributes(global) &
+subroutine rk_std21(wk,wk1,wF,wG,wH,dt,dx,ix,jx,kx)
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx, kx
+  real(8), device, intent(in) :: wk(ix,jx,kx,var1)
+  real(8), device, intent(out):: wk1(ix,jx,kx,var1)
+  real(8), device, intent(in) :: wF(ix,jx,kx,var1), wG(ix,jx,kx,var1), wH(ix,jx,kx,var1)
+  real(8), device, intent(in) :: dt, dx
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k, m
+  real(8), device :: dtx
+
+  dtx = 0.5d0*dt/dx
+!  dtx = dt
+!  write(6,*) dt, dx, dtx
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)).and.(2<=k).and.(k<=(kx-1)) ) then
+     do m=1,var1
+        wk1(i,j,k,m) = wk(i,j,k,m) + &
+             dtx * ( wF(i-1,j,k,m) - wF(i,j,k,m) &
+                   + wG(i,j-1,k,m) - wG(i,j,k,m) &
+                   + wH(i,j,k-1,m) - wH(i,j,k,m) )
+     enddo
+  endif
+
+  return
+end subroutine rk_std21
+
+
+! 2/2 step of the standard Runge=Kutta method
+attributes(global) &
+subroutine rk_std22(wk,wF,wG,wH,dt,dx,ix,jx,kx)
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx, kx
+  real(8), device, intent(inout) :: wk(ix,jx,kx,var1)
+  real(8), device, intent(in) :: wF(ix,jx,kx,var1), wG(ix,jx,kx,var1), wH(ix,jx,kx,var1)
+  real(8), device, intent(in) :: dt, dx
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k, m
+  real(8), device :: dtx
+
+  dtx = dt/dx
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)).and.(2<=k).and.(k<=(kx-1)) ) then
+     do m=1,var1
+        wk(i,j,k,m) = wk(i,j,k,m) + &
+             dtx * ( wF(i-1,j,k,m) - wF(i,j,k,m) &
+                   + wG(i,j-1,k,m) - wG(i,j,k,m) &
+                   + wH(i,j,k-1,m) - wH(i,j,k,m) )
+     enddo
+  endif
+  
+  return
+end subroutine rk_std22

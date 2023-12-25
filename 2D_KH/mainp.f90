@@ -31,7 +31,7 @@ program main
 ! See also modelp.f90
 !-----------------------------------------------------------------------
   integer :: k
-  integer :: n_output
+  integer :: n_loop,n_output
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
@@ -116,7 +116,7 @@ program main
   endif
 
 !-----------------------------------------------------------------------
-  do k=1,loop_max
+  do n_loop=1,loop_max
 
      if( myrank == 0 ) then
         write(6,*) ' t = ', t
@@ -127,7 +127,7 @@ program main
 !   -----------------
 !    [ output ]
      if ( t >= t_output ) then
-        if (( k > 1 ).or.( n_start == 0 )) then
+        if (( n_loop > 1 ).or.( n_start == 0 )) then
            if ( io_type == 0 ) then
               write(6,*) 'writing data ...   t = ', t, ' rank = ', myrank
               write(filename,990) myrank, n_output
@@ -144,7 +144,7 @@ program main
      endif
 !    [ end? ]
      if ( t >= tend )  exit
-     if ( k >= loop_max ) then
+     if ( n_loop >= loop_max ) then
         if( myrank == 0 )  write(6,*) 'max loop'
         exit
      endif

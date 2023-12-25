@@ -26,6 +26,7 @@ subroutine u2v(U,V,ix,jx)
      V(i,j,pr)    = f1 * ( U(i,j,en) - 0.5d0*(rv2+B2) )
      prmin  = min( V(i,j,pr), prmin )
      rhomin = min( U(i,j,ro), rhomin )
+
   enddo
   enddo
 !$omp end parallel do

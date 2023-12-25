@@ -12,7 +12,7 @@ subroutine output(filename,ix,jx,t,x,y,U,V)
 !  open(16,file=filename,form='unformatted')
   open(16,file=filename)
   write(16,*) '# x(1),y(2),ro(3),pr(4),v(5-7),u(8-10),u0(11),',&
-       'B(12-14),E(15-17),pr_t(18)'
+       'B(12-14),E(15-17),pr_t(18), t=', t
   do j=1,jx
   do i=1,ix
      B2 = dot_product( U(i,j,bx:bz), U(i,j,bx:bz) )

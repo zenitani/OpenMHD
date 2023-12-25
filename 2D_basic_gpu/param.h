@@ -1,1 +1,1 @@
-../2D_basic/param.h
+../param.h

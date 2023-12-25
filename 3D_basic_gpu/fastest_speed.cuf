@@ -1,0 +1,55 @@
+attributes(global) &
+subroutine fastest_speed(U,V,vmax,ix,jx,kx)
+!-----------------------------------------------------------------------
+!     fastest speed for CFL condition
+!-----------------------------------------------------------------------
+  implicit none
+  include 'param.h'
+!-----------------------------------------------------------------------
+  integer, value :: ix, jx, kx
+  real(8), device, intent(in) :: U(ix,jx,kx,var1)
+  real(8), device, intent(in) :: V(ix,jx,kx,var2)
+  real(8), device, intent(out) :: vmax(ix,jx,kx)
+!-----------------------------------------------------------------------
+  integer, device :: i, j, k, is, ie, js, je, ks, ke
+  real(8), device :: B2, f1, f2, vfx, vfy, vfz
+
+  ks = 2; ke = kx-1
+  js = 2; je = jx-1
+  is = 2; ie = ix-1
+
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+  vmax(i,j,k) = 0.d0
+  
+!  do k=ks,ke
+!  do j=js,je
+!  do i=is,ie
+  if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je).and.(ks<=k).and.(k<=ke) )then
+
+     B2 = dot_product( U(i,j,k,bx:bz), U(i,j,k,bx:bz) )
+     f1 = gamma * V(i,j,k,pr)
+
+!    fast mode in the X direction
+     f2 = 4 * f1 * U(i,j,k,bx)**2
+!     vfx = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*U(i,j,k,ro) ))
+     vfx = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*U(i,j,k,ro) ))
+
+!    fast mode in the Y direction
+     f2 = 4 * f1 * U(i,j,k,by)**2
+!     vfy = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*U(i,j,k,ro) ))
+     vfy = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*U(i,j,k,ro) ))
+
+!    fast mode in the Z direction
+     f2 = 4 * f1 * U(i,j,k,bz)**2
+!     vfz = sqrt( ( (f1+B2) + sqrt( (f1+B2)**2 - f2 )) / ( 2*U(i,j,k,ro) ))
+     vfz = sqrt( ( (f1+B2) + sqrt(max( (f1+B2)**2-f2, 0.d0 ))) / ( 2*U(i,j,k,ro) ))
+
+!    max speed of MHD waves
+     vmax(i,j,k) = max( abs( V(i,j,k,vx) ) + vfx, abs( V(i,j,k,vy) ) + vfy, abs( V(i,j,k,vz) ) + vfz )
+
+  endif
+
+  return
+end subroutine fastest_speed
