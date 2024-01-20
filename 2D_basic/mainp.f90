@@ -32,7 +32,7 @@ program main
 ! See also modelp.f90
 !-----------------------------------------------------------------------
   integer :: k
-  integer :: n_output
+  integer :: n_loop,n_output
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
