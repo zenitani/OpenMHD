@@ -1,5 +1,15 @@
+attributes(host) &
+subroutine set_dt_resistive(dt,dx,cfl)
+  real(8), intent(inout) :: dt
+  real(8), intent(in) :: dx, cfl
+!-----------------------------------------------------------------------
+  real(8), parameter :: Rm1 = 60.d0   ! localized - same as Rm1 in flux_resistive
+!-----------------------------------------------------------------------
+  dt = min( dt, 0.5d0*cfl*Rm1*(dx**2) )
+end subroutine set_dt_resistive
+
 attributes(global) &
-subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
+subroutine flux_resistive(F,U,x,y,dx,ix,jx,dir)
 !-----------------------------------------------------------------------
 !     Resistive flux terms in the X/Y directions
 !-----------------------------------------------------------------------
@@ -7,40 +17,60 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
 !     2016/09/06  S. Zenitani  resistive part
 !     2016/10/02  S. Zenitani  X/Y directions, loop jamming
 !     2020/07/04  S. Zenitani  CUDA fortran version
+!     2024/02/02  S. Zenitani  eta(X,Y) is hard-coded
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
 !-----------------------------------------------------------------------
   integer, value  :: ix, jx
-  real(8), device, intent(in) :: dx
 ! numerical flux (F) [inout]
   real(8), device, intent(inout) :: F(ix,jx,var1)
 ! conserved variables (U) [input]
   real(8), device, intent(in) :: U(ix,jx,var1)
-! resistivity ** at the cell surface ** (EtS) [input]
-  real(8), device, intent(in) :: EtS(ix,jx)
+! spatial location [input]
+  real(8), device, intent(in) :: x(ix), y(jx), dx
 ! direction [input]: 1 (X), 2 (Y), 3 (Z)
   integer, value :: dir
 !-----------------------------------------------------------------------
 ! electric currents at the cell surface [local]
   real(8), device :: JxS, JyS, JzS
   integer, device :: i, j, is=0, ie=0, js=0, je=0
-  real(8), device :: eta_dx
+  real(8), device :: eta, eta0, eta01, eta_dx
+  real(8), device :: xx, yy
+!-----------------------------------------------------------------------
+! Resistivity
+  real(8), parameter :: Rm1 = 60.d0   ! localized - same as Rm1 in set_dt_resistive
+  real(8), parameter :: Rm0 = 1000.d0 ! background
+!-----------------------------------------------------------------------
+
+  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
+  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
 
   select case(dir)
   case(1)
      is = 1; ie = ix-1
      js = 2; je = jx-1
+     xx = x(i) + 0.5*dx
+     yy = y(j)
   case(2)
      is = 2; ie = ix-1
      js = 1; je = jx-1
+     xx = x(i)
+     yy = y(j) + 0.5*dx
   case(3)
   end select
 
-!  f1 = 1.d0 / dx
-
-  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
-  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
+!-----------------------------------------------------------------------
+! Resistivity
+  eta0  = 1.d0 / Rm0
+  eta01 = ( Rm0 - Rm1 ) / ( Rm0 * Rm1 )
+!  eta = eta0 + eta01 * ( cosh( sqrt( xx**2+yy**2 )/2.d0 ) )**(-2)
+  eta = eta0 + eta01 * ( cosh(min( sqrt( xx**2+yy**2 ), 25.d0 )) )**(-2)
+! Here we use min(..., 25) to avoid an overflow problem on JSS/JAXA.
+! Note that (cosh(25))**(-2) = 7.7E-22 is much smaller than
+! the machine epsilon 10**(-16) in the 8-bit floating-point format.
+  eta_dx = eta / dx
+!-----------------------------------------------------------------------
 
   select case(dir)
 !-----------------------------------------------------------------------
@@ -49,7 +79,6 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
      if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
 ! electric current at the X-surface (Toth+ 2008, JCP)
 ! B is taken from the cell center (U)
-        eta_dx = EtS(i,j) / dx
 !       JxS = 0.25d0*eta_dx*( U(i,j+1,bz)+U(i+1,j+1,bz)-U(i,j-1,bz)-U(i+1,j-1,bz) )
         JyS = -eta_dx*( U(i+1,j,bz)-U(i,j,bz) )
         JzS =  eta_dx*( ( U(i+1,j,by)-U(i,j,by) ) &
@@ -68,7 +97,6 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
      if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
 ! electric current at the Y-surface (Toth+ 2008, JCP)
 ! B is taken from the cell center (U)
-        eta_dx = EtS(i,j) / dx
         JxS = eta_dx*( U(i,j+1,bz)-U(i,j,bz) )
 !       JyS = -0.25d0*eta_dx*( U(i+1,j+1,bz)+U(i+1,j,bz)-U(i-1,j+1,bz)-U(i-1,j,bz) )
         JzS = eta_dx*( 0.25d0*(U(i+1,j+1,by)+U(i+1,j,by)-U(i-1,j+1,by)-U(i-1,j,by)) &
@@ -85,86 +113,3 @@ subroutine flux_resistive(F,U,EtS,dx,ix,jx,dir)
 
   return
 end subroutine flux_resistive
-
-
-attributes(global) &
-subroutine flux_resistive_uni(F,U,eta,dx,ix,jx,dir)
-!-----------------------------------------------------------------------
-!     Resistive flux terms in the X/Y directions
-!-----------------------------------------------------------------------
-  implicit none
-  include 'param.h'
-!-----------------------------------------------------------------------
-  integer, value  :: ix, jx
-  real(8), device, intent(in) :: dx
-! numerical flux (F) [inout]
-  real(8), device, intent(inout) :: F(ix,jx,var1)
-! conserved variables (U) [input]
-  real(8), device, intent(in) :: U(ix,jx,var1)
-! uniform resistivity [input]
-  real(8), device, intent(in) :: eta
-! direction [input]: 1 (X), 2 (Y), 3 (Z)
-  integer, value :: dir
-!-----------------------------------------------------------------------
-! electric currents at the cell surface [local]
-  real(8), device :: JxS, JyS, JzS
-  integer, device :: i, j, is=0, ie=0, js=0, je=0
-  real(8), device :: eta_dx
-
-  select case(dir)
-  case(1)
-     is = 1; ie = ix-1
-     js = 2; je = jx-1
-  case(2)
-     is = 2; ie = ix-1
-     js = 1; je = jx-1
-  case(3)
-  end select
-
-!  f1 = 1.d0 / dx
-  eta_dx = eta / dx
-  
-  j = (blockIdx%y-1)*blockDim%y + threadIdx%y
-  i = (blockIdx%x-1)*blockDim%x + threadIdx%x
-
-  select case(dir)
-!-----------------------------------------------------------------------
-  case(1)
-
-     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
-! electric current at the X-surface (Toth+ 2008, JCP)
-! B is taken from the cell center (U)
-!       JxS = 0.25d0*eta_dx*( U(i,j+1,bz)+U(i+1,j+1,bz)-U(i,j-1,bz)-U(i+1,j-1,bz) )
-        JyS = -eta_dx*( U(i+1,j,bz)-U(i,j,bz) )
-        JzS =  eta_dx*( ( U(i+1,j,by)-U(i,j,by) ) &
-             - 0.25d0*( U(i,j+1,bx)+U(i+1,j+1,bx)-U(i,j-1,bx)-U(i+1,j-1,bx) ) )
-! resistive flux
-        F(i,j,en) = F(i,j,en) + 0.5d0 * &
-             (JyS*(U(i,j,bz)+U(i+1,j,bz))-JzS*(U(i,j,by)+U(i+1,j,by)))
-!             (JyS*(VL(i,j,bz)+VR(i,j,bz))-JzS*(VL(i,j,by)+VR(i,j,by)))
-        F(i,j,by) = F(i,j,by) - JzS
-        F(i,j,bz) = F(i,j,bz) + JyS
-     endif
-
-!-----------------------------------------------------------------------
-  case(2)
-
-     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
-! electric current at the Y-surface (Toth+ 2008, JCP)
-! B is taken from the cell center (U)
-        JxS = eta_dx*( U(i,j+1,bz)-U(i,j,bz) )
-!       JyS = -0.25d0*eta_dx*( U(i+1,j+1,bz)+U(i+1,j,bz)-U(i-1,j+1,bz)-U(i-1,j,bz) )
-        JzS = eta_dx*( 0.25d0*(U(i+1,j+1,by)+U(i+1,j,by)-U(i-1,j+1,by)-U(i-1,j,by)) &
-             - ( U(i,j+1,bx)-U(i,j,bx) ) )
-! resistive flux
-        F(i,j,en) = F(i,j,en) + 0.5d0 * &
-             ( JzS*(U(i,j,bx)+U(i,j+1,bx)) - JxS*(U(i,j,bz)+U(i,j+1,bz)) )
-!             ( JzS*(VL(i,j,bx)+VR(i,j,bx)) - JxS*(VL(i,j,bz)+VR(i,j,bz)) )
-        F(i,j,bx) = F(i,j,bx) + JzS
-        F(i,j,bz) = F(i,j,bz) - JxS
-     endif
-
-  end select
-
-  return
-end subroutine flux_resistive_uni

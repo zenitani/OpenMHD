@@ -18,8 +18,6 @@ program main
   integer, parameter :: flux_type = 3
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
-! Resistivity
-  real(8), parameter :: Rm1 = 60.d0, Rm0 = 1000.d0
 !-----------------------------------------------------------------------
 ! See also model.f90
 !-----------------------------------------------------------------------
@@ -34,16 +32,14 @@ program main
   real(8) :: V(ix,jx,var2)  ! primitive variables (V)
   real(8) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
   real(8) :: F(ix,jx,var1), G(ix,jx,var1)   ! numerical flux (F,G)
-  real(8) :: E(ix,jx),EF(ix,jx), EG(ix,jx)  ! resistivity for U, F, G
 !-----------------------------------------------------------------------
 
   t    =  0.d0
   dt   =  0.d0
   call model(U,V,x,y,dx,ix,jx)
-  call set_eta(E,EF,EG,x,y,dx,Rm1,Rm0,ix,jx)
   call bc_for_U(U,ix,jx)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-  dt = min( dt, 0.5d0*cfl*Rm1*(dx**2) )
+  call set_dt_resistive(dt,dx,cfl)
   t_output = -dt/3.d0
   n_output =  0
 
@@ -84,7 +80,7 @@ program main
 !   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-     dt = min( dt, 0.5d0*cfl*Rm1*(dx**2) )
+     call set_dt_resistive(dt,dx,cfl)
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
      call glm_ss2(U,ch,dt,ix,jx)
@@ -105,7 +101,7 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
-     call flux_resistive(F,U,EF,dx,ix,jx,1)
+     call flux_resistive(F,U,x,y,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -123,7 +119,7 @@ program main
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
-     call flux_resistive(G,U,EG,dx,ix,jx,2)
+     call flux_resistive(G,U,x,y,dx,ix,jx,2)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -153,7 +149,7 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
-     call flux_resistive(F,U1,EF,dx,ix,jx,1)
+     call flux_resistive(F,U1,x,y,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -171,7 +167,7 @@ program main
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
-     call flux_resistive(G,U1,EG,dx,ix,jx,2)
+     call flux_resistive(G,U1,x,y,dx,ix,jx,2)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'

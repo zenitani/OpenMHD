@@ -47,7 +47,7 @@ program main
 !-----------------------------------------------------------------------
   allocate( Ud(ix,jx,kx,var1),U1d(ix,jx,kx,var1),Vd(ix,jx,kx,var2))
   allocate(VLd(ix,jx,kx,var1),VRd(ix,jx,kx,var1))
-  allocate( Fd(ix,jx,kx,var1),Gd(ix,jx,kx,var1),Hd(ix,jx,kx,var1))
+  allocate( Fd(ix,jx,kx,var1), Gd(ix,jx,kx,var1),Hd(ix,jx,kx,var1))
 !-----------------------------------------------------------------------
 
   t    =  0.d0

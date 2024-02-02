@@ -35,8 +35,6 @@ program main
   integer, parameter :: time_type = 0
 ! File I/O  (0: Standard, 1: MPI-IO)
   integer, parameter :: io_type   = 1
-! Resistivity
-  real(8), parameter :: Rm1 = 60.d0, Rm0 = 1000.d0
 !-----------------------------------------------------------------------
 ! See also modelp.f90
 !-----------------------------------------------------------------------
@@ -53,7 +51,6 @@ program main
   real(8) :: V(ix,jx,var2)  ! primitive variables (V)
   real(8) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
   real(8) :: F(ix,jx,var1), G(ix,jx,var1)   ! numerical flux (F,G)
-  real(8) :: E(ix,jx),EF(ix,jx), EG(ix,jx)  ! resistivity for U, F, G
 !-----------------------------------------------------------------------
 
 !-----------------------------------------------------------------------
@@ -66,12 +63,11 @@ program main
   dt   =  0.d0
 ! We calculate dx here
   call modelp(U,V,x,y,dx,ix,jx)
-  call set_eta(E,EF,EG,x,y,dx,Rm1,Rm0,ix,jx)
   call parallel_exchange(U,ix,jx,1)
   call parallel_exchange(U,ix,jx,2)
   call mpibc_for_U(U,ix,jx)
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
-  call set_dt2(Rm1,dt,dx,cfl)
+  call set_dt_resistive(dt,dx,cfl)
 
   call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
   call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
@@ -90,7 +86,6 @@ program main
 997  format ('Code version: ', i8, '  MPI node # : ', i5,' (',i4,' x ',i4,')' )
 998  format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:',i6,' (',i5,') x ',i6,' (',i5,') ')
 999  format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
-     write(6,*) 'Reynolds #  : ', Rm1, ' and ', Rm0
      write(6,*) '== start =='
   endif
 
@@ -166,7 +161,7 @@ program main
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
      call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-     call set_dt2(Rm1,dt,dx,cfl)
+     call set_dt_resistive(dt,dx,cfl)
      call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
      call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
 
@@ -192,7 +187,7 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
-     call flux_resistive(F,U,EF,dx,ix,jx,1)
+     call flux_resistive(F,U,x,y,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -212,7 +207,7 @@ program main
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
-     call flux_resistive(G,U,EG,dx,ix,jx,2)
+     call flux_resistive(G,U,x,y,dx,ix,jx,2)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U* = U + (dt/dx) (F-F)'
@@ -246,7 +241,7 @@ program main
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
-     call flux_resistive(F,U1,EF,dx,ix,jx,1)
+     call flux_resistive(F,U1,x,y,dx,ix,jx,1)
 
 !    Slope limiters on primitive variables
 !     write(6,*) 'V --> VL, VR (G)'
@@ -266,7 +261,7 @@ program main
 !    Numerical flux in the Y direction (G)
 !     write(6,*) 'VL, VR --> G'
      call flux_solver(G,VL,VR,ch,ix,jx,2,flux_type)
-     call flux_resistive(G,U1,EG,dx,ix,jx,2)
+     call flux_resistive(G,U1,x,y,dx,ix,jx,2)
 
      if( time_type == 0 ) then
 !       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
