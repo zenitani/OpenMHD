@@ -14,7 +14,7 @@ subroutine mpibc_for_U(U,ix,jx)
   real(8), device, intent(inout) :: U(ix,jx,var1)
   integer :: i, j
 
-  ! left boundary
+  ! west boundary
   if( ranks%west == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do j=1,jx
@@ -30,7 +30,7 @@ subroutine mpibc_for_U(U,ix,jx)
      enddo
   endif
 
-  ! right boundary
+  ! east boundary
   if( ranks%east == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do j=1,jx
@@ -46,7 +46,7 @@ subroutine mpibc_for_U(U,ix,jx)
      enddo
   endif
 
-  ! bottom boundary
+  ! south boundary
   if( ranks%south == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do i=1,ix
@@ -62,7 +62,7 @@ subroutine mpibc_for_U(U,ix,jx)
      enddo
   endif
 
-  ! top boundary
+  ! north boundary
   if( ranks%north == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do i=1,ix
@@ -90,7 +90,7 @@ subroutine mpibc_for_F( VL,VR,ix,jx )
   real(8), device, intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
   integer :: j
 
-! left boundary
+! west boundary
   if( ranks%west == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do j=1,jx
@@ -106,7 +106,7 @@ subroutine mpibc_for_F( VL,VR,ix,jx )
      enddo
   endif
 
-! right boundary
+! east boundary
   if( ranks%east == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do j=1,jx
@@ -134,7 +134,7 @@ subroutine mpibc_for_G( VL,VR,ix,jx )
   real(8), device, intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
   integer :: i
 
-! bottom boundary
+! south boundary
   if( ranks%south == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do i=1,ix
@@ -150,7 +150,7 @@ subroutine mpibc_for_G( VL,VR,ix,jx )
      enddo
   endif
 
-! top boundary
+! north boundary
   if( ranks%north == mpi_proc_null ) then
 !$cuf kernel do <<<*, *>>>
      do i=1,ix

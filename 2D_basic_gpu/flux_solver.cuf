@@ -84,7 +84,6 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
 
   j = (blockIdx%y-1)*blockDim%y + threadIdx%y
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
-!  F(i,j,:) = 0.d0
 
 ! main switch
   select case(type)

@@ -5,11 +5,11 @@ subroutine bc(U,ix,jx)
   real(8), intent(inout) :: U(ix,jx,var1)
 !----------------------------------------------------------------------
 
-! left/right
+! west/east
   U(ix,:,:) = U(2,:,:)
   U(1,:,:)  = U(ix-1,:,:)
 
-! top/bottom
+! south/north
   U(:,jx,:) = U(:,2,:)
   U(:,1,:)  = U(:,jx-1,:)
 

@@ -19,7 +19,6 @@ subroutine fastest_speed(U,V,vmax,ix,jx)
 
   j = (blockIdx%y-1)*blockDim%y + threadIdx%y
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
-  vmax(i,j) = 0.d0
   
 !  do j=js,je
 !  do i=is,ie

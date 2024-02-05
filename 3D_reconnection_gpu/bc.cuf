@@ -1,0 +1,218 @@
+!-----------------------------------------------------------------------
+!     BC routines
+!-----------------------------------------------------------------------
+
+! BC for Ud
+attributes(host) &
+subroutine bc_for_U(U,ix,jx,kx)
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: U(ix,jx,kx,var1)
+  integer :: i, j, k, m
+  
+! west boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do j=1,jx
+     U(1,j,k,ro) =  U(2,j,k,ro)
+     U(1,j,k,mx) = -U(2,j,k,mx)
+     U(1,j,k,my) =  U(2,j,k,my)
+     U(1,j,k,mz) = -U(2,j,k,mz)
+     U(1,j,k,en) =  U(2,j,k,en)
+     U(1,j,k,bx) =  U(2,j,k,bx)
+     U(1,j,k,by) = -U(2,j,k,by)
+     U(1,j,k,bz) =  U(2,j,k,bz)
+     U(1,j,k,ps) = -U(2,j,k,ps)
+  enddo
+  enddo
+
+! east boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do j=1,jx
+     U(ix,j,k,ro) =  U(ix-1,j,k,ro)
+     U(ix,j,k,mx) = -U(ix-1,j,k,mx)
+     U(ix,j,k,my) =  U(ix-1,j,k,my)
+     U(ix,j,k,mz) = -U(ix-1,j,k,mz)
+     U(ix,j,k,en) =  U(ix-1,j,k,en)
+     U(ix,j,k,bx) =  U(ix-1,j,k,bx)
+     U(ix,j,k,by) = -U(ix-1,j,k,by)
+     U(ix,j,k,bz) =  U(ix-1,j,k,bz)
+     U(ix,j,k,ps) = -U(ix-1,j,k,ps)
+  enddo
+  enddo
+
+! south boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do i=1,ix
+     U(i,1,k,ro) =  U(i,2,k,ro)
+     U(i,1,k,mx) =  U(i,2,k,mx)
+     U(i,1,k,my) = -U(i,2,k,my)
+     U(i,1,k,mz) = -U(i,2,k,mz)
+     U(i,1,k,en) =  U(i,2,k,en)
+     U(i,1,k,bx) = -U(i,2,k,bx)
+     U(i,1,k,by) =  U(i,2,k,by)
+     U(i,1,k,bz) =  U(i,2,k,bz)
+     U(i,1,k,ps) = -U(i,2,k,ps)
+  enddo
+  enddo
+
+! north boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do i=1,ix
+     U(i,jx,k,ro) =  U(i,jx-1,k,ro)
+     U(i,jx,k,mx) =  U(i,jx-1,k,mx)
+     U(i,jx,k,my) = -U(i,jx-1,k,my)
+     U(i,jx,k,mz) =  U(i,jx-1,k,mz)
+     U(i,jx,k,en) =  U(i,jx-1,k,en)
+     U(i,jx,k,bx) =  U(i,jx-1,k,bx)
+     U(i,jx,k,by) = -U(i,jx-1,k,by)
+     U(i,jx,k,bz) =  U(i,jx-1,k,bz)
+     U(i,jx,k,ps) =  U(i,jx-1,k,ps)
+  enddo
+  enddo
+
+! downstairs
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+  do j=1,jx
+  do i=1,ix
+     U(i,j,1,m) =  U(i,j,kx-1,m)
+  enddo
+  enddo
+  enddo
+
+! upstairs
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+  do j=1,jx
+  do i=1,ix
+     U(i,j,kx,m) =  U(i,j,2,m)
+  enddo
+  enddo
+  enddo
+
+end subroutine bc_for_U
+
+
+! BC for Fd -- VL/VR in the X direction
+attributes(host) &
+subroutine bc_for_F( VL,VR,ix,jx,kx )
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: VL(ix,jx,kx,var1), VR(ix,jx,kx,var1) ! interpolated states
+  integer :: j, k
+  
+! west boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do j=1,jx
+     VL(1,j,k,ro) =  VR(1,j,k,ro)
+     VL(1,j,k,vx) = -VR(1,j,k,vx)
+     VL(1,j,k,vy) =  VR(1,j,k,vy)
+     VL(1,j,k,vz) = -VR(1,j,k,vz)
+     VL(1,j,k,pr) =  VR(1,j,k,pr)
+     VL(1,j,k,bx) =  VR(1,j,k,bx)
+     VL(1,j,k,by) = -VR(1,j,k,by)
+     VL(1,j,k,bz) =  VR(1,j,k,bz)
+     VL(1,j,k,ps) = -VR(1,j,k,ps)
+  enddo
+  enddo
+
+! east boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do j=1,jx
+     VR(ix-1,j,k,ro) =  VL(ix-1,j,k,ro)
+     VR(ix-1,j,k,vx) = -VL(ix-1,j,k,vx)
+     VR(ix-1,j,k,vy) =  VL(ix-1,j,k,vy)
+     VR(ix-1,j,k,vz) = -VL(ix-1,j,k,vz)
+     VR(ix-1,j,k,pr) =  VL(ix-1,j,k,pr)
+     VR(ix-1,j,k,bx) =  VL(ix-1,j,k,bx)
+     VR(ix-1,j,k,by) = -VL(ix-1,j,k,by)
+     VR(ix-1,j,k,bz) =  VL(ix-1,j,k,bz)
+     VR(ix-1,j,k,ps) = -VL(ix-1,j,k,ps)
+  enddo
+  enddo
+
+end subroutine bc_for_F
+
+
+! BC for Gd -- VL/VR in the Y direction
+attributes(host) &
+subroutine bc_for_G( VL,VR,ix,jx,kx )
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: VL(ix,jx,kx,var1), VR(ix,jx,kx,var1) ! interpolated states
+  integer :: i, k
+  
+! south boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do i=1,ix
+     VL(i,1,k,ro) =  VR(i,1,k,ro)
+     VL(i,1,k,vx) =  VR(i,1,k,vx)
+     VL(i,1,k,vy) = -VR(i,1,k,vy)
+     VL(i,1,k,vz) = -VR(i,1,k,vz)
+     VL(i,1,k,pr) =  VR(i,1,k,pr)
+     VL(i,1,k,bx) = -VR(i,1,k,bx)
+     VL(i,1,k,by) =  VR(i,1,k,by)
+     VL(i,1,k,bz) =  VR(i,1,k,bz)
+     VL(i,1,k,ps) = -VR(i,1,k,ps)
+  enddo
+  enddo
+
+! north boundary
+!$cuf kernel do(2) <<<*, *>>>
+  do k=1,kx
+  do i=1,ix
+     VR(i,jx-1,k,ro) =  VL(i,jx-1,k,ro)
+     VR(i,jx-1,k,vx) =  VL(i,jx-1,k,vx)
+     VR(i,jx-1,k,vy) = -VL(i,jx-1,k,vy)
+     VR(i,jx-1,k,vz) =  VL(i,jx-1,k,vz)
+     VR(i,jx-1,k,pr) =  VL(i,jx-1,k,pr)
+     VR(i,jx-1,k,bx) =  VL(i,jx-1,k,bx)
+     VR(i,jx-1,k,by) = -VL(i,jx-1,k,by)
+     VR(i,jx-1,k,bz) =  VL(i,jx-1,k,bz)
+     VR(i,jx-1,k,ps) =  VL(i,jx-1,k,ps)
+  enddo
+  enddo
+
+end subroutine bc_for_G
+
+
+! BC for Hd -- VL/VR in the Z direction
+attributes(host) &
+subroutine bc_for_H( VL,VR,ix,jx,kx )
+  implicit none
+  include 'param.h'
+  integer, intent(in) :: ix, jx, kx
+  real(8), device, intent(inout) :: VL(ix,jx,kx,var1), VR(ix,jx,kx,var1) ! interpolated states
+  integer :: i, j, m
+  
+! downstairs
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+  do j=1,jx
+  do i=1,ix
+     VL(i,j,1,m) =  VL(i,j,kx-1,m)
+  enddo
+  enddo
+  enddo
+
+! upstairs
+!$cuf kernel do(3) <<<*, *>>>
+  do m=1,var1
+  do j=1,jx
+  do i=1,ix
+     VR(i,j,kx-1,m) =  VR(i,j,1,m)
+  enddo
+  enddo
+  enddo
+
+end subroutine bc_for_H

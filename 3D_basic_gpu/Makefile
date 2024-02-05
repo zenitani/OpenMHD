@@ -1,7 +1,7 @@
 ### NVIDIA HPC SDK
-F90 = nvfortran -cuda -O2
+# F90 = nvfortran -cuda -O2
 # F90 = mpif90 -cuda -O2
-# F90 = mpif90 -cuda -O2 -mcmodel=medium
+F90 = mpif90 -cuda -O2 -mcmodel=medium
 # F90 = mpif90 -cuda -O2 -mcmodel=medium -gpu=cuda11.6,cc80 -tp=zen2
 
 

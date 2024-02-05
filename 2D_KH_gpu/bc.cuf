@@ -7,7 +7,7 @@ subroutine bc_for_U(U,ix,jx)
   real(8), device, intent(inout) :: U(ix,jx,var1)
   integer :: i, j, k
 
-! left/right
+! west/east
 !$cuf kernel do(2) <<<*, *>>>
   do k=1,var1
      do j=1,jx
@@ -16,7 +16,7 @@ subroutine bc_for_U(U,ix,jx)
      enddo
   enddo
 
-! bottom boundary
+! south boundary
 !$cuf kernel do <<<*, *>>>
   do i=1,ix
      U(i,1,ro) =  U(i,2,ro)
@@ -30,7 +30,7 @@ subroutine bc_for_U(U,ix,jx)
      U(i,1,ps) =  U(i,2,ps)
   enddo
 
-! top boundary
+! north boundary
 !$cuf kernel do <<<*, *>>>
   do i=1,ix
      U(i,jx,ro) =  U(i,jx-1,ro)
@@ -75,7 +75,8 @@ subroutine bc_for_G( VL,VR,ix,jx )
   integer, intent(in) :: ix, jx
   real(8), device, intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
   integer :: i
-  
+
+! south boundary
 !$cuf kernel do <<<*, *>>>
   do i=1,ix
      VL(i,1,ro) =  VR(i,1,ro)
@@ -89,7 +90,7 @@ subroutine bc_for_G( VL,VR,ix,jx )
      VL(i,1,ps) =  VR(i,1,ps)
   enddo
 
-! top boundary
+! north boundary
 !$cuf kernel do <<<*, *>>>
   do i=1,ix
      VR(i,jx-1,ro) =  VL(i,jx-1,ro)

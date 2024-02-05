@@ -38,8 +38,6 @@ program main
 ! File I/O  (0: Standard, 1: MPI-IO)
   integer, parameter :: io_type   = 1
 !-----------------------------------------------------------------------
-! See also modelp.f90
-!-----------------------------------------------------------------------
   integer :: i, j, k
   integer :: n_loop,n_output
   real(8) :: t, dt, t_output
@@ -50,8 +48,6 @@ program main
   real(8) :: x(ix), y(jx), dx
   real(8) :: U(ix,jx,var1)  ! conserved variables (U)
   real(8) :: V(ix,jx,var2)  ! primitive variables (V)
-  real(8) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
-  real(8) :: F(ix,jx,var1), G(ix,jx,var1)   ! numerical flux (F,G)
 !-----------------------------------------------------------------------
   real(8), device, allocatable :: Ud(:,:,:)  ! conserved variables (U)
   real(8), device, allocatable :: U1d(:,:,:) ! conserved variables: medium state (U*)
@@ -331,7 +327,7 @@ program main
 !    GLM solver for the second half timestep
      call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx)
 
-     t=t+dt
+     t = t + dt
 
   enddo
 !-----------------------------------------------------------------------

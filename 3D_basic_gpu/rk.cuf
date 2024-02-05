@@ -28,16 +28,10 @@ subroutine rk_tvd21(wk,wk1,wF,wG,wH,dt,dx,ix,jx,kx)
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
   if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)).and.(2<=k).and.(k<=(kx-1)) ) then
      do m=1,var1
-!     do k=2,kx-1
-!     do j=2,jx-1
-!     do i=2,ix-1
         wk1(i,j,k,m) = wk(i,j,k,m) + &
              dtx * ( wF(i-1,j,k,m) - wF(i,j,k,m) &
                    + wG(i,j-1,k,m) - wG(i,j,k,m) &
                    + wH(i,j,k-1,m) - wH(i,j,k,m) )
-!     enddo
-!     enddo
-!     enddo
      enddo
   endif
 

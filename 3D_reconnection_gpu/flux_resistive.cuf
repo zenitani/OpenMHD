@@ -9,39 +9,40 @@ subroutine set_dt_resistive(dt,dx,cfl)
 end subroutine set_dt_resistive
 
 attributes(global) &
-subroutine flux_resistive(F,U,x,y,dx,ix,jx,dir)
+subroutine flux_resistive(F,U,x,y,z,dx,ix,jx,kx,dir)
 !-----------------------------------------------------------------------
-!     Resistive flux terms in the X/Y directions
+!     Resistive flux terms in the X/Y/z directions
 !-----------------------------------------------------------------------
 !     2010/09/23  S. Zenitani  resistive HLL solver
-!     2016/10/02  S. Zenitani  X/Y directions, loop jamming
+!     2016/10/02  S. Zenitani  X/Y/Z directions, loop jamming
 !     2020/07/04  S. Zenitani  CUDA fortran version
-!     2024/02/02  S. Zenitani  eta(X,Y) is hard-coded
+!     2024/02/02  S. Zenitani  eta(X,Y,Z) is hard-coded
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
 !-----------------------------------------------------------------------
-  integer, value  :: ix, jx
+  integer, value  :: ix, jx, kx
 ! numerical flux (F) [inout]
-  real(8), device, intent(inout) :: F(ix,jx,var1)
+  real(8), device, intent(inout) :: F(ix,jx,kx,var1)
 ! conserved variables (U) [input]
-  real(8), device, intent(in) :: U(ix,jx,var1)
+  real(8), device, intent(in) :: U(ix,jx,kx,var1)
 ! spatial location [input]
-  real(8), device, intent(in) :: x(ix), y(jx), dx
+  real(8), device, intent(in) :: x(ix), y(jx), z(kx), dx
 ! direction [input]: 1 (X), 2 (Y), 3 (Z)
   integer, value :: dir
 !-----------------------------------------------------------------------
 ! electric currents at the cell surface [local]
   real(8), device :: JxS, JyS, JzS
-  integer, device :: i, j, is=0, ie=0, js=0, je=0
+  integer, device :: i, j, k, is=0, ie=0, js=0, je=0, ks=0, ke=0
   real(8), device :: eta, eta0, eta01, eta_dx
-  real(8), device :: xx, yy
+  real(8), device :: xx, yy, zz
 !-----------------------------------------------------------------------
 ! Resistivity
   real(8), parameter :: Rm1 = 60.d0   ! localized - same as Rm1 in set_dt_resistive
   real(8), parameter :: Rm0 = 1000.d0 ! background
 !-----------------------------------------------------------------------
 
+  k = (blockIdx%z-1)*blockDim%z + threadIdx%z
   j = (blockIdx%y-1)*blockDim%y + threadIdx%y
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
 
@@ -49,14 +50,24 @@ subroutine flux_resistive(F,U,x,y,dx,ix,jx,dir)
   case(1)
      is = 1; ie = ix-1
      js = 2; je = jx-1
+     ks = 2; ke = kx-1
      xx = x(i) + 0.5*dx
      yy = y(j)
+     zz = z(k)
   case(2)
      is = 2; ie = ix-1
      js = 1; je = jx-1
+     ks = 2; ke = kx-1
      xx = x(i)
      yy = y(j) + 0.5*dx
+     zz = z(k)
   case(3)
+     is = 2; ie = ix-1
+     js = 2; je = jx-1
+     ks = 1; ke = kx-1
+     xx = x(i)
+     yy = y(j)
+     zz = z(k) + 0.5*dx
   end select
 
 !-----------------------------------------------------------------------
@@ -75,37 +86,52 @@ subroutine flux_resistive(F,U,x,y,dx,ix,jx,dir)
 !-----------------------------------------------------------------------
   case(1)
 
-     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
+     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je).and.(ks<=k).and.(k<=ke) ) then
 ! electric current at the X-surface (Toth+ 2008, JCP)
 ! B is taken from the cell center (U)
-!       JxS = 0.25d0*( U(i,j+1,bz)+U(i+1,j+1,bz)-U(i,j-1,bz)-U(i+1,j-1,bz) )
-        JyS = -( U(i+1,j,bz)-U(i,j,bz) )
-        JzS =  ( U(i+1,j,by)-U(i,j,by) ) &
-             - 0.25d0*( U(i,j+1,bx)+U(i+1,j+1,bx)-U(i,j-1,bx)-U(i+1,j-1,bx) )
+        JyS = -( U(i+1,j,k,bz)-U(i,j,k,bz) ) &
+               + 0.25d0*( U(i,j,k+1,bx)+U(i+1,j,k+1,bx)-U(i,j,k-1,bx)-U(i+1,j,k-1,bx) )
+        JzS =  ( U(i+1,j,k,by)-U(i,j,k,by) ) &
+               - 0.25d0*( U(i,j+1,k,bx)+U(i+1,j+1,k,bx)-U(i,j-1,k,bx)-U(i+1,j-1,k,bx) )
 ! resistive flux
-        F(i,j,en) = F(i,j,en) + 0.5d0*eta_dx * &
-             (JyS*(U(i,j,bz)+U(i+1,j,bz))-JzS*(U(i,j,by)+U(i+1,j,by)))
-!             (JyS*(VL(i,j,bz)+VR(i,j,bz))-JzS*(VL(i,j,by)+VR(i,j,by)))
-        F(i,j,by) = F(i,j,by) - eta_dx*JzS
-        F(i,j,bz) = F(i,j,bz) + eta_dx*JyS
+        F(i,j,k,en) = F(i,j,k,en) + 0.5d0*eta_dx * &
+             (JyS*(U(i,j,k,bz)+U(i+1,j,k,bz))-JzS*(U(i,j,k,by)+U(i+1,j,k,by)))
+        F(i,j,k,by) = F(i,j,k,by) - eta_dx*JzS
+        F(i,j,k,bz) = F(i,j,k,bz) + eta_dx*JyS
      endif
 
 !-----------------------------------------------------------------------
   case(2)
 
-     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je) ) then
+     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je).and.(ks<=k).and.(k<=ke) ) then
 ! electric current at the Y-surface (Toth+ 2008, JCP)
 ! B is taken from the cell center (U)
-        JxS = ( U(i,j+1,bz)-U(i,j,bz) )
-!       JyS = -0.25d0*( U(i+1,j+1,bz)+U(i+1,j,bz)-U(i-1,j+1,bz)-U(i-1,j,bz) )
-        JzS = 0.25d0*(U(i+1,j+1,by)+U(i+1,j,by)-U(i-1,j+1,by)-U(i-1,j,by)) &
-             - ( U(i,j+1,bx)-U(i,j,bx) )
+        JxS =  ( U(i,j+1,k,bz)-U(i,j,k,bz) ) &
+               - 0.25d0*( U(i,j,k+1,by)+U(i,j+1,k+1,by)-U(i,j,k-1,by)-U(i,j+1,k-1,by) )
+        JzS = -( U(i,j+1,k,bx)-U(i,j,k,bx) ) &
+               + 0.25d0*( U(i+1,j,k,by)+U(i+1,j+1,k,by)-U(i-1,j,k,by)-U(i-1,j+1,k,by) )
 ! resistive flux
-        F(i,j,en) = F(i,j,en) + 0.5d0*eta_dx * &
-             ( JzS*(U(i,j,bx)+U(i,j+1,bx)) - JxS*(U(i,j,bz)+U(i,j+1,bz)) )
-!             ( JzS*(VL(i,j,bx)+VR(i,j,bx)) - JxS*(VL(i,j,bz)+VR(i,j,bz)) )
-        F(i,j,bx) = F(i,j,bx) + eta_dx*JzS
-        F(i,j,bz) = F(i,j,bz) - eta_dx*JxS
+        F(i,j,k,en) = F(i,j,k,en) + 0.5d0*eta_dx * &
+             ( JzS*(U(i,j,k,bx)+U(i,j+1,k,bx)) - JxS*(U(i,j,k,bz)+U(i,j+1,k,bz)) )
+        F(i,j,k,bx) = F(i,j,k,bx) + eta_dx*JzS
+        F(i,j,k,bz) = F(i,j,k,bz) - eta_dx*JxS
+     endif
+
+!-----------------------------------------------------------------------
+  case(3)
+
+     if( (is<=i).and.(i<=ie).and.(js<=j).and.(j<=je).and.(ks<=k).and.(k<=ke) ) then
+! electric current at the Z-surface (Toth+ 2008, JCP)
+! B is taken from the cell center (U)
+        JyS =  ( U(i,j,k+1,bx)-U(i,j,k,bx) ) &
+               - 0.25d0*( U(i+1,j,k,bz)+U(i+1,j,k+1,bz)-U(i-1,j,k,bz)-U(i-1,j,k+1,bz) )
+        JxS = -( U(i,j,k+1,by)-U(i,j,k,by) ) &
+               + 0.25d0*( U(i,j+1,k,bz)+U(i,j+1,k+1,bz)-U(i,j-1,k,bz)-U(i,j-1,k+1,bz) )
+! resistive flux
+        F(i,j,k,en) = F(i,j,k,en) + 0.5d0*eta_dx * &
+             ( JxS*(U(i,j,k,by)+U(i,j,k+1,by)) - JyS*(U(i,j,k,bx)+U(i,j,k+1,bx)) )
+        F(i,j,k,bx) = F(i,j,k,bx) - eta_dx*JyS
+        F(i,j,k,by) = F(i,j,k,by) + eta_dx*JxS
      endif
 
   end select

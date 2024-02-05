@@ -11,7 +11,7 @@ subroutine mpibc_for_U(U,ix,jx)
   integer, intent(in) :: ix, jx
   real(8), intent(inout) :: U(ix,jx,var1)
 
-  ! bottom
+  ! south boundary
   if( ranks%south == mpi_proc_null ) then
      U(:,1,ro) =  U(:,2,ro)
      U(:,1,mx) =  U(:,2,mx)
@@ -24,7 +24,7 @@ subroutine mpibc_for_U(U,ix,jx)
      U(:,1,ps) =  U(:,2,ps)
   endif
 
-  ! top
+  ! north boundary
   if( ranks%north == mpi_proc_null ) then
      U(:,jx,ro) =  U(:,jx-1,ro)
      U(:,jx,mx) =  U(:,jx-1,mx)
@@ -50,7 +50,7 @@ subroutine mpibc_for_G(VL,VR,ix,jx)
 ! right flux (VR) [input]
   real(8), intent(inout) :: VR(ix,jx,var1)
 
-! bottom boundary
+! south boundary
   if( ranks%south == mpi_proc_null ) then
      VL(:,1,ro) =  VR(:,1,ro)
      VL(:,1,vx) =  VR(:,1,vx)
@@ -63,7 +63,7 @@ subroutine mpibc_for_G(VL,VR,ix,jx)
      VL(:,1,ps) =  VR(:,1,ps)
   endif
 
-  ! top
+  ! north boundary
   if( ranks%north == mpi_proc_null ) then
      VR(:,jx-1,ro) =  VL(:,jx-1,ro)
      VR(:,jx-1,vx) =  VL(:,jx-1,vx)

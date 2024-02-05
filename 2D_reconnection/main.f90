@@ -19,8 +19,6 @@ program main
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 !-----------------------------------------------------------------------
-! See also model.f90
-!-----------------------------------------------------------------------
   integer :: n_loop,n_output
   real(8) :: t, dt, t_output
   real(8) :: ch

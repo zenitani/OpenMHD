@@ -255,35 +255,27 @@ contains
        case(3)  ! MPI-3
 
           call mpi_win_lock_all(0,mwin1,merr)
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do j=1,jx
+             bufsnd1(j,k) = Ud(2,j,k)
+          enddo; enddo
           if( ranks_local%west /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd1(j,k) = Ud(2,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              fwest(:,:,2) = bufsnd1(:,:)
           else
              call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq1(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd1(j,k) = Ud(2,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
           endif
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do j=1,jx
+             bufsnd2(j,k) = Ud(ix-1,j,k)
+          enddo; enddo
           if( ranks_local%east /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd2(j,k) = Ud(ix-1,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              feast(:,:,1) = bufsnd2(:,:)
           else
              call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq2(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd2(j,k) = Ud(ix-1,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
@@ -386,19 +378,15 @@ contains
        case(3)  ! MPI-3
 
           call mpi_win_lock_all(0,mwin2,merr)
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do i=1,ix
+             bufsnd1(i,k) = Ud(i,2,k)
+          enddo; enddo
           if( ranks_local%south /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do i=1,ix
-                bufsnd1(i,k) = Ud(i,2,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              fsouth(:,:,2) = bufsnd1(:,:)
           else
              call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq1(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do i=1,ix
-                bufsnd1(i,k) = Ud(i,2,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
           endif
@@ -541,35 +529,27 @@ contains
        case(3)  ! MPI-3
 
           call mpi_win_lock_all(0,mwin1,merr)
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do j=1,jx
+             bufsnd1(j,k) = VRd(1,j,k)
+          enddo; enddo
           if( ranks_local%west /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd1(j,k) = VRd(1,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              fwest(:,:,2) = bufsnd1(:,:)
           else
              call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq1(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd1(j,k) = VRd(1,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
           endif
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do j=1,jx
+             bufsnd2(j,k) = VLd(ix-1,j,k)
+          enddo; enddo
           if( ranks_local%east /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd2(j,k) = VLd(ix-1,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              fwest(:,:,1) = bufsnd2(:,:)
           else
              call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq2(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do j=1,jx
-                bufsnd2(j,k) = VLd(ix-1,j,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
@@ -672,35 +652,27 @@ contains
        case(3)  ! MPI-3
 
           call mpi_win_lock_all(0,mwin2,merr)
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do i=1,ix
+             bufsnd1(i,k) = VRd(i,1,k)
+          enddo; enddo
           if( ranks_local%south /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do i=1,ix
-                bufsnd1(i,k) = VRd(i,1,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              fsouth(:,:,2) = bufsnd1(:,:)
           else
              call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq1(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do i=1,ix
-                bufsnd1(i,k) = VRd(i,1,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
           endif
+          !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
+          do k=1,var1; do i=1,ix
+             bufsnd2(i,k) = VLd(i,jx-1,k)
+          enddo; enddo
           if( ranks_local%north /= mpi_undefined ) then
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do i=1,ix
-                bufsnd2(i,k) = VLd(i,jx-1,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              fnorth(:,:,1) = bufsnd2(:,:)
           else
              call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq2(1),merr)
-             !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-             do k=1,var1; do i=1,ix
-                bufsnd2(i,k) = VLd(i,jx-1,k)
-             enddo; enddo
              stat = cudaStreamSynchronize(comm_stream)
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif

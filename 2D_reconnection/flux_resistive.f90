@@ -29,7 +29,6 @@ subroutine flux_resistive(F,U,x,y,dx,ix,jx,dir)
 !     Resistive flux terms in the X/Y directions
 !-----------------------------------------------------------------------
 !     2010/09/23  S. Zenitani  resistive HLL solver
-!     2016/09/06  S. Zenitani  resistive part
 !     2016/10/02  S. Zenitani  X/Y directions, loop jamming
 !     2024/02/02  S. Zenitani  eta(X,Y) function
 !-----------------------------------------------------------------------

@@ -27,12 +27,8 @@ subroutine rk_tvd21(wk,wk1,wF,wG,dt,dx,ix,jx)
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
   if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)) ) then
      do k=1,var1
-!     do j=2,jx-1
-!        do i=2,ix-1
-           wk1(i,j,k) = wk(i,j,k) + &
-                dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) )
-!        enddo
-!     enddo
+        wk1(i,j,k) = wk(i,j,k) + &
+             dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) )
      enddo
   endif
 
@@ -60,13 +56,9 @@ subroutine rk_tvd22(wk,wk1,wF,wG,dt,dx,ix,jx)
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
   if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)) ) then
      do k=1,var1
-!     do j=2,jx-1
-!        do i=2,ix-1
-           wk(i,j,k) = 0.5d0*( wk(i,j,k)+wk1(i,j,k) + &
-                dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) ) &
-           )
-!        enddo
-!     enddo
+        wk(i,j,k) = 0.5d0*( wk(i,j,k)+wk1(i,j,k) + &
+             dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) ) &
+             )
      enddo
   endif
 
@@ -96,12 +88,8 @@ subroutine rk_std21(wk,wk1,wF,wG,dt,dx,ix,jx)
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
   if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)) ) then
      do k=1,var1
-!     do j=2,jx-1
-!        do i=2,ix-1
-           wk1(i,j,k) = wk(i,j,k) + &
-                dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) )
-!        enddo
-!     enddo
+        wk1(i,j,k) = wk(i,j,k) + &
+             dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) )
      enddo
   endif
 
@@ -128,12 +116,8 @@ subroutine rk_std22(wk,wF,wG,dt,dx,ix,jx)
   i = (blockIdx%x-1)*blockDim%x + threadIdx%x
   if( (2<=i).and.(i<=(ix-1)).and.(2<=j).and.(j<=(jx-1)) ) then
      do k=1,var1
-!     do j=2,jx-1
-!        do i=2,ix-1
-           wk(i,j,k) = wk(i,j,k) + &
-                dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) )
-!        enddo
-!     enddo
+        wk(i,j,k) = wk(i,j,k) + &
+             dtx * ( wF(i-1,j,k) - wF(i,j,k) + wG(i,j-1,k) - wG(i,j,k) )
      enddo
   endif
   

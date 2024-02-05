@@ -12,7 +12,7 @@ subroutine mpibc_for_U(U,ix,jx)
   integer, intent(in) :: ix, jx
   real(8), intent(inout) :: U(ix,jx,var1)
 
-  ! left boundary
+  ! west boundary
   if( ranks%west == mpi_proc_null ) then
      U(1,:,ro) =  U(2,:,ro)
      U(1,:,mx) = -U(2,:,mx)
@@ -25,7 +25,7 @@ subroutine mpibc_for_U(U,ix,jx)
      U(1,:,ps) = -U(2,:,ps)
   endif
 
-  ! right boundary
+  ! east boundary
   if( ranks%east == mpi_proc_null ) then
      U(ix,:,ro) =  U(ix-1,:,ro)
      U(ix,:,mx) = -U(ix-1,:,mx)
@@ -38,7 +38,7 @@ subroutine mpibc_for_U(U,ix,jx)
      U(ix,:,ps) = -U(ix-1,:,ps)
   endif
 
-  ! bottom boundary
+  ! south boundary
   if( ranks%south == mpi_proc_null ) then
      U(:,1,ro) =  U(:,2,ro)
      U(:,1,mx) =  U(:,2,mx)
@@ -51,7 +51,7 @@ subroutine mpibc_for_U(U,ix,jx)
      U(:,1,ps) = -U(:,2,ps)
   endif
 
-  ! top boundary
+  ! north boundary
   if( ranks%north == mpi_proc_null ) then
      U(:,jx,:)  =  U(:,jx-1,:)
      U(:,jx,my) = -U(:,jx-1,my)
@@ -69,7 +69,7 @@ subroutine mpibc_for_F( VL,VR,ix,jx )
   integer, intent(in) :: ix, jx
   real(8), intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
 
-! left boundary
+! west boundary
   if( ranks%west == mpi_proc_null ) then
      VL(1,:,ro) =  VR(1,:,ro)
      VL(1,:,vx) = -VR(1,:,vx)
@@ -82,7 +82,7 @@ subroutine mpibc_for_F( VL,VR,ix,jx )
      VL(1,:,ps) = -VR(1,:,ps)
   endif
 
-! right boundary
+! east boundary
   if( ranks%east == mpi_proc_null ) then
      VR(ix-1,:,ro) =  VL(ix-1,:,ro)
      VR(ix-1,:,vx) = -VL(ix-1,:,vx)
@@ -106,7 +106,7 @@ subroutine mpibc_for_G( VL,VR,ix,jx )
   integer, intent(in) :: ix, jx
   real(8), intent(inout) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
 
-! bottom boundary
+! south boundary
   if( ranks%south == mpi_proc_null ) then
      VL(:,1,ro) =  VR(:,1,ro)
      VL(:,1,vx) =  VR(:,1,vx)
@@ -119,7 +119,7 @@ subroutine mpibc_for_G( VL,VR,ix,jx )
      VL(:,1,ps) = -VR(:,1,ps)
   endif
 
-! top boundary
+! north boundary
   if( ranks%north == mpi_proc_null ) then
      VR(:,jx-1,ro) =  VL(:,jx-1,ro)
      VR(:,jx-1,vx) =  VL(:,jx-1,vx)

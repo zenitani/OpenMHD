@@ -36,8 +36,6 @@ program main
 ! File I/O  (0: Standard, 1: MPI-IO)
   integer, parameter :: io_type   = 1
 !-----------------------------------------------------------------------
-! See also modelp.f90
-!-----------------------------------------------------------------------
   integer :: k
   integer :: n_loop,n_output
   real(8) :: t, dt, t_output

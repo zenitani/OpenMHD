@@ -1,0 +1,310 @@
+program main
+!-----------------------------------------------------------------------
+!     OpenMHD  Reconnection solver (serial version)
+!-----------------------------------------------------------------------
+!     2010/09/25  S. Zenitani  HLL reconnection code
+!     2020/07/04  S. Zenitani  CUDA fortran version
+!-----------------------------------------------------------------------
+  use cudafor
+  implicit none
+  include 'param.h'
+  integer, parameter :: ix = 1000 + 2
+  integer, parameter :: jx =  250 + 2
+  integer, parameter :: kx =  100 + 2
+  integer, parameter :: loop_max = 1000000
+  real(8), parameter :: dtmin = 1.0d-7
+  real(8), parameter :: tend  = 251.0d0
+  real(8), parameter :: dtout =  25.d0 ! output interval
+  real(8), parameter :: cfl   = 0.35d0 ! time step
+! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
+  integer :: n_start = 0
+! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
+  integer, parameter :: lm_type   = 1
+! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
+  integer, parameter :: flux_type = 3
+! Time marching  (0: TVD RK2, 1: RK2)
+  integer, parameter :: time_type = 0
+!-----------------------------------------------------------------------
+  integer :: i, j, k
+  integer :: n_loop,n_output
+  real(8) :: t, dt, t_output
+  real(8) :: ch
+  character*256 :: filename
+!-----------------------------------------------------------------------
+  real(8) :: x(ix), y(jx), z(kx), dx
+  real(8) :: U(ix,jx,kx,var1)  ! conserved variables (U)
+  real(8) :: V(ix,jx,kx,var2)  ! primitive variables (V)
+!-----------------------------------------------------------------------
+  real(8), device, allocatable :: Ud(:,:,:,:)  ! conserved variables (U)
+  real(8), device, allocatable :: U1d(:,:,:,:) ! conserved variables: medium state (U*)
+  real(8), device, allocatable :: Vd(:,:,:,:)  ! primitive variables (V)
+  real(8), device, allocatable :: VLd(:,:,:,:), VRd(:,:,:,:) ! interpolated states
+  real(8), device, allocatable :: Fd(:,:,:,:), Gd(:,:,:,:), Hd(:,:,:,:)   ! numerical flux (F,G,H)
+  real(8), device, allocatable :: xd(:), yd(:), zd(:)   ! positions (x,y,z)
+  real(8), device :: dtd, dxd, chd
+  integer :: stat
+  type(dim3), parameter :: Th = dim3(64,1,1)
+  type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),ceiling(real(kx)/Th%z))
+!-----------------------------------------------------------------------
+  allocate( Ud(ix,jx,kx,var1),U1d(ix,jx,kx,var1),Vd(ix,jx,kx,var2))
+  allocate(VLd(ix,jx,kx,var1),VRd(ix,jx,kx,var1))
+  allocate( Fd(ix,jx,kx,var1), Gd(ix,jx,kx,var1),Hd(ix,jx,kx,var1))
+  allocate( xd(ix), yd(jx), zd(kx) )
+!-----------------------------------------------------------------------
+
+  t    =  0.d0
+  dt   =  0.d0
+  call model(U,V,x,y,z,dx,ix,jx,kx)
+  Ud = U; Vd = V; xd = x; yd = y; zd = z; dxd = dx
+
+  call bc_for_U(Ud,ix,jx,kx)
+  call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,:,vx),ix,jx,kx)
+  chd = 0.d0
+!$cuf kernel do(3) <<<*, *, stream=0>>> reduction(max:chd)
+  do k=2,kx-1; do j=2,jx-1; do i=2,ix-1
+     chd=max(chd,VRd(i,j,k,vx))
+  enddo; enddo; enddo
+  ch = chd
+  dt = cfl*dx/ch
+  call set_dt_resistive(dt,dx,cfl)
+
+  if( dt < dtmin ) then
+     write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+     write(6,*) '     velocity is : ', ch
+     stop
+  endif
+  if ( dt > dtout ) then
+     write(6,*) 'error: ', dt, '>', dtout
+     stop
+  endif
+
+  write(6,*) '[Params]'
+  write(6,998) dt, dtout, ix, jx, kx
+  write(6,999) lm_type, flux_type, time_type
+998 format (' dt:', 1p, e10.3, ' dtout:', 1p, e10.3, ' grids:', i5, i5, i5 )
+999 format (' limiter: ', i1, '  flux: ', i1, '  time-marching: ', i1 )
+  write(6,*) '== start =='
+
+  ! If n_start is negative, look for a latest restart file.
+  if ( n_start < 0 ) then
+     do k = floor(tend/dtout),0,-1
+        n_start = k
+        write(filename,990) n_start
+        open(15,file=filename,form='unformatted',access='stream',status='old',err=100)
+        close(15)
+        exit
+100     continue
+     enddo
+  endif
+
+  ! If n_start is non-zero, restart from a previous file.
+  if ( n_start == 0 ) then
+     n_output = 0
+     t_output = -dt/3.d0
+  else
+     write(6,*) 'reading data ...'
+     write(filename,990) n_start
+     call fileio_input(filename,ix,jx,kx,t,x,y,z,U)
+     Ud = U
+     n_output = n_start + 1
+     t_output = t + dtout
+  endif
+
+!-----------------------------------------------------------------------
+  do n_loop=1,loop_max
+
+     write(6,*) ' t = ', t
+!    Recovering primitive variables
+!     write(6,*) 'U --> V'
+     call u2v<<<Bl,Th>>>(Ud,Vd,ix,jx,kx)
+!   -----------------
+!    [ output ]
+     if ( t >= t_output ) then
+        U = Ud; V = Vd
+        write(6,*) 'data output   t = ', t
+        write(filename,990) n_output
+        call fileio_output(filename,ix,jx,kx,t,x,y,z,U,V)
+        n_output = n_output + 1
+        t_output = t_output + dtout
+     endif
+!    [ end? ]
+     if ( t >= tend )  exit
+     if ( n_loop >= loop_max ) then
+        write(6,*) 'max loop'
+        exit
+     endif
+!   -----------------
+!    CFL condition
+     call fastest_speed<<<Bl,Th>>>(Ud,Vd,VRd(:,:,:,vx),ix,jx,kx)
+     chd = 0.d0
+!$cuf kernel do(3) <<<*, *, stream=0>>> reduction(max:chd)
+     do k=2,kx-1; do j=2,jx-1; do i=2,ix-1
+        chd=max(chd,VRd(i,j,k,vx))
+     enddo; enddo; enddo
+     ch = chd
+     dt = cfl*dx/ch
+     call set_dt_resistive(dt,dx,cfl)
+     if( dt < dtmin ) then
+        write(6,*) ' dt is too small : ', dt, ' < ', dtmin
+        write(6,*) '     velocity is : ', ch
+        stop
+     endif
+     dtd = dt
+!   -----------------
+
+!    GLM solver for the first half timestep
+!    This should be done after set_dt()
+     call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx,kx)
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (F)'
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vx),VLd(:,:,:,vx),VRd(:,:,:,vx),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vy),VLd(:,:,:,vy),VRd(:,:,:,vy),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vz),VLd(:,:,:,vz),VRd(:,:,:,vz),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,pr),VLd(:,:,:,pr),VRd(:,:,:,pr),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,ro),VLd(:,:,:,ro),VRd(:,:,:,ro),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,bx),VLd(:,:,:,bx),VRd(:,:,:,bx),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,by),VLd(:,:,:,by),VRd(:,:,:,by),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,bz),VLd(:,:,:,bz),VRd(:,:,:,bz),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,ps),VLd(:,:,:,ps),VRd(:,:,:,ps),ix,jx,kx,1,lm_type)
+!    fix flux bc (F)
+     call bc_for_F(VLd,VRd,ix,jx,kx)
+
+!    Numerical flux in the X direction (F)
+!     write(6,*) 'VL, VR --> F'
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,kx,1,flux_type)
+     call flux_resistive<<<Bl,Th>>>(Fd,Ud,xd,yd,zd,dxd,ix,jx,kx,1)
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (G)'
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vx),VLd(:,:,:,vx),VRd(:,:,:,vx),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vy),VLd(:,:,:,vy),VRd(:,:,:,vy),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vz),VLd(:,:,:,vz),VRd(:,:,:,vz),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,pr),VLd(:,:,:,pr),VRd(:,:,:,pr),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,ro),VLd(:,:,:,ro),VRd(:,:,:,ro),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,bx),VLd(:,:,:,bx),VRd(:,:,:,bx),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,by),VLd(:,:,:,by),VRd(:,:,:,by),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,bz),VLd(:,:,:,bz),VRd(:,:,:,bz),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,ps),VLd(:,:,:,ps),VRd(:,:,:,ps),ix,jx,kx,2,lm_type)
+!    fix flux bc (G)
+     call bc_for_G(VLd,VRd,ix,jx,kx)
+
+!    Numerical flux in the Y direction (G)
+!     write(6,*) 'VL, VR --> G'
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,kx,2,flux_type)
+     call flux_resistive<<<Bl,Th>>>(Gd,Ud,xd,yd,zd,dxd,ix,jx,kx,2)
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (H)'
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vx),VLd(:,:,:,vx),VRd(:,:,:,vx),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vy),VLd(:,:,:,vy),VRd(:,:,:,vy),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vz),VLd(:,:,:,vz),VRd(:,:,:,vz),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,pr),VLd(:,:,:,pr),VRd(:,:,:,pr),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,ro),VLd(:,:,:,ro),VRd(:,:,:,ro),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,bx),VLd(:,:,:,bx),VRd(:,:,:,bx),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,by),VLd(:,:,:,by),VRd(:,:,:,by),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,bz),VLd(:,:,:,bz),VRd(:,:,:,bz),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Ud(:,:,:,ps),VLd(:,:,:,ps),VRd(:,:,:,ps),ix,jx,kx,3,lm_type)
+!    fix flux bc (H)
+     call bc_for_H(VLd,VRd,ix,jx,kx)
+
+!    Numerical flux in the Y direction (H)
+!     write(6,*) 'VL, VR --> H'
+     call flux_solver<<<Bl,Th>>>(Hd,VLd,VRd,chd,ix,jx,kx,3,flux_type)
+     call flux_resistive<<<Bl,Th>>>(Hd,Ud,xd,yd,zd,dxd,ix,jx,kx,3)
+
+     if( time_type == 0 ) then
+!       write(6,*) 'U* = U + (dt/dx) (F-F)'
+        call rk_tvd21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,Hd,dtd,dxd,ix,jx,kx)
+     elseif( time_type == 1 ) then
+!       write(6,*) 'U*(n+1/2) = U + (0.5 dt/dx) (F-F)'
+        call rk_std21<<<Bl,Th>>>(Ud,U1d,Fd,Gd,Hd,dtd,dxd,ix,jx,kx)
+     endif
+
+!    boundary condition
+     call bc_for_U(U1d,ix,jx,kx)
+!     write(6,*) 'U* --> V'
+     call u2v<<<Bl,Th>>>(U1d,Vd,ix,jx,kx)
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (F)'
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vx),VLd(:,:,:,vx),VRd(:,:,:,vx),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vy),VLd(:,:,:,vy),VRd(:,:,:,vy),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vz),VLd(:,:,:,vz),VRd(:,:,:,vz),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,pr),VLd(:,:,:,pr),VRd(:,:,:,pr),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,ro),VLd(:,:,:,ro),VRd(:,:,:,ro),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,bx),VLd(:,:,:,bx),VRd(:,:,:,bx),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,by),VLd(:,:,:,by),VRd(:,:,:,by),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,bz),VLd(:,:,:,bz),VRd(:,:,:,bz),ix,jx,kx,1,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,ps),VLd(:,:,:,ps),VRd(:,:,:,ps),ix,jx,kx,1,lm_type)
+!    fix flux bc (F)
+     call bc_for_F(VLd,VRd,ix,jx,kx)
+
+!    Numerical flux in the X direction (F)
+!     write(6,*) 'VL, VR --> F'
+     call flux_solver<<<Bl,Th>>>(Fd,VLd,VRd,chd,ix,jx,kx,1,flux_type)
+     call flux_resistive<<<Bl,Th>>>(Fd,U1d,xd,yd,zd,dxd,ix,jx,kx,1)
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (G)'
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vx),VLd(:,:,:,vx),VRd(:,:,:,vx),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vy),VLd(:,:,:,vy),VRd(:,:,:,vy),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vz),VLd(:,:,:,vz),VRd(:,:,:,vz),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,pr),VLd(:,:,:,pr),VRd(:,:,:,pr),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,ro),VLd(:,:,:,ro),VRd(:,:,:,ro),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,bx),VLd(:,:,:,bx),VRd(:,:,:,bx),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,by),VLd(:,:,:,by),VRd(:,:,:,by),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,bz),VLd(:,:,:,bz),VRd(:,:,:,bz),ix,jx,kx,2,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,ps),VLd(:,:,:,ps),VRd(:,:,:,ps),ix,jx,kx,2,lm_type)
+!    fix flux bc (G)
+     call bc_for_G(VLd,VRd,ix,jx,kx)
+
+!    Numerical flux in the Y direction (G)
+!     write(6,*) 'VL, VR --> G'
+     call flux_solver<<<Bl,Th>>>(Gd,VLd,VRd,chd,ix,jx,kx,2,flux_type)
+     call flux_resistive<<<Bl,Th>>>(Gd,U1d,xd,yd,zd,dxd,ix,jx,kx,2)
+
+!    Slope limiters on primitive variables
+!     write(6,*) 'V --> VL, VR (H)'
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vx),VLd(:,:,:,vx),VRd(:,:,:,vx),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vy),VLd(:,:,:,vy),VRd(:,:,:,vy),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,vz),VLd(:,:,:,vz),VRd(:,:,:,vz),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(Vd(:,:,:,pr),VLd(:,:,:,pr),VRd(:,:,:,pr),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,ro),VLd(:,:,:,ro),VRd(:,:,:,ro),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,bx),VLd(:,:,:,bx),VRd(:,:,:,bx),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,by),VLd(:,:,:,by),VRd(:,:,:,by),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,bz),VLd(:,:,:,bz),VRd(:,:,:,bz),ix,jx,kx,3,lm_type)
+     call limiter<<<Bl,Th>>>(U1d(:,:,:,ps),VLd(:,:,:,ps),VRd(:,:,:,ps),ix,jx,kx,3,lm_type)
+!    fix flux bc (H)
+     call bc_for_H(VLd,VRd,ix,jx,kx)
+
+!    Numerical flux in the Y direction (H)
+!     write(6,*) 'VL, VR --> H'
+     call flux_solver<<<Bl,Th>>>(Hd,VLd,VRd,chd,ix,jx,kx,3,flux_type)
+     call flux_resistive<<<Bl,Th>>>(Hd,U1d,xd,yd,zd,dxd,ix,jx,kx,3)
+
+     if( time_type == 0 ) then
+!       write(6,*) 'U_new = 0.5( U_old + U* + F dt )'
+        call rk_tvd22<<<Bl,Th>>>(Ud,U1d,Fd,Gd,dtd,dxd,ix,jx,kx)
+     elseif( time_type == 1 ) then
+!       write(6,*) 'U_new = U + (dt/dx) (F-F) (n+1/2)'
+        call rk_std22<<<Bl,Th>>>(Ud,Fd,Gd,dtd,dxd,ix,jx,kx)
+     endif
+
+!    boundary condition
+     call bc_for_U(Ud,ix,jx,kx)
+
+!    GLM solver for the second half timestep
+     call glm_ss2<<<Bl,Th>>>(Ud,chd,dtd,ix,jx,kx)
+
+     t = t + dt
+
+  enddo
+
+  deallocate(Ud,U1d,Vd,VLd,VRd,Fd,Gd,Hd,xd,yd,zd)
+  write(6,*) '== end =='
+
+990 format ('data/field-',i5.5,'.dat')
+
+end program main
+!-----------------------------------------------------------------------
