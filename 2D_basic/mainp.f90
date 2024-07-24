@@ -155,6 +155,10 @@ program main
      call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart2d%comm,mreq(2),merr)
      call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
 
+!    *** education ***
+!    To disable hyperbolic div cleaning, pass zero to flux_solver
+!     ch = 0.d0
+!    *** education ***
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
 !     write(6,*) 'U --> SS'

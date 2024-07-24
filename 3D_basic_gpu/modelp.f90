@@ -1,3 +1,10 @@
+function mya3(xx,yy,zz)
+  real(8), intent(in) :: xx, yy, zz
+  real(8), parameter :: myr = 0.3d0
+  real(8) :: mya3
+  mya3 = max( 0.d0, myr - sqrt( yy**2 + min( (2*xx+zz-2)**2, (2*xx+zz)**2, (2*xx+zz+2)**2 )/5.d0 ) )
+end function mya3
+
 subroutine modelp(U,V,x,y,z,dx,ix,jx,kx)
   use parallel
   implicit none
@@ -9,13 +16,15 @@ subroutine modelp(U,V,x,y,z,dx,ix,jx,kx)
 ! ---------------------------------------------------
   real(8), parameter :: pi = 4.d0*atan(1.d0)
 ! X, Y, Z ranges (Note: domain_y(2) and domain_z(2) are automatically calculated)
-  real(8), parameter :: domain_x(2) = (/0.d0, 2*pi/)
-  real(8), parameter :: domain_y(1) = (/0.d0/)
-  real(8), parameter :: domain_z(1) = (/0.d0/)
+  real(8), parameter :: domain_x(2) = (/-0.5d0, 0.5d0/)
+  real(8), parameter :: domain_y(1) = (/-0.5d0/)
+  real(8), parameter :: domain_z(1) = (/-1.d0/)
 ! ---------------------------------------------------
   integer :: i, j, k
   integer :: iix, jjx, kkx
   real(8) :: B2, v2, f1
+  real(8) :: fx, fz, dx2, xx, yy, zz
+  real(8) :: mya3
   real(8) :: tmpx(cart3d%sizes(1)*(ix-2) + 2)
   real(8) :: tmpy(cart3d%sizes(2)*(jx-2) + 2)
   real(8) :: tmpz(cart3d%sizes(3)*(kx-2) + 2)
@@ -54,32 +63,25 @@ subroutine modelp(U,V,x,y,z,dx,ix,jx,kx)
   enddo
 ! ---------------------------------------------------
 
+  fx = - (0.001d0/dx) * (1.d0/sqrt(5.d0))
+  fz = + (0.001d0/dx) * (2.d0/sqrt(5.d0))
+  dx2 = dx/2
+
   do k=1,kx
   do j=1,jx
   do i=1,ix
         
-     U(i,j,k,ro) = gamma**2
-     V(i,j,k,pr) = gamma
+     U(i,j,k,ro) = 1.d0
+     V(i,j,k,pr) = 1.d0
 
-     V(i,j,k,vx) = -sin(y(j))
-     V(i,j,k,vy) = sin(x(i))
-     V(i,j,k,vz) = 0.d0
-!     V(i,j,k,vx) = 0.d0
-!     V(i,j,k,vy) = -sin(z(k))
-!     V(i,j,k,vz) = sin(y(j))
-!     V(i,j,k,vx) = sin(z(k))
-!     V(i,j,k,vy) = 0.d0
-!     V(i,j,k,vz) = -sin(x(i))
+     V(i,j,k,vx) = 1.d0
+     V(i,j,k,vy) = 1.d0
+     V(i,j,k,vz) = 2.d0
 
-     U(i,j,k,bx) = -sin(y(j))
-     U(i,j,k,by) = sin(2*x(i))
-     U(i,j,k,bz) = 0.d0
-!     U(i,j,k,bx) = 0.d0
-!     U(i,j,k,by) = -sin(z(k))
-!     U(i,j,k,bz) = sin(2*y(j))
-!     U(i,j,k,by) = sin(2*z(k))
-!     U(i,j,k,bz) = 0.d0
-!     U(i,j,k,bx) = -sin(x(i))
+     xx = x(i); yy = y(j); zz = z(k)
+     U(i,j,k,bx) =  fz * ( mya3(xx,yy+dx2,zz) - mya3(xx,yy-dx2,zz)  )
+     U(i,j,k,by) =  fx * ( mya3(xx,yy,zz+dx2) - mya3(xx,yy,zz-dx2)  ) - fz * ( mya3(xx+dx2,yy,zz) - mya3(xx-dx2,yy,zz)  )
+     U(i,j,k,bz) = -fx * ( mya3(xx,yy+dx2,zz) - mya3(xx,yy-dx2,zz)  )
 
      U(i,j,k,ps) = 0.d0
 

@@ -5,10 +5,10 @@ F90 = gfortran -O2 -Wall
 ### AMD AOCC fortran
 # F90 = flang -O2
 
-OBJS = model.o u2v.o output.o limiter.o flux_solver.o
+OBJ = main.o model.o u2v.o output.o limiter.o flux_solver.o
 
-run : main.o $(OBJS)
-	$(F90) -o a.out main.o $(OBJS)
+run : $(OBJ)
+	$(F90) -o a.out $(OBJ)
 
 %.o: %.f90 param_rela.h
 	$(F90) $(FFLAGS) -c $<

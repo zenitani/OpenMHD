@@ -5,27 +5,25 @@ program main
 !        Ref: S. Zenitani, T. Miyoshi, Phys. Plasmas 18, 022105 (2011)
 !-----------------------------------------------------------------------
 !     2010/09/25  S. Zenitani  HLL reconnection code
-!     2010/09/29  S. Zenitani  MPI version
-!     2018/05/02  S. Zenitani  parallel module (MPI-3 version)
 !     2020/08/04  S. Zenitani  CUDA + MPI version
+!     2024/11/01  S. Zenitani  3-D version
 !-----------------------------------------------------------------------
   use cudafor
   use parallel
   implicit none
   include 'param.h'
 !-----------------------------------------------------------------------
-  integer, parameter :: ix =  250 + 2  ! 500 x   4 -->  2000 cells = 200 x 10
-  integer, parameter :: jx =  125 + 2  !                 500 cells =  50 x 10
-  integer, parameter :: kx =  100 + 2  !                 500 cells =  50 x 10
-  integer, parameter :: mpi_nums(3)       = (/4, 2, 1/)  ! MPI numbers
+  integer, parameter :: ix =  800 + 2  !                 800 cells = 160 x 5
+  integer, parameter :: jx =  100 + 2  !    100 x 2 -->  200 cells =  40 x 5
+  integer, parameter :: kx =  150 + 2  !                 150 cells =  30 x 5
+  integer, parameter :: mpi_nums(3)       = (/1, 2, 1/)  ! MPI numbers
   logical, parameter :: bc_periodicity(3) = (/.false., .false., .true./)
-! Zenitani & Miyoshi (2011): 6000 x 4500 cells
 !-----------------------------------------------------------------------
   integer, parameter :: loop_max = 1000000
   real(8), parameter :: dtmin = 1.0d-7
   real(8), parameter :: tend  = 251.0d0
-  real(8), parameter :: dtout =  25.0d0  ! output interval
-  real(8), parameter :: cfl   =   0.35d0 ! time step
+  real(8), parameter :: dtout =  25.0d0 ! output interval
+  real(8), parameter :: cfl   =   0.3d0 ! time step
 ! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
   integer :: n_start = 0
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)

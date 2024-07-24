@@ -17,19 +17,19 @@ F90 = mpif90 -Wall -O2
 ### JAXA/FX100
 # F90 = f90sjx -Umpi -Uflat
 
-OBJS = model.o set_dt.o u2v.o bc.o fileio.o rk.o \
-	flux_solver.o limiter.o glm_ss2.o
-OBJP = modelp.o mpiio.o
+OBJ   = set_dt.o u2v.o bc.o fileio.o rk.o flux_solver.o limiter.o glm_ss2.o
+OBJ_S = main.o model.o
+OBJ_P = parallel.o mainp.o modelp.o mpiio.o
 
 all: run runp
 
 # serial version
-run : main.o $(OBJS)
-	$(F90) -o a.out main.o $(OBJS)
+run : $(OBJ) $(OBJ_S)
+	$(F90) -o a.out $(OBJ) $(OBJ_S)
 
 # parallel version
-runp : parallel.o mainp.o $(OBJS) $(OBJP)
-	$(F90) -o ap.out parallel.o mainp.o $(OBJS) $(OBJP)
+runp : $(OBJ) $(OBJ_P)
+	$(F90) -o ap.out $(OBJ) $(OBJ_P)
 
 
 %.o: %.f90 param.h

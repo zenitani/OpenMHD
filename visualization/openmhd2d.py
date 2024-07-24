@@ -6,8 +6,8 @@
 #-----------------------------------------------------------------------
 # This file contains the following subroutines to load the data.
 #
-#  * data_read(it,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None)
-#  * data_read_from_bigendian(it,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None)
+#  * data_read(it,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None,silent=False)
+#  * data_read_from_bigendian(it,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None,silent=False)
 #
 # We assume a python environment on little-endian computers.
 # A little-endian-to-big-endian version is not provided here, but
@@ -17,9 +17,9 @@
 #-----------------------------------------------------------------------
 #     data_read routine
 #-----------------------------------------------------------------------
-def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None):
+def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None,silent=False):
     """
-    data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None)
+    data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None,silent=False)
 
     Reads data from a file.
     The first argument arg1 can be a string or an integer.
@@ -55,8 +55,9 @@ def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None):
     buf = np.fromfile(file=f,dtype=np.int32,count=2)
     ix0 = buf[0]
     jx0 = buf[1]
-    print( ' t = ', t0 )
-    print( ' size = (',ix0,' x ',jx0,')' )
+    if( silent==False ):
+        print( ' t = ', t0 )
+        print( ' size = (',ix0,' x ',jx0,')' )
 
     tmpx = np.ndarray((ix0),np.double)
     tmpy = np.ndarray((jx0),np.double)
@@ -129,9 +130,9 @@ def data_read(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None):
 #-----------------------------------------------------------------------
 #     data_read code to read big-endian data
 #-----------------------------------------------------------------------
-def data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None):
+def data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None,silent=False):
     """
-    data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None)
+    data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=None,yrange=None,silent=False)
 
     Reads data from a file.
     The first argument arg1 can be a string or an integer.
@@ -164,8 +165,9 @@ def data_read_from_bigendian(arg1,ix1=None,ix2=None,jx1=None,jx2=None,xrange=Non
     buf = np.fromfile(file=f,dtype='>i',count=2)
     ix0 = buf[0]
     jx0 = buf[1]
-    print( ' t = ', t0 )
-    print( ' size = (',ix0,' x ',jx0,')' )
+    if( silent==False ):
+        print( ' t = ', t0 )
+        print( ' size = (',ix0,' x ',jx0,')' )
 
     tmpx = np.ndarray((ix0),np.double)
     tmpy = np.ndarray((jx0),np.double)

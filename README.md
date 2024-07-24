@@ -54,10 +54,6 @@ Numerical schemes
 
  * M. Brio, C. C. Wu, J. Comput. Phys. 75, 400 (1988)
 
-Corotating interaction region
-
- * K. Tsubouchi, J. Geophys. Res. 114, A02101 (2009)
-
 Orszag-Tang vortex
 
  * S. A. Orszag, C.-M. Tang, J. Fluid Mech. 90, 129 (1979)
@@ -76,3 +72,8 @@ Relativistic jet and relativistic MHD schemes
  * S. Zenitani, M. Hesse, A. Klimas, ApJ, 712, 951 (2010)
  * A. Mignone, M. Ugliano, G. Bodo, MNRAS, 393, 1141 (2009)
  * A. Mignone, J. C. McKinney, MNRAS, 378, 1118 (2007)
+
+Loop advection problem
+
+ * T. A. Gardiner, J. M. Stone, J. Comput. Phys. 205, 509 (2005)
+
