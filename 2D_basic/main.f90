@@ -78,6 +78,10 @@ program main
 !   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx)
+!    *** education ***
+!    To disable hyperbolic div cleaning, pass zero to flux_solver
+!     ch = 0.d0
+!    *** education ***
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()
      call glm_ss2(U,ch,dt,ix,jx)
@@ -96,10 +100,6 @@ program main
 !    fix VL/VR for periodic bc (F)
      VR(ix-1,:,:) = VR(1,:,:)
      VL(1,:,:)    = VL(ix-1,:,:)
-!    *** education ***
-!    To disable hyperbolic div cleaning, pass zero to flux_solver
-!    ch = 0.d0
-!    *** education ***
 !    Numerical flux in the X direction (F)
 !     write(6,*) 'VL, VR --> F'
      call flux_solver(F,VL,VR,ch,ix,jx,1,flux_type)
