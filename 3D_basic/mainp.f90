@@ -3,7 +3,6 @@ program main
 !     OpenMHD  Riemann solver (parallel version)
 !-----------------------------------------------------------------------
 !     2010/09/18  S. Zenitani  2D LLF/HLL/HLLC-G/HLLD solver
-!     2010/09/25  S. Zenitani  Hyperbolic divergence cleaning
 !     2015/04/09  S. Zenitani  MPI-IO
 !     2018/05/02  S. Zenitani  parallel module (MPI-3 version)
 !     2023/12/25  S. Zenitani  3-D version
@@ -14,12 +13,12 @@ program main
   integer, parameter :: ix =  50 + 2
   integer, parameter :: jx =  50 + 2
   integer, parameter :: kx =  50 + 2
-  integer, parameter :: mpi_nums(3)       = (/2, 2, 2/)  ! MPI numbers
+  integer, parameter :: mpi_nums(3)       = (/2, 2, 4/)  ! MPI numbers
   logical, parameter :: bc_periodicity(3) = (/.true., .true., .true./)
   integer, parameter :: loop_max = 200000
-  real(8), parameter :: tend  = 4.0d0
+  real(8), parameter :: tend  = 1.01d0
   real(8), parameter :: dtout = 0.1d0 ! output interval
-  real(8), parameter :: cfl   = 0.4d0 ! time step
+  real(8), parameter :: cfl   = 0.3d0 ! time step
 ! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
   integer :: n_start = 0
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)

@@ -3,7 +3,6 @@ program main
 !     OpenMHD  Riemann solver
 !-----------------------------------------------------------------------
 !     2010/09/18  S. Zenitani  2D LLF/HLL/HLLC-G/HLLD solver
-!     2010/09/25  S. Zenitani  Hyperbolic divergence cleaning
 !     2020/07/04  S. Zenitani  CUDA fortran version
 !     2023/12/25  S. Zenitani  3-D version
 !-----------------------------------------------------------------------
@@ -11,16 +10,16 @@ program main
   use parallel
   implicit none
   include 'param.h'
-  integer, parameter :: ix =  50 + 2
-  integer, parameter :: jx =  50 + 2
-  integer, parameter :: kx =  50 + 2
-  integer, parameter :: mpi_nums(3)       = (/2, 2, 2/)  ! MPI numbers
+  integer, parameter :: ix = 100 + 2
+  integer, parameter :: jx = 100 + 2
+  integer, parameter :: kx = 100 + 2
+  integer, parameter :: mpi_nums(3)       = (/1, 1, 2/)  ! MPI numbers
   logical, parameter :: bc_periodicity(3) = (/.true., .true., .true./)
   integer, parameter :: loop_max = 3000000
   real(8), parameter :: dtmin = 1.0d-7
-  real(8), parameter :: tend  = 4.0d0
+  real(8), parameter :: tend  = 1.01d0
   real(8), parameter :: dtout = 0.1d0 ! output interval
-  real(8), parameter :: cfl   = 0.4d0 ! time step
+  real(8), parameter :: cfl   = 0.3d0 ! time step
 ! If non-zero, restart from a previous file. If negative, find a restart file backword in time.
   integer :: n_start = 0
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)

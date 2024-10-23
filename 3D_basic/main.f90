@@ -3,18 +3,17 @@ program main
 !     OpenMHD  Riemann solver
 !-----------------------------------------------------------------------
 !     2010/09/18  S. Zenitani  2D LLF/HLL/HLLC-G/HLLD solver
-!     2010/09/25  S. Zenitani  Hyperbolic divergence cleaning
 !     2023/12/25  S. Zenitani  3-D version
 !-----------------------------------------------------------------------
   implicit none
   include 'param.h'
   integer, parameter :: ix = 100 + 2
   integer, parameter :: jx = 100 + 2
-  integer, parameter :: kx = 100 + 2
-  integer, parameter :: loop_max = 30000
-  real(8), parameter :: tend  = 4.0d0
+  integer, parameter :: kx = 200 + 2
+  integer, parameter :: loop_max = 3000000
+  real(8), parameter :: tend  = 1.01d0
   real(8), parameter :: dtout = 0.1d0 ! output interval
-  real(8), parameter :: cfl   = 0.4d0 ! time step
+  real(8), parameter :: cfl   = 0.3d0 ! time step
 ! Slope limiter  (0: flat, 1: minmod, 2: MC, 3: van Leer, 4: Koren)
   integer, parameter :: lm_type   = 1
 ! Numerical flux (0: LLF, 1: HLL, 2: HLLC, 3: HLLD)
