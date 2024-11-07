@@ -75,5 +75,5 @@ Relativistic jet and relativistic MHD schemes
 
 Loop advection problem
 
- * T. A. Gardiner, J. M. Stone, J. Comput. Phys. 205, 509 (2005)
+ * T. A. Gardiner, J. M. Stone, J. Comput. Phys. 227, 4123 (2008)
 
