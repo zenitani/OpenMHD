@@ -25,6 +25,9 @@ module parallel
   type(myranks) :: ranks_local   ! intra-node communication
   integer, private :: comm_local ! intra-node communication
 
+  integer, private :: type_w1,type_w2,type_e1,type_e2
+  integer, private :: type_s1,type_s2,type_n1,type_n2
+
   ! ----- MPI-3 shared memory communication ------------------------
   logical, parameter, private :: use_shm = .false.  ! MPI communication
 ! logical, parameter, private :: use_shm = .true.   ! MPI-3 SHM model (experimental)
@@ -52,6 +55,7 @@ contains
     integer :: tmpA(4), tmpB(4)
     integer :: group_world, group_local
     integer :: mdisp, merr, merrcode
+    integer :: sizes(ndims+1), halo_sizes(ndims+1)
     integer(kind=mpi_address_kind) :: msize
     type(c_ptr) :: baseptr1, baseptr2
 
@@ -81,6 +85,27 @@ contains
     ! No MPI transport in the case of 1
     if( cart2d%sizes(1) == 1 )  mpi_mode(1) = 0
     if( cart2d%sizes(2) == 1 )  mpi_mode(2) = 0
+
+    ! Halo datatypes
+    sizes = (/ix,jx,var1/)
+    halo_sizes = (/1,jx,var1/)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0/),mpi_order_fortran,mpi_real8,type_w1,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/1,0,0/),mpi_order_fortran,mpi_real8,type_w2,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/ix-2,0,0/),mpi_order_fortran,mpi_real8,type_e2,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/ix-1,0,0/),mpi_order_fortran,mpi_real8,type_e1,merr)
+    call mpi_type_commit(type_w1,merr)
+    call mpi_type_commit(type_w2,merr)
+    call mpi_type_commit(type_e2,merr)
+    call mpi_type_commit(type_e1,merr)
+    halo_sizes = (/ix,1,var1/)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0/),mpi_order_fortran,mpi_real8,type_s1,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,1,0/),mpi_order_fortran,mpi_real8,type_s2,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,jx-2,0/),mpi_order_fortran,mpi_real8,type_n2,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,jx-1,0/),mpi_order_fortran,mpi_real8,type_n1,merr)
+    call mpi_type_commit(type_s1,merr)
+    call mpi_type_commit(type_s2,merr)
+    call mpi_type_commit(type_n2,merr)
+    call mpi_type_commit(type_n1,merr)
 
     ! ----- MPI-3 shared memory communication ------------------------
     if( use_shm ) then
@@ -166,6 +191,14 @@ contains
 
     if( mpi_mode(1) == 3 )  call mpi_win_free(mwin1,merr)
     if( mpi_mode(2) == 3 )  call mpi_win_free(mwin2,merr)
+    call mpi_type_free( type_w1,merr )
+    call mpi_type_free( type_w2,merr )
+    call mpi_type_free( type_e1,merr )
+    call mpi_type_free( type_e2,merr )
+    call mpi_type_free( type_s1,merr )
+    call mpi_type_free( type_s2,merr )
+    call mpi_type_free( type_n1,merr )
+    call mpi_type_free( type_n2,merr )
     call mpi_finalize(merr)
   
   end subroutine parallel_finalize
@@ -178,18 +211,12 @@ contains
     ! direction [input]: 1 (X), 2 (Y), 3 (Z)
     integer, intent(in)  :: dir
 !----------------------------------------------------------------------
-    real(8), allocatable :: bufsnd1(:,:), bufrcv1(:,:)
-    real(8), allocatable :: bufsnd2(:,:), bufrcv2(:,:)
     integer :: mreq1(2), mreq2(2)
-    integer :: msize, merr
+    integer :: merr
 !----------------------------------------------------------------------
 
     select case(dir)
     case(1)  ! west <--> east
-
-       allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
-       allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
-       msize  = jx*var1
 
        ! MPI mode switch
        select case(mpi_mode(1))
@@ -204,22 +231,14 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq1(1),merr)
-          bufsnd1(:,:) = U(2,:,:)
-          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
+          call mpi_irecv(U,1,type_e1,ranks%east,0,cart2d%comm,mreq1(1),merr)
+          call mpi_isend(U,1,type_w2,ranks%west,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq2(1),merr)
-          bufsnd2(:,:) = U(ix-1,:,:)
-          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
+          call mpi_irecv(U,1,type_w1,ranks%west,1,cart2d%comm,mreq2(1),merr)
+          call mpi_isend(U,1,type_e2,ranks%east,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( ranks%east /= mpi_proc_null ) then
-             U(ix,:,:) = bufrcv1(:,:)
-          endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( ranks%west /= mpi_proc_null ) then
-             U(1,:,:) = bufrcv2(:,:)
-          endif
 
        case(3)  ! MPI-3
 
@@ -229,18 +248,16 @@ contains
              fwest(:,:,2) = U(2,:,:)
 !            call mpi_win_unlock(ranks_local%west,mwin1,merr)
           else
-             call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq1(1),merr)
-             bufsnd1(:,:) = U(2,:,:)
-             call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
+             call mpi_irecv(U,1,type_w1,ranks%west,1,cart2d%comm,mreq1(1),merr)
+             call mpi_isend(U,1,type_w2,ranks%west,0,cart2d%comm,mreq1(2),merr)
           endif
           if( ranks_local%east /= mpi_undefined ) then
 !            call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwin1,merr)
              feast(:,:,1) = U(ix-1,:,:)
 !            call mpi_win_unlock(ranks_local%east,mwin1,merr)
           else
-             call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq2(1),merr)
-             bufsnd2(:,:) = U(ix-1,:,:)
-             call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
+             call mpi_irecv(U,1,type_e1,ranks%east,0,cart2d%comm,mreq2(1),merr)
+             call mpi_isend(U,1,type_e2,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
 
           call mpi_win_unlock_all(mwin1,merr)
@@ -252,32 +269,19 @@ contains
              U(1,:,:) = fptr1(:,:,1)
           else
              call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-             if( ranks%west /= mpi_proc_null ) then
-                U(1,:,:) = bufrcv2(:,:)
-             endif
           endif
           if( ranks_local%east /= mpi_undefined ) then
              U(ix,:,:) = fptr1(:,:,2)
           else
              call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-             if( ranks%east /= mpi_proc_null ) then
-                U(ix,:,:) = bufrcv1(:,:)
-             endif
           endif
 !         call mpi_win_fence(0,mwin1,merr)
 
        end select
        ! MPI mode switch
 
-       deallocate( bufsnd1, bufrcv1 )
-       deallocate( bufsnd2, bufrcv2 )
-
     !----------------------------------------------------------
     case(2)  ! south <--> north
-
-       allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
-       allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
-       msize  = ix*var1
 
        ! MPI mode switch
        select case(mpi_mode(2))
@@ -292,22 +296,14 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq1(1),merr)
-          bufsnd1(:,:) = U(:,2,:)
-          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
+          call mpi_irecv(U,1,type_n1,ranks%north,0,cart2d%comm,mreq1(1),merr)
+          call mpi_isend(U,1,type_s2,ranks%south,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq2(1),merr)
-          bufsnd2(:,:) = U(:,jx-1,:)
-          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
+          call mpi_irecv(U,1,type_s1,ranks%south,1,cart2d%comm,mreq2(1),merr)
+          call mpi_isend(U,1,type_n2,ranks%north,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( ranks%north /= mpi_proc_null ) then
-             U(:,jx,:) = bufrcv1(:,:)
-          endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( ranks%south /= mpi_proc_null ) then
-             U(:,1,:) = bufrcv2(:,:)
-          endif
 
        case(3)  ! MPI-3
 
@@ -315,16 +311,14 @@ contains
           if( ranks_local%south /= mpi_undefined ) then
              fsouth(:,:,2) = U(:,2,:)
           else
-             call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq1(1),merr)
-             bufsnd1(:,:) = U(:,2,:)
-             call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
+             call mpi_irecv(U,1,type_s1,ranks%south,1,cart2d%comm,mreq1(1),merr)
+             call mpi_isend(U,1,type_s2,ranks%south,0,cart2d%comm,mreq1(2),merr)
           endif
           if( ranks_local%north /= mpi_undefined ) then
              fnorth(:,:,1) = U(:,jx-1,:)
           else
-             call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq2(1),merr)
-             bufsnd2(:,:) = U(:,jx-1,:)
-             call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
+             call mpi_irecv(U,1,type_n1,ranks%north,0,cart2d%comm,mreq2(1),merr)
+             call mpi_isend(U,1,type_n2,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif
 
           call mpi_win_unlock_all(mwin2,merr)
@@ -334,24 +328,15 @@ contains
              U(:,1,:) = fptr2(:,:,1)
           else
              call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-             if( ranks%south /= mpi_proc_null ) then
-                U(:,1,:) = bufrcv2(:,:)
-             endif
           endif
           if( ranks_local%north /= mpi_undefined ) then
              U(:,jx,:) = fptr2(:,:,2)
           else
              call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-             if( ranks%north /= mpi_proc_null ) then
-                U(:,jx,:) = bufrcv1(:,:)
-             endif
           endif
 
        end select
        ! MPI mode switch
-
-       deallocate( bufsnd1, bufrcv1 )
-       deallocate( bufsnd2, bufrcv2 )
    
     end select
 
@@ -366,18 +351,12 @@ contains
     ! direction [input]: 1 (X), 2 (Y), 3 (Z)
     integer, intent(in)  :: dir
 !----------------------------------------------------------------------
-    real(8), allocatable :: bufsnd1(:,:), bufrcv1(:,:)
-    real(8), allocatable :: bufsnd2(:,:), bufrcv2(:,:)
     integer :: mreq1(2), mreq2(2)
-    integer :: msize, merr
+    integer :: merr
 !----------------------------------------------------------------------
 
     select case(dir)
     case(1)  ! west <--> east
-
-       allocate( bufsnd1(jx,var1), bufrcv1(jx,var1) )
-       allocate( bufsnd2(jx,var1), bufrcv2(jx,var1) )
-       msize  = jx*var1
 
        ! MPI mode switch
        select case(mpi_mode(1))
@@ -392,22 +371,14 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq1(1),merr)
-          bufsnd1(:,:) = VR(1,:,:)
-          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
+          call mpi_irecv(VR,1,type_e2,ranks%east,0,cart2d%comm,mreq1(1),merr)
+          call mpi_isend(VR,1,type_w1,ranks%west,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq2(1),merr)
-          bufsnd2(:,:) = VL(ix-1,:,:)
-          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
+          call mpi_irecv(VL,1,type_w1,ranks%west,1,cart2d%comm,mreq2(1),merr)
+          call mpi_isend(VL,1,type_e2,ranks%east,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( ranks%east /= mpi_proc_null ) then
-             VR(ix-1,:,:) = bufrcv1(:,:)
-          endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( ranks%west /= mpi_proc_null ) then
-             VL(1,:,:) = bufrcv2(:,:)
-          endif
 
        case(3)  ! MPI-3
 
@@ -415,16 +386,14 @@ contains
           if( ranks_local%west /= mpi_undefined ) then
              fwest(:,:,2) = VR(1,:,:)
           else
-             call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%west,1,cart2d%comm,mreq1(1),merr)
-             bufsnd1(:,:) = VR(1,:,:)
-             call mpi_isend(bufsnd1,msize,mpi_real8,ranks%west,0,cart2d%comm,mreq1(2),merr)
+             call mpi_irecv(VL,1,type_w1,ranks%west,1,cart2d%comm,mreq1(1),merr)
+             call mpi_isend(VR,1,type_w1,ranks%west,0,cart2d%comm,mreq1(2),merr)
           endif
           if( ranks_local%east /= mpi_undefined ) then
              feast(:,:,1) = VL(ix-1,:,:)
           else
-             call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%east,0,cart2d%comm,mreq2(1),merr)
-             bufsnd2(:,:) = VL(ix-1,:,:)
-             call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
+             call mpi_irecv(VR,1,type_e2,ranks%east,0,cart2d%comm,mreq2(1),merr)
+             call mpi_isend(VL,1,type_e2,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
 
           call mpi_win_unlock_all(mwin1,merr)
@@ -434,31 +403,18 @@ contains
              VL(1,:,:) = fptr1(:,:,1)
           else
              call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-             if( ranks%west /= mpi_proc_null ) then
-                VL(1,:,:) = bufrcv2(:,:)
-             endif
           endif
           if( ranks_local%east /= mpi_undefined ) then
              VR(ix-1,:,:) = fptr1(:,:,2)
           else
              call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-             if( ranks%east /= mpi_proc_null ) then
-                VR(ix-1,:,:) = bufrcv1(:,:)
-             endif
           endif
 
        end select
        ! MPI mode switch
 
-       deallocate( bufsnd1, bufrcv1 )
-       deallocate( bufsnd2, bufrcv2 )
-
     !----------------------------------------------------------
     case(2)  ! south <--> north
-
-       allocate( bufsnd1(ix,var1), bufrcv1(ix,var1) )
-       allocate( bufsnd2(ix,var1), bufrcv2(ix,var1) )
-       msize  = ix*var1
 
        ! MPI mode switch
        select case(mpi_mode(2))
@@ -473,22 +429,14 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq1(1),merr)
-          bufsnd1(:,:) = VR(:,1,:)
-          call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
+          call mpi_irecv(VR,1,type_n2,ranks%north,0,cart2d%comm,mreq1(1),merr)
+          call mpi_isend(VR,1,type_s1,ranks%south,0,cart2d%comm,mreq1(2),merr)
           ! nonblocking communication (mreq2)
-          call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq2(1),merr)
-          bufsnd2(:,:) = VL(:,jx-1,:)
-          call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
+          call mpi_irecv(VL,1,type_s1,ranks%south,1,cart2d%comm,mreq2(1),merr)
+          call mpi_isend(VL,1,type_n2,ranks%north,1,cart2d%comm,mreq2(2),merr)
 
           call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          if( ranks%north /= mpi_proc_null ) then
-             VR(:,jx-1,:) = bufrcv1(:,:)
-          endif
           call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-          if( ranks%south /= mpi_proc_null ) then
-             VL(:,1,:) = bufrcv2(:,:)
-          endif
 
        case(3)  ! MPI-3
 
@@ -496,16 +444,14 @@ contains
           if( ranks_local%south /= mpi_undefined ) then
              fsouth(:,:,2) = VR(:,1,:)
           else
-             call mpi_irecv(bufrcv2,msize,mpi_real8,ranks%south,1,cart2d%comm,mreq1(1),merr)
-             bufsnd1(:,:) = VR(:,1,:)
-             call mpi_isend(bufsnd1,msize,mpi_real8,ranks%south,0,cart2d%comm,mreq1(2),merr)
+             call mpi_irecv(VL,1,type_s1,ranks%south,1,cart2d%comm,mreq1(1),merr)
+             call mpi_isend(VR,1,type_s1,ranks%south,0,cart2d%comm,mreq1(2),merr)
           endif
           if( ranks_local%north /= mpi_undefined ) then
              fnorth(:,:,1) = VL(:,jx-1,:)
           else
-             call mpi_irecv(bufrcv1,msize,mpi_real8,ranks%north,0,cart2d%comm,mreq2(1),merr)
-             bufsnd2(:,:) = VL(:,jx-1,:)
-             call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
+             call mpi_irecv(VR,1,type_n2,ranks%north,0,cart2d%comm,mreq2(1),merr)
+             call mpi_isend(VL,1,type_n2,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif
 
           call mpi_win_unlock_all(mwin2,merr)
@@ -515,25 +461,16 @@ contains
              VL(:,1,:) = fptr2(:,:,1)
           else
              call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-             if( ranks%south /= mpi_proc_null ) then
-                VL(:,1,:) = bufrcv2(:,:)
-             endif
           endif
           if( ranks_local%north /= mpi_undefined ) then
              VR(:,jx-1,:) = fptr2(:,:,2)
           else
              call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
-             if( ranks%north /= mpi_proc_null ) then
-                VR(:,jx-1,:) = bufrcv1(:,:)
-             endif
           endif
 
        end select
        ! MPI mode switch
 
-       deallocate( bufsnd1, bufrcv1 )
-       deallocate( bufsnd2, bufrcv2 )
-   
     end select
 
   end subroutine parallel_exchange2
