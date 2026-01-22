@@ -191,14 +191,14 @@ contains
 
     if( mpi_mode(1) == 3 )  call mpi_win_free(mwin1,merr)
     if( mpi_mode(2) == 3 )  call mpi_win_free(mwin2,merr)
-    call mpi_type_free( type_w1,merr )
-    call mpi_type_free( type_w2,merr )
-    call mpi_type_free( type_e1,merr )
-    call mpi_type_free( type_e2,merr )
-    call mpi_type_free( type_s1,merr )
-    call mpi_type_free( type_s2,merr )
-    call mpi_type_free( type_n1,merr )
-    call mpi_type_free( type_n2,merr )
+    call mpi_type_free(type_w1,merr)
+    call mpi_type_free(type_w2,merr)
+    call mpi_type_free(type_e1,merr)
+    call mpi_type_free(type_e2,merr)
+    call mpi_type_free(type_s1,merr)
+    call mpi_type_free(type_s2,merr)
+    call mpi_type_free(type_n1,merr)
+    call mpi_type_free(type_n2,merr)
     call mpi_finalize(merr)
   
   end subroutine parallel_finalize
