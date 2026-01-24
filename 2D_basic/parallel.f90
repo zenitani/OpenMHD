@@ -6,7 +6,7 @@ module parallel
   integer, parameter :: ndims = 2
 
   ! topology
-  type mycoords
+  type :: mycoords
      integer :: comm
      integer :: sizes(ndims)
      integer :: coords(ndims)
@@ -15,7 +15,7 @@ module parallel
   type(mycoords) :: cart2d
 
   ! rank info
-  type myranks
+  type :: myranks
      integer :: size = 0
      integer :: myrank
      integer :: north, east, south, west
@@ -30,7 +30,7 @@ module parallel
 
   ! ----- MPI-3 shared memory communication ------------------------
   logical, parameter, private :: use_shm = .false.  ! MPI communication
-! logical, parameter, private :: use_shm = .true.   ! MPI-3 SHM model (experimental)
+! logical, parameter, private :: use_shm = .true.   ! MPI-3 SHM model
 
   ! Please do not edit here
   integer, private :: mpi_mode(ndims) = (/1, 1/)  ! 0: no MPI, 1: MPI-1, 3: MPI-3
@@ -244,26 +244,22 @@ contains
 
           call mpi_win_lock_all(0,mwin1,merr)
           if( ranks_local%west /= mpi_undefined ) then
-!            call mpi_win_lock(mpi_lock_shared,ranks_local%west,0,mwin1,merr)
              fwest(:,:,2) = U(2,:,:)
-!            call mpi_win_unlock(ranks_local%west,mwin1,merr)
           else
              call mpi_irecv(U,1,type_w1,ranks%west,1,cart2d%comm,mreq1(1),merr)
              call mpi_isend(U,1,type_w2,ranks%west,0,cart2d%comm,mreq1(2),merr)
           endif
           if( ranks_local%east /= mpi_undefined ) then
-!            call mpi_win_lock(mpi_lock_shared,ranks_local%east,0,mwin1,merr)
              feast(:,:,1) = U(ix-1,:,:)
-!            call mpi_win_unlock(ranks_local%east,mwin1,merr)
           else
              call mpi_irecv(U,1,type_e1,ranks%east,0,cart2d%comm,mreq2(1),merr)
              call mpi_isend(U,1,type_e2,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin1,merr)
           call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
-!         call mpi_win_sync(mwin1,merr)
-!         call mpi_win_fence(mpi_mode_noput,mwin1,merr)
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
              U(1,:,:) = fptr1(:,:,1)
@@ -275,7 +271,6 @@ contains
           else
              call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
           endif
-!         call mpi_win_fence(0,mwin1,merr)
 
        end select
        ! MPI mode switch
@@ -321,8 +316,10 @@ contains
              call mpi_isend(U,1,type_n2,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin2,merr)
           call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
              U(:,1,:) = fptr2(:,:,1)
@@ -396,8 +393,10 @@ contains
              call mpi_isend(VL,1,type_e2,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin1,merr)
           call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
              VL(1,:,:) = fptr1(:,:,1)
@@ -454,8 +453,10 @@ contains
              call mpi_isend(VL,1,type_n2,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin2,merr)
           call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
              VL(:,1,:) = fptr2(:,:,1)
