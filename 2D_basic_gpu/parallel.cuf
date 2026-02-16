@@ -7,7 +7,7 @@ module parallel
   integer, parameter :: ndims = 2
 
   ! topology
-  type mycoords
+  type :: mycoords
      integer :: comm
      integer :: sizes(ndims)
      integer :: coords(ndims)
@@ -16,7 +16,7 @@ module parallel
   type(mycoords) :: cart2d
 
   ! rank info
-  type myranks
+  type :: myranks
      integer :: size = 0
      integer :: myrank
      integer :: north, east, south, west
