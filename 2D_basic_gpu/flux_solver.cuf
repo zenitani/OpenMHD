@@ -53,7 +53,7 @@ subroutine flux_solver(F,VL,VR,ch,ix,jx,dir,type)
   real(8), device :: aL1, aR1, aVL, aVR
   real(8), device :: UL1(var1), UR1(var1), U2(var1)
   real(8), device :: vt1L, vt1R, vt2L, vt2R, roLs, roRs
-  real(8), device :: hllg_factor = 1.001d0   ! threshold to switch HLLC-G and HLLD
+  real(8), parameter :: hllg_factor = 1.001d0   ! threshold to switch HLLC-G and HLLD
 !-----------------------------------------------------------------------
 
   FL = 0.d0; FR = 0.d0

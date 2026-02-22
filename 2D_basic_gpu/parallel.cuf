@@ -254,7 +254,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin1,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do j=1,jx
              bufsnd1(j,k) = Ud(2,j,k)
@@ -280,8 +279,9 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
 
-          call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          ! local sync & barrier
+          call mpi_win_sync(mwin1,merr)
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
              bufrcv2(:,:) = fptr1(:,:,1)
@@ -377,7 +377,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin2,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do i=1,ix
              bufsnd1(i,k) = Ud(i,2,k)
@@ -407,8 +406,9 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif
 
-          call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          ! local sync & barrier
+          call mpi_win_sync(mwin2,merr)
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
              bufrcv2(:,:) = fptr2(:,:,1)
@@ -528,7 +528,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin1,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do j=1,jx
              bufsnd1(j,k) = VRd(1,j,k)
@@ -554,8 +553,9 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart2d%comm,mreq2(2),merr)
           endif
 
-          call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          ! local sync & barrier
+          call mpi_win_sync(mwin1,merr)
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
              bufrcv2(:,:) = fptr1(:,:,1)
@@ -651,7 +651,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin2,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do i=1,ix
              bufsnd1(i,k) = VRd(i,1,k)
@@ -677,8 +676,9 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart2d%comm,mreq2(2),merr)
           endif
 
-          call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          ! local sync & barrier
+          call mpi_win_sync(mwin2,merr)
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
              bufrcv2(:,:) = fptr2(:,:,1)
