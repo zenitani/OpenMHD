@@ -254,7 +254,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin1,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do j=1,jx
              bufsnd1(j,k) = Ud(2,j,k)
@@ -379,7 +378,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin2,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do i=1,ix
              bufsnd1(i,k) = Ud(i,2,k)
@@ -532,7 +530,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin1,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do j=1,jx
              bufsnd1(j,k) = VRd(1,j,k)
@@ -657,7 +654,6 @@ contains
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin2,merr)
           !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
           do k=1,var1; do i=1,ix
              bufsnd1(i,k) = VRd(i,1,k)
