@@ -242,6 +242,7 @@ contains
 
        case(3)  ! MPI-3
 
+          call mpi_win_lock_all(0,mwin1,merr)
           if( ranks_local%west /= mpi_undefined ) then
              fwest(:,:,2) = U(2,:,:)
           else
@@ -257,6 +258,7 @@ contains
 
           ! local sync & barrier
           call mpi_win_sync(mwin1,merr)
+          call mpi_win_unlock_all(mwin1,merr)
           call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
@@ -300,6 +302,7 @@ contains
 
        case(3)  ! MPI-3
 
+          call mpi_win_lock_all(0,mwin2,merr)
           if( ranks_local%south /= mpi_undefined ) then
              fsouth(:,:,2) = U(:,2,:)
           else
@@ -315,6 +318,7 @@ contains
 
           ! local sync & barrier
           call mpi_win_sync(mwin2,merr)
+          call mpi_win_unlock_all(mwin2,merr)
           call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
@@ -375,6 +379,7 @@ contains
 
        case(3)  ! MPI-3
 
+          call mpi_win_lock_all(0,mwin1,merr)
           if( ranks_local%west /= mpi_undefined ) then
              fwest(:,:,2) = VR(1,:,:)
           else
@@ -390,6 +395,7 @@ contains
 
           ! local sync & barrier
           call mpi_win_sync(mwin1,merr)
+          call mpi_win_unlock_all(mwin1,merr)
           call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
@@ -433,6 +439,7 @@ contains
 
        case(3)  ! MPI-3
 
+          call mpi_win_lock_all(0,mwin2,merr)
           if( ranks_local%south /= mpi_undefined ) then
              fsouth(:,:,2) = VR(:,1,:)
           else
@@ -448,6 +455,7 @@ contains
 
           ! local sync & barrier
           call mpi_win_sync(mwin2,merr)
+          call mpi_win_unlock_all(mwin2,merr)
           call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then

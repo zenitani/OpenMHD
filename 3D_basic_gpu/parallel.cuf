@@ -315,8 +315,10 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart3d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin1,merr)
           call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
              bufrcv2(:,:,:) = fptr1(:,:,:,1)
@@ -438,8 +440,10 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart3d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin2,merr)
           call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
              bufrcv2(:,:,:) = fptr2(:,:,:,1)
@@ -561,8 +565,10 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%up,1,cart3d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin3,merr)
           call mpi_win_unlock_all(mwin3,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%down /= mpi_undefined ) then
              bufrcv2(:,:,:) = fptr3(:,:,:,1)
@@ -707,8 +713,10 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%east,1,cart3d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin1,merr)
           call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%west /= mpi_undefined ) then
              bufrcv2(:,:,:) = fptr1(:,:,:,1)
@@ -830,8 +838,10 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%north,1,cart3d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin2,merr)
           call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%south /= mpi_undefined ) then
              bufrcv2(:,:,:) = fptr2(:,:,:,1)
@@ -953,8 +963,10 @@ contains
              call mpi_isend(bufsnd2,msize,mpi_real8,ranks%up,1,cart3d%comm,mreq2(2),merr)
           endif
 
+          ! local sync & barrier
+          call mpi_win_sync(mwin3,merr)
           call mpi_win_unlock_all(mwin3,merr)
-          call mpi_barrier(comm_local,merr)  ! local barrier
+          call mpi_barrier(comm_local,merr)
 
           if( ranks_local%down /= mpi_undefined ) then
              bufrcv2(:,:,:) = fptr3(:,:,:,1)
