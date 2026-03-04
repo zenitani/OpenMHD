@@ -20,17 +20,17 @@ program main
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 !-----------------------------------------------------------------------
+  integer :: n_loop,n_output
+  real(8) :: t, dt, t_output
+  real(8) :: ch
+  character*256 :: filename
+!-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), dx
   real(8) :: U(ix,jx,var1)  ! conserved variables (U)
   real(8) :: U1(ix,jx,var1) ! conserved variables: medium state (U*)
   real(8) :: V(ix,jx,var2)  ! primitive variables (V)
   real(8) :: VL(ix,jx,var1), VR(ix,jx,var1) ! interpolated states
   real(8) :: F(ix,jx,var1), G(ix,jx,var1)   ! numerical flux (F,G)
-!-----------------------------------------------------------------------
-  integer :: n_loop,n_output
-  real(8) :: t, dt, t_output
-  real(8) :: ch
-  character*256 :: filename
 !-----------------------------------------------------------------------
 
   t    =  0.d0

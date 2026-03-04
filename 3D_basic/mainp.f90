@@ -37,7 +37,9 @@ program main
   real(8) :: t, dt, t_output
   real(8) :: ch
   character*256 :: filename
-  integer :: merr, myrank, mreq(2)   ! for MPI
+!---- for MPI ----------------------------------------------------------
+  integer :: myrank
+  type(mpi_request) :: mreq(2)
 !-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), z(kx), dx
   real(8) :: U(ix,jx,kx,var1)  ! conserved variables (U)
@@ -62,10 +64,10 @@ program main
   call parallel_exchange(U,ix,jx,kx,3) ! in the z direction
   call set_dt(U,V,ch,dt,dx,cfl,ix,jx,kx)
 
-  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart3d%comm,mreq(1),merr)
-  call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart3d%comm,mreq(2),merr)
-  call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
-  call mpi_barrier(cart3d%comm,merr)
+  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart3d%comm,mreq(1))
+  call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart3d%comm,mreq(2))
+  call mpi_waitall(2,mreq,mpi_statuses_ignore)
+  call mpi_barrier(cart3d%comm)
 
   if ( dt > dtout ) then
      write(6,*) 'error: ', dt, '>', dtout
@@ -95,9 +97,9 @@ program main
 100        continue
         enddo
      endif
-     call mpi_bcast(n_start,1,mpi_integer,0,cart3d%comm,merr)
+     call mpi_bcast(n_start,1,mpi_integer,0,cart3d%comm)
   endif
-  call mpi_barrier(cart3d%comm,merr)
+  call mpi_barrier(cart3d%comm)
 
   ! If n_start is non-zero, restart from a previous file.
   if ( n_start == 0 ) then
@@ -142,7 +144,7 @@ program main
         endif
         n_output = n_output + 1
         t_output = t_output + dtout
-        call mpi_barrier(cart3d%comm,merr)
+        call mpi_barrier(cart3d%comm)
      endif
 !    [ end? ]
      if ( t >= tend )  exit
@@ -153,9 +155,9 @@ program main
 !   -----------------
 !    CFL condition
      call set_dt(U,V,ch,dt,dx,cfl,ix,jx,kx)
-     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart3d%comm,mreq(1),merr)
-     call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart3d%comm,mreq(2),merr)
-     call mpi_waitall(2,mreq,mpi_statuses_ignore,merr)
+     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart3d%comm,mreq(1))
+     call mpi_iallreduce(mpi_in_place,dt,1,mpi_real8,mpi_min,cart3d%comm,mreq(2))
+     call mpi_waitall(2,mreq,mpi_statuses_ignore)
 
 !    GLM solver for the first half timestep
 !    This should be done after set_dt()

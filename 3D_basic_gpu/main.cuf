@@ -24,6 +24,12 @@ program main
 ! Time marching  (0: TVD RK2, 1: RK2)
   integer, parameter :: time_type = 0
 !-----------------------------------------------------------------------
+  integer :: i, j, k, n_loop
+  integer :: n_output
+  real(8) :: t, dt, t_output
+  real(8) :: ch
+  character*256 :: filename
+!-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), z(kx), dx
   real(8) :: U(ix,jx,kx,var1)  ! conserved variables (U)
   real(8) :: V(ix,jx,kx,var2)  ! primitive variables (V)
@@ -34,15 +40,8 @@ program main
   real(8), device, allocatable :: VLd(:,:,:,:), VRd(:,:,:,:) ! interpolated states
   real(8), device, allocatable :: Fd(:,:,:,:),Gd(:,:,:,:),Hd(:,:,:,:) ! numerical flux (F,G,H)
   real(8), device :: dtd, dxd, chd
-  integer :: stat
   type(dim3), parameter :: Th = dim3(64,1,1)
   type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),ceiling(real(kx)/Th%z))
-!-----------------------------------------------------------------------
-  integer :: i, j, k, n_loop
-  integer :: n_output
-  real(8) :: t, dt, t_output
-  real(8) :: ch
-  character*256 :: filename
 !-----------------------------------------------------------------------
   allocate( Ud(ix,jx,kx,var1),U1d(ix,jx,kx,var1),Vd(ix,jx,kx,var2))
   allocate(VLd(ix,jx,kx,var1),VRd(ix,jx,kx,var1))

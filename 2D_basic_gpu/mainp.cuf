@@ -30,6 +30,15 @@ program main
 ! File I/O  (0: Standard, 1: MPI-IO)
   integer, parameter :: io_type   = 1
 !-----------------------------------------------------------------------
+  integer :: i, j, k
+  integer :: n_loop,n_output
+  real(8) :: t, dt, t_output
+  real(8) :: ch
+  character*256 :: filename
+!---- for MPI ----------------------------------------------------------
+  integer :: myrank
+  type(mpi_request) :: mreq(2)
+!-----------------------------------------------------------------------
   real(8) :: x(ix), y(jx), dx
   real(8) :: U(ix,jx,var1)  ! conserved variables (U)
   real(8) :: V(ix,jx,var2)  ! primitive variables (V)
@@ -40,16 +49,8 @@ program main
   real(8), device, allocatable :: VLd(:,:,:), VRd(:,:,:) ! interpolated states
   real(8), device, allocatable :: Fd(:,:,:), Gd(:,:,:)   ! numerical flux (F,G)
   real(8), device :: dtd, dxd, chd
-  integer :: stat
   type(dim3), parameter :: Th = dim3(64,1,1)
   type(dim3), parameter :: Bl = dim3(ceiling(real(ix)/Th%x),ceiling(real(jx)/Th%y),1)
-!-----------------------------------------------------------------------
-  integer :: i, j, k
-  integer :: n_loop,n_output
-  real(8) :: t, dt, t_output
-  real(8) :: ch
-  character*256 :: filename
-  integer :: merr, myrank, mreq(2)   ! for MPI
 !-----------------------------------------------------------------------
 
 !-----------------------------------------------------------------------
@@ -76,9 +77,9 @@ program main
      chd=max(chd,VRd(i,j,vx))
   enddo; enddo
   ch = chd
-  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-  call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
-  call mpi_barrier(cart2d%comm,merr)
+  call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1))
+  call mpi_waitall(1,mreq,mpi_statuses_ignore)
+  call mpi_barrier(cart2d%comm)
 
   dt = cfl * dx / ch
   if( dt < dtmin ) then
@@ -114,9 +115,9 @@ program main
 100        continue
         enddo
      endif
-     call mpi_bcast(n_start,1,mpi_integer,0,cart2d%comm,merr)
+     call mpi_bcast(n_start,1,mpi_integer,0,cart2d%comm)
   endif
-  call mpi_barrier(cart2d%comm,merr)
+  call mpi_barrier(cart2d%comm)
 
   ! If n_start is non-zero, restart from a previous file.
   if ( n_start == 0 ) then
@@ -163,7 +164,7 @@ program main
         endif
         n_output = n_output + 1
         t_output = t_output + dtout
-        call mpi_barrier(cart2d%comm,merr)
+        call mpi_barrier(cart2d%comm)
      endif
 !    [ end? ]
      if ( t >= tend )  exit
@@ -180,8 +181,8 @@ program main
         chd=max(chd,VRd(i,j,vx))
      enddo; enddo
      ch = chd
-     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1),merr)
-     call mpi_waitall(1,mreq,mpi_statuses_ignore,merr)
+     call mpi_iallreduce(mpi_in_place,ch,1,mpi_real8,mpi_max,cart2d%comm,mreq(1))
+     call mpi_waitall(1,mreq,mpi_statuses_ignore)
      dt = cfl * dx / ch
      if( dt < dtmin ) then
         write(6,*) ' dt is too small : ', dt, ' < ', dtmin

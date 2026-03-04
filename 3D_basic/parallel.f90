@@ -1,5 +1,5 @@
 module parallel
-  use mpi
+  use mpi_f08
   implicit none
 
   ! 3-D domain
@@ -7,7 +7,7 @@ module parallel
 
   ! topology
   type :: mycoords
-     integer :: comm
+     type(mpi_comm) :: comm
      integer :: sizes(ndims)
      integer :: coords(ndims)
      logical :: periods(ndims)
@@ -23,11 +23,11 @@ module parallel
 
   type(myranks) :: ranks         ! global communication
   type(myranks) :: ranks_local   ! intra-node communication
-  integer, private :: comm_local ! intra-node communication
+  type(mpi_comm), private :: comm_local ! intra-node communication
 
-  integer, private :: type_w1,type_w2,type_e1,type_e2
-  integer, private :: type_s1,type_s2,type_n1,type_n2
-  integer, private :: type_d1,type_d2,type_u1,type_u2
+  type(mpi_datatype), private :: type_w1,type_w2,type_e1,type_e2
+  type(mpi_datatype), private :: type_s1,type_s2,type_n1,type_n2
+  type(mpi_datatype), private :: type_d1,type_d2,type_u1,type_u2
 
   ! ----- MPI-3 shared memory communication ------------------------
   logical, parameter, private :: use_shm = .false.  ! MPI communication
@@ -35,7 +35,7 @@ module parallel
 
   ! Please do not edit here
   integer, private :: mpi_mode(ndims) = (/1, 1, 1/)  ! 0: no MPI, 1: MPI-1, 3: MPI-3
-  integer, private :: mwin1, mwin2, mwin3
+  type(mpi_win), private :: mwin1, mwin2, mwin3
   real(8), private, dimension(:,:,:,:), pointer, contiguous :: fptr1 => null()
   real(8), private, dimension(:,:,:,:), pointer, contiguous :: fwest => null()
   real(8), private, dimension(:,:,:,:), pointer, contiguous :: feast => null()
@@ -57,33 +57,33 @@ contains
     integer, intent(in) :: ix, jx, kx
     integer :: i
     integer :: tmpA(6), tmpB(6)
-    integer :: group_world, group_local
-    integer :: mdisp, merr, merrcode
+    type(mpi_group) :: group_world, group_local
+    integer :: mdisp, merrcode
     integer :: sizes(ndims+1), halo_sizes(ndims+1)
     integer(kind=mpi_address_kind) :: msize
     type(c_ptr) :: baseptr1, baseptr2, baseptr3
 
-    call mpi_init(merr)
+    call mpi_init()
 
     cart3d%sizes(:) = my_sizes(:)
     cart3d%coords(:)  = 0
     cart3d%periods(:) = my_periods(:)
 
     ! After this, one should use cart3d%comm instead of mpi_comm_world
-    call mpi_cart_create(mpi_comm_world, ndims, cart3d%sizes, cart3d%periods, .true., cart3d%comm, merr)
-    call mpi_comm_size (cart3d%comm, ranks%size, merr)
-    call mpi_comm_rank (cart3d%comm, ranks%myrank, merr)
-    call mpi_cart_shift(cart3d%comm, 0, 1, ranks%west, ranks%east, merr)
-    call mpi_cart_shift(cart3d%comm, 1, 1, ranks%south,ranks%north,merr)
-    call mpi_cart_shift(cart3d%comm, 2, 1, ranks%down, ranks%up, merr)
-    call mpi_cart_coords(cart3d%comm, ranks%myrank, 3, cart3d%coords, merr)
+    call mpi_cart_create(mpi_comm_world, ndims, cart3d%sizes, cart3d%periods, .true., cart3d%comm)
+    call mpi_comm_size (cart3d%comm, ranks%size)
+    call mpi_comm_rank (cart3d%comm, ranks%myrank)
+    call mpi_cart_shift(cart3d%comm, 0, 1, ranks%west, ranks%east)
+    call mpi_cart_shift(cart3d%comm, 1, 1, ranks%south,ranks%north)
+    call mpi_cart_shift(cart3d%comm, 2, 1, ranks%down, ranks%up)
+    call mpi_cart_coords(cart3d%comm, ranks%myrank, 3, cart3d%coords)
 
     if( ranks%size /= my_sizes(1)*my_sizes(2)*my_sizes(3) ) then
        if( ranks%myrank == 0 ) then
           write(6,*) 'MPI process numbers mismatch.'
        endif
        merrcode = -1
-       call mpi_abort(cart3d%comm, merrcode, merr)
+       call mpi_abort(cart3d%comm, merrcode)
     endif
 
     ! MPI mode
@@ -95,43 +95,43 @@ contains
     ! Halo datatypes
     sizes = (/ix,jx,kx,var1/)
     halo_sizes = (/1,jx,kx,var1/)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0,0/),mpi_order_fortran,mpi_real8,type_w1,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/1,0,0,0/),mpi_order_fortran,mpi_real8,type_w2,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/ix-2,0,0,0/),mpi_order_fortran,mpi_real8,type_e2,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/ix-1,0,0,0/),mpi_order_fortran,mpi_real8,type_e1,merr)
-    call mpi_type_commit(type_w1,merr)
-    call mpi_type_commit(type_w2,merr)
-    call mpi_type_commit(type_e2,merr)
-    call mpi_type_commit(type_e1,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0,0/),mpi_order_fortran,mpi_real8,type_w1)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/1,0,0,0/),mpi_order_fortran,mpi_real8,type_w2)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/ix-2,0,0,0/),mpi_order_fortran,mpi_real8,type_e2)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/ix-1,0,0,0/),mpi_order_fortran,mpi_real8,type_e1)
+    call mpi_type_commit(type_w1)
+    call mpi_type_commit(type_w2)
+    call mpi_type_commit(type_e2)
+    call mpi_type_commit(type_e1)
     halo_sizes = (/ix,1,kx,var1/)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0,0/),mpi_order_fortran,mpi_real8,type_s1,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,1,0,0/),mpi_order_fortran,mpi_real8,type_s2,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,jx-2,0,0/),mpi_order_fortran,mpi_real8,type_n2,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,jx-1,0,0/),mpi_order_fortran,mpi_real8,type_n1,merr)
-    call mpi_type_commit(type_s1,merr)
-    call mpi_type_commit(type_s2,merr)
-    call mpi_type_commit(type_n2,merr)
-    call mpi_type_commit(type_n1,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0,0/),mpi_order_fortran,mpi_real8,type_s1)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,1,0,0/),mpi_order_fortran,mpi_real8,type_s2)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,jx-2,0,0/),mpi_order_fortran,mpi_real8,type_n2)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,jx-1,0,0/),mpi_order_fortran,mpi_real8,type_n1)
+    call mpi_type_commit(type_s1)
+    call mpi_type_commit(type_s2)
+    call mpi_type_commit(type_n2)
+    call mpi_type_commit(type_n1)
     halo_sizes = (/ix,jx,1,var1/)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0,0/),mpi_order_fortran,mpi_real8,type_d1,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,1,0/),mpi_order_fortran,mpi_real8,type_d2,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,kx-2,0/),mpi_order_fortran,mpi_real8,type_u2,merr)
-    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,kx-1,0/),mpi_order_fortran,mpi_real8,type_u1,merr)
-    call mpi_type_commit(type_d1,merr)
-    call mpi_type_commit(type_d2,merr)
-    call mpi_type_commit(type_u2,merr)
-    call mpi_type_commit(type_u1,merr)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,0,0/),mpi_order_fortran,mpi_real8,type_d1)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,1,0/),mpi_order_fortran,mpi_real8,type_d2)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,kx-2,0/),mpi_order_fortran,mpi_real8,type_u2)
+    call mpi_type_create_subarray(3,sizes,halo_sizes,(/0,0,kx-1,0/),mpi_order_fortran,mpi_real8,type_u1)
+    call mpi_type_commit(type_d1)
+    call mpi_type_commit(type_d2)
+    call mpi_type_commit(type_u2)
+    call mpi_type_commit(type_u1)
 
     ! ----- MPI-3 shared memory communication ------------------------
     if( use_shm ) then
        ! node-local mapping
        tmpA = (/ranks%north, ranks%east, ranks%south, ranks%west, ranks%up, ranks%down/)
-       call mpi_comm_split_type(cart3d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local, merr)
-       call mpi_comm_group(cart3d%comm, group_world, merr)
-       call mpi_comm_group(comm_local,  group_local, merr)
-       call mpi_group_translate_ranks(group_world, 6, tmpA, group_local, tmpB, merr)
-       call mpi_comm_size(comm_local, ranks_local%size, merr)
-       call mpi_comm_rank(comm_local, ranks_local%myrank, merr)
+       call mpi_comm_split_type(cart3d%comm, mpi_comm_type_shared, 0, mpi_info_null, comm_local)
+       call mpi_comm_group(cart3d%comm, group_world)
+       call mpi_comm_group(comm_local,  group_local)
+       call mpi_group_translate_ranks(group_world, 6, tmpA, group_local, tmpB)
+       call mpi_comm_size(comm_local, ranks_local%size)
+       call mpi_comm_rank(comm_local, ranks_local%myrank)
        do i=1,6
           if( tmpB(i) == mpi_proc_null )  tmpB(i) = mpi_undefined
        enddo
@@ -149,20 +149,20 @@ contains
           if(( ranks_local%west /= mpi_undefined ).or.( ranks_local%east /= mpi_undefined )) then
              msize = 2*8*jx*kx*var1
              mdisp = 0
-             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1)
              call c_f_pointer(baseptr1,fptr1,(/jx,kx,var1,2/))
              if( ranks_local%west /= mpi_undefined ) then
-                call mpi_win_shared_query(mwin1,ranks_local%west,msize,mdisp,baseptr1,merr)
+                call mpi_win_shared_query(mwin1,ranks_local%west,msize,mdisp,baseptr1)
                 call c_f_pointer(baseptr1,fwest,(/jx,kx,var1,2/))
              endif
              if( ranks_local%east /= mpi_undefined ) then
-                call mpi_win_shared_query(mwin1,ranks_local%east,msize,mdisp,baseptr1,merr)
+                call mpi_win_shared_query(mwin1,ranks_local%east,msize,mdisp,baseptr1)
                 call c_f_pointer(baseptr1,feast,(/jx,kx,var1,2/))
              endif
           else
              ! dummy pointer
              msize = 0
-             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1,merr)
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr1,mwin1)
           endif
 
        endif
@@ -177,20 +177,20 @@ contains
           if(( ranks_local%north /= mpi_undefined ).or.( ranks_local%south /= mpi_undefined )) then
              msize = 2*8*ix*kx*var1
              mdisp = 0
-             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2)
              call c_f_pointer(baseptr2,fptr2,(/ix,kx,var1,2/))
              if( ranks_local%south /= mpi_undefined ) then
-                call mpi_win_shared_query(mwin2,ranks_local%south,msize,mdisp,baseptr2,merr)
+                call mpi_win_shared_query(mwin2,ranks_local%south,msize,mdisp,baseptr2)
                 call c_f_pointer(baseptr2,fsouth,(/ix,kx,var1,2/))
              endif
              if( ranks_local%north /= mpi_undefined ) then
-                call mpi_win_shared_query(mwin2,ranks_local%north,msize,mdisp,baseptr2,merr)
+                call mpi_win_shared_query(mwin2,ranks_local%north,msize,mdisp,baseptr2)
                 call c_f_pointer(baseptr2,fnorth,(/ix,kx,var1,2/))
              endif
           else
              ! dummy pointer
              msize = 0
-             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2,merr)
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr2,mwin2)
           endif
 
        endif
@@ -205,20 +205,20 @@ contains
           if(( ranks_local%down /= mpi_undefined ).or.( ranks_local%up /= mpi_undefined )) then
              msize = 2*8*ix*jx*var1
              mdisp = 0
-             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr3,mwin3,merr)
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr3,mwin3)
              call c_f_pointer(baseptr3,fptr3,(/ix,jx,var1,2/))
              if( ranks_local%down /= mpi_undefined ) then
-                call mpi_win_shared_query(mwin3,ranks_local%down,msize,mdisp,baseptr3,merr)
+                call mpi_win_shared_query(mwin3,ranks_local%down,msize,mdisp,baseptr3)
                 call c_f_pointer(baseptr3,fdown,(/ix,jx,var1,2/))
              endif
              if( ranks_local%up /= mpi_undefined ) then
-                call mpi_win_shared_query(mwin3,ranks_local%up,msize,mdisp,baseptr3,merr)
+                call mpi_win_shared_query(mwin3,ranks_local%up,msize,mdisp,baseptr3)
                 call c_f_pointer(baseptr3,fup,(/ix,jx,var1,2/))
              endif
           else
              ! dummy pointer
              msize = 0
-             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr3,mwin3,merr)
+             call mpi_win_allocate_shared(msize,8,mpi_info_null,comm_local,baseptr3,mwin3)
           endif
 
        endif
@@ -230,24 +230,23 @@ contains
 
 
   subroutine parallel_finalize
-    integer :: merr
 
-    if( mpi_mode(1) == 3 )  call mpi_win_free(mwin1,merr)
-    if( mpi_mode(2) == 3 )  call mpi_win_free(mwin2,merr)
-    if( mpi_mode(3) == 3 )  call mpi_win_free(mwin3,merr)
-    call mpi_type_free(type_w1,merr)
-    call mpi_type_free(type_w2,merr)
-    call mpi_type_free(type_e1,merr)
-    call mpi_type_free(type_e2,merr)
-    call mpi_type_free(type_s1,merr)
-    call mpi_type_free(type_s2,merr)
-    call mpi_type_free(type_n1,merr)
-    call mpi_type_free(type_n2,merr)
-    call mpi_type_free(type_d1,merr)
-    call mpi_type_free(type_d2,merr)
-    call mpi_type_free(type_u1,merr)
-    call mpi_type_free(type_u2,merr)
-    call mpi_finalize(merr)
+    if( mpi_mode(1) == 3 )  call mpi_win_free(mwin1)
+    if( mpi_mode(2) == 3 )  call mpi_win_free(mwin2)
+    if( mpi_mode(3) == 3 )  call mpi_win_free(mwin3)
+    call mpi_type_free(type_w1)
+    call mpi_type_free(type_w2)
+    call mpi_type_free(type_e1)
+    call mpi_type_free(type_e2)
+    call mpi_type_free(type_s1)
+    call mpi_type_free(type_s2)
+    call mpi_type_free(type_n1)
+    call mpi_type_free(type_n2)
+    call mpi_type_free(type_d1)
+    call mpi_type_free(type_d2)
+    call mpi_type_free(type_u1)
+    call mpi_type_free(type_u2)
+    call mpi_finalize()
   
   end subroutine parallel_finalize
 
@@ -259,8 +258,7 @@ contains
     ! direction [input]: 1 (X), 2 (Y), 3 (Z)
     integer, intent(in)  :: dir
 !----------------------------------------------------------------------
-    integer :: mreq1(2), mreq2(2)
-    integer :: merr
+    type(mpi_request) :: mreq1(2), mreq2(2)
 !----------------------------------------------------------------------
 
     select case(dir)
@@ -279,45 +277,45 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(U,1,type_e1,ranks%east,0,cart3d%comm,mreq1(1),merr)
-          call mpi_isend(U,1,type_w2,ranks%west,0,cart3d%comm,mreq1(2),merr)
+          call mpi_irecv(U,1,type_e1,ranks%east,0,cart3d%comm,mreq1(1))
+          call mpi_isend(U,1,type_w2,ranks%west,0,cart3d%comm,mreq1(2))
           ! nonblocking communication (mreq2)
-          call mpi_irecv(U,1,type_w1,ranks%west,1,cart3d%comm,mreq2(1),merr)
-          call mpi_isend(U,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2),merr)
+          call mpi_irecv(U,1,type_w1,ranks%west,1,cart3d%comm,mreq2(1))
+          call mpi_isend(U,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2))
 
-          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore)
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore)
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin1,merr)
+          call mpi_win_lock_all(0,mwin1)
           if( ranks_local%west /= mpi_undefined ) then
              fwest(:,:,:,2) = U(2,:,:,:)
           else
-             call mpi_irecv(U,1,type_w1,ranks%west,1,cart3d%comm,mreq1(1),merr)
-             call mpi_isend(U,1,type_w2,ranks%west,0,cart3d%comm,mreq1(2),merr)
+             call mpi_irecv(U,1,type_w1,ranks%west,1,cart3d%comm,mreq1(1))
+             call mpi_isend(U,1,type_w2,ranks%west,0,cart3d%comm,mreq1(2))
           endif
           if( ranks_local%east /= mpi_undefined ) then
              feast(:,:,:,1) = U(ix-1,:,:,:)
           else
-             call mpi_irecv(U,1,type_e1,ranks%east,0,cart3d%comm,mreq2(1),merr)
-             call mpi_isend(U,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2),merr)
+             call mpi_irecv(U,1,type_e1,ranks%east,0,cart3d%comm,mreq2(1))
+             call mpi_isend(U,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2))
           endif
 
           ! local sync & barrier
-          call mpi_win_sync(mwin1,merr)
-          call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)
+          call mpi_win_sync(mwin1)
+          call mpi_win_unlock_all(mwin1)
+          call mpi_barrier(comm_local)
 
           if( ranks_local%west /= mpi_undefined ) then
              U(1,:,:,:) = fptr1(:,:,:,1)
           else
-             call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq1,mpi_statuses_ignore)
           endif
           if( ranks_local%east /= mpi_undefined ) then
              U(ix,:,:,:) = fptr1(:,:,:,2)
           else
-             call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq2,mpi_statuses_ignore)
           endif
 
        end select
@@ -339,45 +337,45 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(U,1,type_n1,ranks%north,0,cart3d%comm,mreq1(1),merr)
-          call mpi_isend(U,1,type_s2,ranks%south,0,cart3d%comm,mreq1(2),merr)
+          call mpi_irecv(U,1,type_n1,ranks%north,0,cart3d%comm,mreq1(1))
+          call mpi_isend(U,1,type_s2,ranks%south,0,cart3d%comm,mreq1(2))
           ! nonblocking communication (mreq2)
-          call mpi_irecv(U,1,type_s1,ranks%south,1,cart3d%comm,mreq2(1),merr)
-          call mpi_isend(U,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2),merr)
+          call mpi_irecv(U,1,type_s1,ranks%south,1,cart3d%comm,mreq2(1))
+          call mpi_isend(U,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2))
 
-          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore)
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore)
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin2,merr)
+          call mpi_win_lock_all(0,mwin2)
           if( ranks_local%south /= mpi_undefined ) then
              fsouth(:,:,:,2) = U(:,2,:,:)
           else
-             call mpi_irecv(U,1,type_s1,ranks%south,1,cart3d%comm,mreq1(1),merr)
-             call mpi_isend(U,1,type_s2,ranks%south,0,cart3d%comm,mreq1(2),merr)
+             call mpi_irecv(U,1,type_s1,ranks%south,1,cart3d%comm,mreq1(1))
+             call mpi_isend(U,1,type_s2,ranks%south,0,cart3d%comm,mreq1(2))
           endif
           if( ranks_local%north /= mpi_undefined ) then
              fnorth(:,:,:,1) = U(:,jx-1,:,:)
           else
-             call mpi_irecv(U,1,type_n1,ranks%north,0,cart3d%comm,mreq2(1),merr)
-             call mpi_isend(U,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2),merr)
+             call mpi_irecv(U,1,type_n1,ranks%north,0,cart3d%comm,mreq2(1))
+             call mpi_isend(U,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2))
           endif
 
           ! local sync & barrier
-          call mpi_win_sync(mwin2,merr)
-          call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)
+          call mpi_win_sync(mwin2)
+          call mpi_win_unlock_all(mwin2)
+          call mpi_barrier(comm_local)
 
           if( ranks_local%south /= mpi_undefined ) then
              U(:,1,:,:) = fptr2(:,:,:,1)
           else
-             call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq1,mpi_statuses_ignore)
           endif
           if( ranks_local%north /= mpi_undefined ) then
              U(:,jx,:,:) = fptr2(:,:,:,2)
           else
-             call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq2,mpi_statuses_ignore)
           endif
 
        end select
@@ -399,45 +397,45 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(U,1,type_u1,ranks%up,0,cart3d%comm,mreq1(1),merr)
-          call mpi_isend(U,1,type_d2,ranks%down,0,cart3d%comm,mreq1(2),merr)
+          call mpi_irecv(U,1,type_u1,ranks%up,0,cart3d%comm,mreq1(1))
+          call mpi_isend(U,1,type_d2,ranks%down,0,cart3d%comm,mreq1(2))
           ! nonblocking communication (mreq2)
-          call mpi_irecv(U,1,type_d1,ranks%down,1,cart3d%comm,mreq2(1),merr)
-          call mpi_isend(U,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2),merr)
+          call mpi_irecv(U,1,type_d1,ranks%down,1,cart3d%comm,mreq2(1))
+          call mpi_isend(U,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2))
 
-          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore)
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore)
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin3,merr)
+          call mpi_win_lock_all(0,mwin3)
           if( ranks_local%down /= mpi_undefined ) then
              fdown(:,:,:,2) = U(:,:,2,:)
           else
-             call mpi_irecv(U,1,type_d1,ranks%down,1,cart3d%comm,mreq1(1),merr)
-             call mpi_isend(U,1,type_d2,ranks%down,0,cart3d%comm,mreq1(2),merr)
+             call mpi_irecv(U,1,type_d1,ranks%down,1,cart3d%comm,mreq1(1))
+             call mpi_isend(U,1,type_d2,ranks%down,0,cart3d%comm,mreq1(2))
           endif
           if( ranks_local%up /= mpi_undefined ) then
              fup(:,:,:,1) = U(:,:,kx-1,:)
           else
-             call mpi_irecv(U,1,type_u1,ranks%up,0,cart3d%comm,mreq2(1),merr)
-             call mpi_isend(U,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2),merr)
+             call mpi_irecv(U,1,type_u1,ranks%up,0,cart3d%comm,mreq2(1))
+             call mpi_isend(U,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2))
           endif
 
           ! local sync & barrier
-          call mpi_win_sync(mwin3,merr)
-          call mpi_win_unlock_all(mwin3,merr)
-          call mpi_barrier(comm_local,merr)
+          call mpi_win_sync(mwin3)
+          call mpi_win_unlock_all(mwin3)
+          call mpi_barrier(comm_local)
 
           if( ranks_local%down /= mpi_undefined ) then
              U(:,:,1,:) = fptr3(:,:,:,1)
           else
-             call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq1,mpi_statuses_ignore)
           endif
           if( ranks_local%up /= mpi_undefined ) then
              U(:,:,kx,:) = fptr3(:,:,:,2)
           else
-             call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq2,mpi_statuses_ignore)
           endif
 
        end select
@@ -456,8 +454,7 @@ contains
     ! direction [input]: 1 (X), 2 (Y), 3 (Z)
     integer, intent(in)  :: dir
 !----------------------------------------------------------------------
-    integer :: mreq1(2), mreq2(2)
-    integer :: merr
+    type(mpi_request) :: mreq1(2), mreq2(2)
 !----------------------------------------------------------------------
 
     select case(dir)
@@ -476,45 +473,45 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(VR,1,type_e2,ranks%east,0,cart3d%comm,mreq1(1),merr)
-          call mpi_isend(VR,1,type_w1,ranks%west,0,cart3d%comm,mreq1(2),merr)
+          call mpi_irecv(VR,1,type_e2,ranks%east,0,cart3d%comm,mreq1(1))
+          call mpi_isend(VR,1,type_w1,ranks%west,0,cart3d%comm,mreq1(2))
           ! nonblocking communication (mreq2)
-          call mpi_irecv(VL,1,type_w1,ranks%west,1,cart3d%comm,mreq2(1),merr)
-          call mpi_isend(VL,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2),merr)
+          call mpi_irecv(VL,1,type_w1,ranks%west,1,cart3d%comm,mreq2(1))
+          call mpi_isend(VL,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2))
 
-          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore)
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore)
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin1,merr)
+          call mpi_win_lock_all(0,mwin1)
           if( ranks_local%west /= mpi_undefined ) then
              fwest(:,:,:,2) = VR(1,:,:,:)
           else
-             call mpi_irecv(VL,1,type_w1,ranks%west,1,cart3d%comm,mreq1(1),merr)
-             call mpi_isend(VR,1,type_w1,ranks%west,0,cart3d%comm,mreq1(2),merr)
+             call mpi_irecv(VL,1,type_w1,ranks%west,1,cart3d%comm,mreq1(1))
+             call mpi_isend(VR,1,type_w1,ranks%west,0,cart3d%comm,mreq1(2))
           endif
           if( ranks_local%east /= mpi_undefined ) then
              feast(:,:,:,1) = VL(ix-1,:,:,:)
           else
-             call mpi_irecv(VR,1,type_e2,ranks%east,0,cart3d%comm,mreq2(1),merr)
-             call mpi_isend(VL,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2),merr)
+             call mpi_irecv(VR,1,type_e2,ranks%east,0,cart3d%comm,mreq2(1))
+             call mpi_isend(VL,1,type_e2,ranks%east,1,cart3d%comm,mreq2(2))
           endif
 
           ! local sync & barrier
-          call mpi_win_sync(mwin1,merr)
-          call mpi_win_unlock_all(mwin1,merr)
-          call mpi_barrier(comm_local,merr)
+          call mpi_win_sync(mwin1)
+          call mpi_win_unlock_all(mwin1)
+          call mpi_barrier(comm_local)
 
           if( ranks_local%west /= mpi_undefined ) then
              VL(1,:,:,:) = fptr1(:,:,:,1)
           else
-             call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq1,mpi_statuses_ignore)
           endif
           if( ranks_local%east /= mpi_undefined ) then
              VR(ix-1,:,:,:) = fptr1(:,:,:,2)
           else
-             call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq2,mpi_statuses_ignore)
           endif
 
        end select
@@ -536,45 +533,45 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(VR,1,type_n2,ranks%north,0,cart3d%comm,mreq1(1),merr)
-          call mpi_isend(VR,1,type_s1,ranks%south,0,cart3d%comm,mreq1(2),merr)
+          call mpi_irecv(VR,1,type_n2,ranks%north,0,cart3d%comm,mreq1(1))
+          call mpi_isend(VR,1,type_s1,ranks%south,0,cart3d%comm,mreq1(2))
           ! nonblocking communication (mreq2)
-          call mpi_irecv(VL,1,type_s1,ranks%south,1,cart3d%comm,mreq2(1),merr)
-          call mpi_isend(VL,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2),merr)
+          call mpi_irecv(VL,1,type_s1,ranks%south,1,cart3d%comm,mreq2(1))
+          call mpi_isend(VL,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2))
 
-          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore)
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore)
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin2,merr)
+          call mpi_win_lock_all(0,mwin2)
           if( ranks_local%south /= mpi_undefined ) then
              fsouth(:,:,:,2) = VR(:,1,:,:)
           else
-             call mpi_irecv(VL,1,type_s1,ranks%south,1,cart3d%comm,mreq1(1),merr)
-             call mpi_isend(VR,1,type_s1,ranks%south,0,cart3d%comm,mreq1(2),merr)
+             call mpi_irecv(VL,1,type_s1,ranks%south,1,cart3d%comm,mreq1(1))
+             call mpi_isend(VR,1,type_s1,ranks%south,0,cart3d%comm,mreq1(2))
           endif
           if( ranks_local%north /= mpi_undefined ) then
              fnorth(:,:,:,1) = VL(:,jx-1,:,:)
           else
-             call mpi_irecv(VR,1,type_n2,ranks%north,0,cart3d%comm,mreq2(1),merr)
-             call mpi_isend(VL,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2),merr)
+             call mpi_irecv(VR,1,type_n2,ranks%north,0,cart3d%comm,mreq2(1))
+             call mpi_isend(VL,1,type_n2,ranks%north,1,cart3d%comm,mreq2(2))
           endif
 
           ! local sync & barrier
-          call mpi_win_sync(mwin2,merr)
-          call mpi_win_unlock_all(mwin2,merr)
-          call mpi_barrier(comm_local,merr)
+          call mpi_win_sync(mwin2)
+          call mpi_win_unlock_all(mwin2)
+          call mpi_barrier(comm_local)
 
           if( ranks_local%south /= mpi_undefined ) then
              VL(:,1,:,:) = fptr2(:,:,:,1)
           else
-             call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq1,mpi_statuses_ignore)
           endif
           if( ranks_local%north /= mpi_undefined ) then
              VR(:,jx-1,:,:) = fptr2(:,:,:,2)
           else
-             call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq2,mpi_statuses_ignore)
           endif
 
        end select
@@ -596,45 +593,45 @@ contains
        case(1)  ! MPI-1
 
           ! nonblocking communication (mreq1)
-          call mpi_irecv(VR,1,type_u2,ranks%up,0,cart3d%comm,mreq1(1),merr)
-          call mpi_isend(VR,1,type_d1,ranks%down,0,cart3d%comm,mreq1(2),merr)
+          call mpi_irecv(VR,1,type_u2,ranks%up,0,cart3d%comm,mreq1(1))
+          call mpi_isend(VR,1,type_d1,ranks%down,0,cart3d%comm,mreq1(2))
           ! nonblocking communication (mreq2)
-          call mpi_irecv(VL,1,type_d1,ranks%down,1,cart3d%comm,mreq2(1),merr)
-          call mpi_isend(VL,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2),merr)
+          call mpi_irecv(VL,1,type_d1,ranks%down,1,cart3d%comm,mreq2(1))
+          call mpi_isend(VL,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2))
 
-          call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
-          call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+          call mpi_waitall(2,mreq1,mpi_statuses_ignore)
+          call mpi_waitall(2,mreq2,mpi_statuses_ignore)
 
        case(3)  ! MPI-3
 
-          call mpi_win_lock_all(0,mwin3,merr)
+          call mpi_win_lock_all(0,mwin3)
           if( ranks_local%down /= mpi_undefined ) then
              fdown(:,:,:,2) = VR(:,:,1,:)
           else
-             call mpi_irecv(VL,1,type_d1,ranks%down,1,cart3d%comm,mreq1(1),merr)
-             call mpi_isend(VR,1,type_d1,ranks%down,0,cart3d%comm,mreq1(2),merr)
+             call mpi_irecv(VL,1,type_d1,ranks%down,1,cart3d%comm,mreq1(1))
+             call mpi_isend(VR,1,type_d1,ranks%down,0,cart3d%comm,mreq1(2))
           endif
           if( ranks_local%up /= mpi_undefined ) then
              fup(:,:,:,1) = VL(:,:,kx-1,:)
           else
-             call mpi_irecv(VR,1,type_u2,ranks%up,0,cart3d%comm,mreq2(1),merr)
-             call mpi_isend(VL,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2),merr)
+             call mpi_irecv(VR,1,type_u2,ranks%up,0,cart3d%comm,mreq2(1))
+             call mpi_isend(VL,1,type_u2,ranks%up,1,cart3d%comm,mreq2(2))
           endif
 
           ! local sync & barrier
-          call mpi_win_sync(mwin3,merr)
-          call mpi_win_unlock_all(mwin3,merr)
-          call mpi_barrier(comm_local,merr)
+          call mpi_win_sync(mwin3)
+          call mpi_win_unlock_all(mwin3)
+          call mpi_barrier(comm_local)
 
           if( ranks_local%down /= mpi_undefined ) then
              VL(:,:,1,:) = fptr3(:,:,:,1)
           else
-             call mpi_waitall(2,mreq1,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq1,mpi_statuses_ignore)
           endif
           if( ranks_local%up /= mpi_undefined ) then
              VR(:,:,kx-1,:) = fptr3(:,:,:,2)
           else
-             call mpi_waitall(2,mreq2,mpi_statuses_ignore,merr)
+             call mpi_waitall(2,mreq2,mpi_statuses_ignore)
           endif
 
        end select
