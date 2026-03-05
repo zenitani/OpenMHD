@@ -85,14 +85,14 @@ subroutine mpiio_output(filename,ix,jx,kx,t,x,y,z,U,V)
 
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null)
   if( cart3d%coords(2) == 0 .and. cart3d%coords(3) == 0 ) then
-     call mpi_file_write( fh, x, 1, ftype2, mpi_status_ignore )
+     call mpi_file_write(fh, x, 1, ftype2, mpi_status_ignore)
   endif
-! call mpi_file_write_all( fh, x, 1, ftype2, mpi_status_ignore )
+! call mpi_file_write_all(fh, x, 1, ftype2, mpi_status_ignore)
   call mpi_type_free(ftype1)
   call mpi_type_free(ftype2)
   disp = disp+8*iix
 
-  call mpi_barrier( cart3d%comm )
+  call mpi_barrier(cart3d%comm)
 
 ! --------- 1D array of jjx -------------------------------------------------
   gsize(1)   = jjx
@@ -111,12 +111,12 @@ subroutine mpiio_output(filename,ix,jx,kx,t,x,y,z,U,V)
   if( cart3d%coords(1) == 0 .and. cart3d%coords(3) == 0 ) then
      call mpi_file_write(fh, y, 1, ftype2, mpi_status_ignore)
   endif
-! call mpi_file_write_all( fh, y, 1, ftype2, mpi_status_ignore )
+! call mpi_file_write_all(fh, y, 1, ftype2, mpi_status_ignore)
   call mpi_type_free(ftype1)
   call mpi_type_free(ftype2)
   disp = disp+8*jjx
 
-  call mpi_barrier( cart3d%comm )
+  call mpi_barrier(cart3d%comm)
 
 ! --------- 1D array of kkx -------------------------------------------------
   gsize(1)   = kkx
@@ -133,14 +133,14 @@ subroutine mpiio_output(filename,ix,jx,kx,t,x,y,z,U,V)
 
   call mpi_file_set_view(fh, disp, mpi_real8, ftype1, "native", mpi_info_null)
   if( cart3d%coords(1) == 0 .and. cart3d%coords(2) == 0 ) then
-     call mpi_file_write( fh, z, 1, ftype2, mpi_status_ignore)
+     call mpi_file_write(fh, z, 1, ftype2, mpi_status_ignore)
   endif
-! call mpi_file_write_all( fh, z, 1, ftype2, mpi_status_ignore)
+! call mpi_file_write_all(fh, z, 1, ftype2, mpi_status_ignore)
   call mpi_type_free(ftype1)
   call mpi_type_free(ftype2)
-  disp = disp+8*jjx
+  disp = disp+8*kkx
 
-  call mpi_barrier( cart3d%comm )
+  call mpi_barrier(cart3d%comm)
 
 ! --------- 3D matrix of iix * jjx * kkx -------------------------------------------------
   gsizes = (/iix,jjx,kkx/);  subsizes = (/(ie-is+1),(je-js+1),(ke-ks+1)/);
@@ -184,9 +184,9 @@ subroutine mpiio_output(filename,ix,jx,kx,t,x,y,z,U,V)
 ! -------------------------------------
   call mpi_type_free(ftype1)
   call mpi_type_free(ftype2)
-! --------- 2D matrix of iix * jjx * kkx -------------------------------------------------
+! --------- 3D matrix of iix * jjx * kkx -------------------------------------------------
 
-  call mpi_file_close( fh )
+  call mpi_file_close(fh)
 
   return
 end subroutine mpiio_output
@@ -294,9 +294,9 @@ subroutine mpiio_input(filename,ix,jx,kx,t,x,y,z,U)
 !  call mpi_file_read_all(fh, V(1,1,1,pr), ijk, mpi_real8, mpi_status_ignore); disp = disp+mk
 
   call mpi_type_free(ftype)
-! --------- 2D matrix of iix * jjx -------------------------------------------------
+! --------- 3D matrix of iix * jjx * kkx -------------------------------------------------
 
-  call mpi_file_close( fh )
+  call mpi_file_close(fh)
 
   return
 end subroutine mpiio_input
