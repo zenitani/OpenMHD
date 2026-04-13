@@ -1,8 +1,9 @@
 ### NVIDIA HPC SDK
-# F90 = nvfortran -cuda -O2
-# F90 = mpif90 -cuda -O2
+# F90 = nvfortran -cuda -O2 -cudalib=nvshmem
+# F90 = mpif90 -cuda -O2 -cudalib=nvshmem
 F90 = mpif90 -cuda -O2 -mcmodel=medium -cudalib=nvshmem
-# F90 = mpif90 -cuda -O2 -mcmodel=medium -gpu=cuda11.6,cc80 -tp=zen2
+### CfCA/GPU node
+# F90 = mpif90 -cuda -O2 -mcmodel=medium -gpu=cc80 -tp=zen2 -cudalib=nvshmem
 
 
 OBJ   = fileio.o u2v.o bc.o rk.o flux_solver.o limiter.o glm_ss2.o \
