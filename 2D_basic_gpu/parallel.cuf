@@ -350,10 +350,10 @@ contains
 
           if( ranks_local%south /= mpi_undefined ) then
              if( ranks_local%south /= mpi_proc_null ) then
-                !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-                do k=1,var1; do i=1,ix
-                   call nvshmem_put(nvrcv2(i,k,1),Ud(i,2,k),1,ranks_local%south)
-                enddo; enddo
+                !$cuf kernel do(1) <<<*, *, stream=comm_stream>>>
+                do k=1,var1
+                   call nvshmem_put(nvrcv2(1,k,1),Ud(1,2,k),ix,ranks_local%south)
+                enddo
                 stat = cudaStreamSynchronize(comm_stream)
              endif
           else
@@ -367,10 +367,10 @@ contains
           endif
           if( ranks_local%north /= mpi_undefined ) then
              if( ranks_local%north /= mpi_proc_null ) then
-                !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-                do k=1,var1; do i=1,ix
-                   call nvshmem_put(nvrcv2(i,k,2),Ud(i,jx-1,k),1,ranks_local%north)
-                enddo; enddo
+                !$cuf kernel do(1) <<<*, *, stream=comm_stream>>>
+                do k=1,var1
+                   call nvshmem_put(nvrcv2(1,k,2),Ud(1,jx-1,k),ix,ranks_local%north)
+                enddo
                 stat = cudaStreamSynchronize(comm_stream)
              endif
           else
@@ -632,10 +632,10 @@ contains
 
           if( ranks_local%south /= mpi_undefined ) then
              if( ranks_local%south /= mpi_proc_null ) then
-                !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-                do k=1,var1; do i=1,ix
-                   call nvshmem_put(nvrcv2(i,k,1),VRd(i,1,k),1,ranks_local%south)
-                enddo; enddo
+                !$cuf kernel do(1) <<<*, *, stream=comm_stream>>>
+                do k=1,var1
+                   call nvshmem_put(nvrcv2(1,k,1),VRd(1,1,k),ix,ranks_local%south)
+                enddo
                 stat = cudaStreamSynchronize(comm_stream)
              endif
           else
@@ -649,10 +649,10 @@ contains
           endif
           if( ranks_local%north /= mpi_undefined ) then
              if( ranks_local%north /= mpi_proc_null ) then
-                !$cuf kernel do(2) <<<*, *, stream=comm_stream>>>
-                do k=1,var1; do i=1,ix
-                   call nvshmem_put(nvrcv2(i,k,2),VLd(i,jx-1,k),1,ranks_local%north)
-                enddo; enddo
+                !$cuf kernel do(1) <<<*, *, stream=comm_stream>>>
+                do k=1,var1
+                   call nvshmem_put(nvrcv2(1,k,2),VLd(1,jx-1,k),ix,ranks_local%north)
+                enddo
                 stat = cudaStreamSynchronize(comm_stream)
              endif
           else
