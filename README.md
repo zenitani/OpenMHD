@@ -20,12 +20,12 @@ Usage
 
 Python (matplotlib):
 
-    $ ipython3 --pylab
+    $ ipython3
     In [1]: %run -i plot.py
 
 Python (Jupyter):
 
-    $ jupyter-notebook plot.ipynb
+    $ jupyter-lab plot.ipynb
 
 IDL:
 
