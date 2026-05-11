@@ -23,7 +23,7 @@ Python (matplotlib):
     $ ipython3
     In [1]: %run -i plot.py
 
-Python (Jupyter):
+Python (Jupyter Lab):
 
     $ jupyter-lab plot.ipynb
 
@@ -67,7 +67,7 @@ Magnetic reconnection
  * S. Zenitani, T. Miyoshi, Phys. Plasmas 18, 022105 (2011)
  * S. Zenitani, Phys. Plasmas 22, 032114 (2015)
 
-Relativistic jet and relativistic MHD schemes
+Relativistic jet problem
 
  * S. Zenitani, M. Hesse, A. Klimas, ApJ, 712, 951 (2010)
  * A. Mignone, M. Ugliano, G. Bodo, MNRAS, 393, 1141 (2009)
