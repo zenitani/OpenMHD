@@ -4,6 +4,7 @@
 F90 = mpif90 -cuda -O2 -mcmodel=medium -cudalib=nvshmem
 ### CfCA/GPU node
 # F90 = mpif90 -cuda -O2 -mcmodel=medium -gpu=cc80 -tp=zen2 -cudalib=nvshmem
+# F90 = mpif90 -cuda -O2 -mcmodel=medium -gpu=cc120 -tp=zen2 -cudalib=nvshmem # RTX 6000 Blackwell
 
 
 OBJ   = u2v.o fileio.o \
